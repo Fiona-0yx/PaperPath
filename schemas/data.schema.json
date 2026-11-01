@@ -1,0 +1,2795 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PaperPath data contract 0.1.0",
+  "description": "Normative structural contract. Cross-reference, source-text and business invariants are defined in DATA_SPEC.md. These files do not implement the application.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/session_snapshot"
+    },
+    {
+      "$ref": "#/$defs/tool_request"
+    },
+    {
+      "$ref": "#/$defs/tool_result"
+    }
+  ],
+  "$defs": {
+    "learning_goal": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "paper_requirements": {
+          "type": "object",
+          "properties": {
+            "min_year": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9999
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "max_year": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9999
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "max_papers": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "min_year",
+            "max_year",
+            "max_papers",
+            "languages"
+          ],
+          "additionalProperties": false
+        },
+        "explanation_language": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "topic",
+        "purpose",
+        "paper_requirements",
+        "explanation_language"
+      ],
+      "additionalProperties": false
+    },
+    "paper": {
+      "type": "object",
+      "properties": {
+        "paper_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "minItems": 0
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^10\\.\\d{4,9}/\\S+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "uploaded",
+                "retrieved",
+                "mock"
+              ]
+            },
+            "provider": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "source_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "provider",
+            "source_id"
+          ],
+          "additionalProperties": false
+        },
+        "landing_url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https?://\\S+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pdf_url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https?://\\S+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pdf_path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parse_status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "ready",
+            "failed"
+          ]
+        }
+      },
+      "required": [
+        "paper_id",
+        "title",
+        "authors",
+        "year",
+        "doi",
+        "language",
+        "source",
+        "landing_url",
+        "pdf_url",
+        "pdf_path",
+        "parse_status"
+      ],
+      "additionalProperties": false
+    },
+    "page_text": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "native_text",
+            "ocr",
+            "mock"
+          ]
+        }
+      },
+      "required": [
+        "page",
+        "text",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "parsed_paper": {
+      "type": "object",
+      "properties": {
+        "paper_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/page_text"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "paper_id",
+        "page_count",
+        "content_sha256",
+        "pages"
+      ],
+      "additionalProperties": false
+    },
+    "measurement": {
+      "type": "object",
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "parameter",
+        "value",
+        "unit",
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "paper_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "measurement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/measurement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "evidence_id",
+        "paper_id",
+        "page",
+        "quote",
+        "confidence",
+        "measurement"
+      ],
+      "additionalProperties": false
+    },
+    "assessment_turn": {
+      "type": "object",
+      "properties": {
+        "turn_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "question_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "concept_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "difficulty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "answer": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_difficulty": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "turn_id",
+        "question_id",
+        "concept_id",
+        "question",
+        "difficulty",
+        "answer",
+        "score",
+        "feedback",
+        "next_difficulty"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answer": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "answer"
+            ]
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "type": "null"
+              },
+              "feedback": {
+                "type": "null"
+              },
+              "next_difficulty": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "score": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "score"
+            ]
+          },
+          "then": {
+            "properties": {
+              "next_difficulty": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "path_step": {
+      "type": "object",
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "paper_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "concept_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "prerequisite_step_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "todo",
+            "active",
+            "completed",
+            "blocked"
+          ]
+        }
+      },
+      "required": [
+        "step_id",
+        "paper_id",
+        "order",
+        "concept_ids",
+        "prerequisite_step_ids",
+        "goal",
+        "rationale",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "learning_path": {
+      "type": "object",
+      "properties": {
+        "path_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "replan_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path_step"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "path_id",
+        "revision",
+        "replan_reason",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "revision": {
+                "type": "integer",
+                "minimum": 2
+              }
+            },
+            "required": [
+              "revision"
+            ]
+          },
+          "then": {
+            "properties": {
+              "replan_reason": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "grounded_text": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "text",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "term": {
+      "type": "object",
+      "properties": {
+        "term_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "explanation": {
+          "$ref": "#/$defs/grounded_text"
+        }
+      },
+      "required": [
+        "term_id",
+        "name",
+        "explanation"
+      ],
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "object",
+      "properties": {
+        "question_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "concept_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "difficulty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "question_id",
+        "concept_id",
+        "prompt",
+        "difficulty",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "learning_content": {
+      "type": "object",
+      "properties": {
+        "content_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "step_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "paper_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "explanations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/grounded_text"
+          },
+          "minItems": 1
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/term"
+          },
+          "minItems": 0
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/question"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "content_id",
+        "step_id",
+        "paper_id",
+        "explanations",
+        "terms",
+        "questions"
+      ],
+      "additionalProperties": false
+    },
+    "validation_check": {
+      "type": "object",
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "rule": {
+          "type": "string",
+          "enum": [
+            "reference_integrity",
+            "quote_exists",
+            "citation_relevance"
+          ]
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "needs_review"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "target_path": {
+          "type": "string",
+          "pattern": "^(|/(explanations/[0-9]+|terms/[0-9]+/explanation|questions/[0-9]+))$"
+        }
+      },
+      "required": [
+        "check_id",
+        "rule",
+        "evidence_id",
+        "status",
+        "message",
+        "target_path"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "rule": {
+                "const": "citation_relevance"
+              }
+            },
+            "required": [
+              "rule"
+            ]
+          },
+          "then": {
+            "properties": {
+              "target_path": {
+                "minLength": 1
+              },
+              "evidence_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "validation_result": {
+      "type": "object",
+      "properties": {
+        "validation_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "content_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "needs_review"
+          ]
+        },
+        "reviewer": {
+          "type": "string",
+          "enum": [
+            "rule_engine",
+            "llm",
+            "human"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/validation_check"
+          },
+          "minItems": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        }
+      },
+      "required": [
+        "validation_id",
+        "content_id",
+        "status",
+        "reviewer",
+        "checks",
+        "summary",
+        "created_at"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checks": {
+                "items": {
+                  "properties": {
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "failed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checks": {
+                "contains": {
+                  "properties": {
+                    "status": {
+                      "const": "failed"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "needs_review"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checks": {
+                "items": {
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "passed",
+                        "needs_review"
+                      ]
+                    }
+                  }
+                },
+                "contains": {
+                  "properties": {
+                    "status": {
+                      "const": "needs_review"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "concept_mastery": {
+      "type": "object",
+      "properties": {
+        "concept_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "mastery": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assessment_turn_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "concept_id",
+        "mastery",
+        "assessment_turn_ids"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mastery": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "mastery"
+            ]
+          },
+          "then": {
+            "properties": {
+              "assessment_turn_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "learner_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "competencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/concept_mastery"
+          },
+          "minItems": 0
+        },
+        "completed_paper_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "pending_concept_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "profile_id",
+        "learner_id",
+        "revision",
+        "updated_at",
+        "competencies",
+        "completed_paper_ids",
+        "pending_concept_ids"
+      ],
+      "additionalProperties": false
+    },
+    "trajectory_node": {
+      "type": "object",
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "concept_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "unexplored",
+            "learning",
+            "mastered"
+          ]
+        },
+        "paper_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "node_id",
+        "concept_id",
+        "status",
+        "paper_ids"
+      ],
+      "additionalProperties": false
+    },
+    "trajectory_edge": {
+      "type": "object",
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "from_node_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "to_node_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "prerequisite",
+            "explored",
+            "suggested"
+          ]
+        }
+      },
+      "required": [
+        "edge_id",
+        "from_node_id",
+        "to_node_id",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "trajectory": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/trajectory_node"
+          },
+          "minItems": 0
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/trajectory_edge"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "planner",
+            "tutor",
+            "critic",
+            "profiler",
+            "tool",
+            "system"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "plan",
+            "tool_call",
+            "validation",
+            "replan",
+            "profile_updated"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "tool_call_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "event_id",
+        "at",
+        "role",
+        "kind",
+        "summary",
+        "tool_call_id"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "tool_call"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "tool_call_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "tool_error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_INPUT",
+            "UNSUPPORTED_SCHEMA_VERSION",
+            "AUTH_FAILED",
+            "PERMISSION_DENIED",
+            "NOT_FOUND",
+            "PDF_PARSE_FAILED",
+            "OCR_REQUIRED",
+            "EVIDENCE_NOT_FOUND",
+            "VALIDATION_FAILED",
+            "CONFLICT",
+            "NETWORK_ERROR",
+            "TIMEOUT",
+            "RATE_LIMITED",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after_seconds": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable",
+        "retry_after_seconds"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "retryable": {
+                "const": false
+              }
+            },
+            "required": [
+              "retryable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "retry_after_seconds": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "retryable": {
+                "const": true
+              }
+            },
+            "required": [
+              "retryable"
+            ]
+          },
+          "then": {
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "NETWORK_ERROR",
+                  "TIMEOUT",
+                  "RATE_LIMITED",
+                  "INTERNAL_ERROR"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "search_papers_input": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/learning_goal"
+        }
+      },
+      "required": [
+        "goal"
+      ],
+      "additionalProperties": false
+    },
+    "search_papers_output": {
+      "type": "object",
+      "properties": {
+        "papers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/paper"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "papers"
+      ],
+      "additionalProperties": false
+    },
+    "parse_pdf_input": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "$ref": "#/$defs/paper"
+        }
+      },
+      "required": [
+        "paper"
+      ],
+      "additionalProperties": false
+    },
+    "parse_pdf_output": {
+      "type": "object",
+      "properties": {
+        "parsed_paper": {
+          "$ref": "#/$defs/parsed_paper"
+        }
+      },
+      "required": [
+        "parsed_paper"
+      ],
+      "additionalProperties": false
+    },
+    "next_assessment_input": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/learning_goal"
+        },
+        "turns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment_turn"
+          },
+          "minItems": 0
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/profile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "goal",
+        "turns",
+        "profile"
+      ],
+      "additionalProperties": false
+    },
+    "next_assessment_output": {
+      "type": "object",
+      "properties": {
+        "turn": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/assessment_turn"
+            },
+            {
+              "properties": {
+                "answer": {
+                  "type": "null"
+                },
+                "score": {
+                  "type": "null"
+                },
+                "feedback": {
+                  "type": "null"
+                },
+                "next_difficulty": {
+                  "type": "null"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "turn"
+      ],
+      "additionalProperties": false
+    },
+    "plan_path_input": {
+      "type": "object",
+      "properties": {
+        "goal": {
+          "$ref": "#/$defs/learning_goal"
+        },
+        "assessment_turns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment_turn"
+          },
+          "minItems": 0
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/profile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "papers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/paper"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "goal",
+        "assessment_turns",
+        "profile",
+        "papers"
+      ],
+      "additionalProperties": false
+    },
+    "plan_path_output": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/learning_path"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "generate_content_input": {
+      "type": "object",
+      "properties": {
+        "step": {
+          "$ref": "#/$defs/path_step"
+        },
+        "parsed_paper": {
+          "$ref": "#/$defs/parsed_paper"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/profile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "step",
+        "parsed_paper",
+        "profile"
+      ],
+      "additionalProperties": false
+    },
+    "generate_content_output": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/learning_content"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "content",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "validate_content_input": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/learning_content"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 1
+        },
+        "parsed_paper": {
+          "$ref": "#/$defs/parsed_paper"
+        }
+      },
+      "required": [
+        "content",
+        "evidence",
+        "parsed_paper"
+      ],
+      "additionalProperties": false
+    },
+    "validate_content_output": {
+      "type": "object",
+      "properties": {
+        "validation": {
+          "$ref": "#/$defs/validation_result"
+        }
+      },
+      "required": [
+        "validation"
+      ],
+      "additionalProperties": false
+    },
+    "update_profile_input": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/profile"
+        },
+        "assessment_turns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment_turn"
+          },
+          "minItems": 1,
+          "contains": {
+            "properties": {
+              "score": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "score"
+            ]
+          }
+        },
+        "validation": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/validation_result"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": "passed"
+                }
+              }
+            }
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/learning_path"
+        },
+        "trajectory": {
+          "$ref": "#/$defs/trajectory"
+        }
+      },
+      "required": [
+        "profile",
+        "assessment_turns",
+        "validation",
+        "path",
+        "trajectory"
+      ],
+      "additionalProperties": false
+    },
+    "update_profile_output": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/profile"
+        },
+        "trajectory": {
+          "$ref": "#/$defs/trajectory"
+        }
+      },
+      "required": [
+        "profile",
+        "trajectory"
+      ],
+      "additionalProperties": false
+    },
+    "tool_request": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "0.1.0"
+        },
+        "call_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "search_papers",
+            "parse_pdf",
+            "next_assessment",
+            "plan_path",
+            "generate_content",
+            "validate_content",
+            "update_profile"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "is_mock": {
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "tool_request"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "arguments": {
+          "type": "object"
+        },
+        "extensions": {
+          "type": "object",
+          "description": "Optional namespaced non-core metadata; must not contain credentials."
+        }
+      },
+      "required": [
+        "schema_version",
+        "call_id",
+        "request_id",
+        "session_id",
+        "operation",
+        "attempt",
+        "is_mock",
+        "kind",
+        "timeout_ms",
+        "arguments"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "search_papers"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/search_papers_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "parse_pdf"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/parse_pdf_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "next_assessment"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/next_assessment_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "plan_path"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/plan_path_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "generate_content"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/generate_content_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "validate_content"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/validate_content_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "update_profile"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "arguments": {
+                "$ref": "#/$defs/update_profile_input"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "tool_result": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "0.1.0"
+        },
+        "call_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "search_papers",
+            "parse_pdf",
+            "next_assessment",
+            "plan_path",
+            "generate_content",
+            "validate_content",
+            "update_profile"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "is_mock": {
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "tool_result"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "succeeded",
+            "partial",
+            "failed"
+          ]
+        },
+        "data": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/tool_error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "extensions": {
+          "type": "object",
+          "description": "Optional namespaced non-core metadata; must not contain credentials."
+        }
+      },
+      "required": [
+        "schema_version",
+        "call_id",
+        "request_id",
+        "session_id",
+        "operation",
+        "attempt",
+        "is_mock",
+        "kind",
+        "status",
+        "data",
+        "error",
+        "started_at",
+        "finished_at"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "search_papers"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/search_papers_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "parse_pdf"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/parse_pdf_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "next_assessment"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/next_assessment_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "plan_path"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/plan_path_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "generate_content"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/generate_content_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "validate_content"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/validate_content_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "const": "update_profile"
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/update_profile_output"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "succeeded"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "type": "object"
+              },
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "operation": {
+                "const": "search_papers"
+              },
+              "data": {
+                "type": "object"
+              },
+              "error": {
+                "$ref": "#/$defs/tool_error"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "failed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "type": "null"
+              },
+              "error": {
+                "$ref": "#/$defs/tool_error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "session_snapshot": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "0.1.0"
+        },
+        "kind": {
+          "const": "session_snapshot"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "learner_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "is_mock": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\dZ$"
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "requirements",
+            "assessment",
+            "retrieval",
+            "planning",
+            "generating",
+            "validating",
+            "reading",
+            "profiling",
+            "completed",
+            "failed"
+          ]
+        },
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/learning_goal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assessment_turns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment_turn"
+          },
+          "minItems": 0
+        },
+        "papers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/paper"
+          },
+          "minItems": 0
+        },
+        "parsed_papers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parsed_paper"
+          },
+          "minItems": 0
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 0
+        },
+        "path": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/learning_path"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/learning_content"
+          },
+          "minItems": 0
+        },
+        "validations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/validation_result"
+          },
+          "minItems": 0
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/profile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trajectory": {
+          "$ref": "#/$defs/trajectory"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/event"
+          },
+          "minItems": 0
+        },
+        "tool_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tool_request"
+          },
+          "minItems": 0
+        },
+        "tool_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tool_result"
+          },
+          "minItems": 0
+        },
+        "last_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/tool_error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extensions": {
+          "type": "object",
+          "description": "Optional namespaced non-core metadata; must not contain credentials."
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/concept"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "session_id",
+        "learner_id",
+        "is_mock",
+        "created_at",
+        "updated_at",
+        "stage",
+        "goal",
+        "assessment_turns",
+        "papers",
+        "parsed_papers",
+        "evidence",
+        "path",
+        "contents",
+        "validations",
+        "profile",
+        "trajectory",
+        "events",
+        "tool_calls",
+        "tool_results",
+        "last_error",
+        "concepts"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "assessment",
+                  "retrieval",
+                  "planning",
+                  "generating",
+                  "validating",
+                  "reading",
+                  "profiling",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "goal": {
+                "$ref": "#/$defs/learning_goal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "planning"
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "papers": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "generating",
+                  "validating",
+                  "reading",
+                  "profiling",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/learning_path"
+                  },
+                  {
+                    "properties": {
+                      "steps": {
+                        "minItems": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "papers": {
+                "minItems": 1
+              },
+              "parsed_papers": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "validating",
+                  "reading",
+                  "profiling",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "contents": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "reading",
+                  "profiling",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "validations": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "profiling",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "profile": {
+                "$ref": "#/$defs/profile"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "path": {
+                "properties": {
+                  "steps": {
+                    "items": {
+                      "properties": {
+                        "status": {
+                          "const": "completed"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "failed"
+              }
+            },
+            "required": [
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "last_error": {
+                "$ref": "#/$defs/tool_error"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "is_mock": {
+                "const": false
+              }
+            },
+            "required": [
+              "is_mock"
+            ]
+          },
+          "then": {
+            "properties": {
+              "papers": {
+                "items": {
+                  "properties": {
+                    "source": {
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "uploaded",
+                            "retrieved"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "parsed_papers": {
+                "items": {
+                  "properties": {
+                    "content_sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "pages": {
+                      "items": {
+                        "properties": {
+                          "method": {
+                            "type": "string",
+                            "enum": [
+                              "native_text",
+                              "ocr"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "items": {
+                  "properties": {
+                    "is_mock": {
+                      "const": false
+                    }
+                  }
+                }
+              },
+              "tool_results": {
+                "items": {
+                  "properties": {
+                    "is_mock": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "concept": {
+      "type": "object",
+      "properties": {
+        "concept_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,127}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "concept_id",
+        "name",
+        "description"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

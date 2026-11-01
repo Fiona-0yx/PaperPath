@@ -1,0 +1,453 @@
+{
+  "schema_version": "0.1.0",
+  "kind": "session_snapshot",
+  "session_id": "session_demo_001",
+  "learner_id": "learner_demo_001",
+  "is_mock": true,
+  "created_at": "2026-11-01T09:00:00Z",
+  "updated_at": "2026-11-01T09:03:00Z",
+  "stage": "completed",
+  "goal": {
+    "topic": "科研文献中的证据与解读",
+    "purpose": "用一篇虚构论文验证自适应文献学习的数据连接。",
+    "paper_requirements": {
+      "min_year": null,
+      "max_year": null,
+      "max_papers": 1,
+      "languages": [
+        "en"
+      ]
+    },
+    "explanation_language": "zh-CN"
+  },
+  "assessment_turns": [
+    {
+      "turn_id": "turn_demo_001",
+      "question_id": "question_diagnostic_001",
+      "concept_id": "concept_evidence",
+      "question": "你会如何判断一句论文解读是否有原文依据？",
+      "difficulty": 2,
+      "answer": "先找到对应的论文和引用位置。",
+      "score": 0.5,
+      "feedback": "模拟反馈：还需要核对引用是否支持具体结论。",
+      "next_difficulty": 3
+    },
+    {
+      "turn_id": "turn_demo_002",
+      "question_id": "question_reading_001",
+      "concept_id": "concept_evidence",
+      "question": "为什么记录了页码与原文，仍不能直接认定生成的解读正确？",
+      "difficulty": 3,
+      "answer": "页码与原文只方便定位，还要判断引用的措辞与范围是否支持解读。",
+      "score": 0.9,
+      "feedback": "模拟反馈：能够区分可定位与内容支持。",
+      "next_difficulty": 4
+    }
+  ],
+  "papers": [
+    {
+      "paper_id": "paper_demo_001",
+      "title": "DEMO ONLY: Evidence-Aware Reading",
+      "authors": [],
+      "year": null,
+      "doi": null,
+      "language": "en",
+      "source": {
+        "kind": "mock",
+        "provider": null,
+        "source_id": null
+      },
+      "landing_url": null,
+      "pdf_url": null,
+      "pdf_path": null,
+      "parse_status": "ready"
+    }
+  ],
+  "parsed_papers": [
+    {
+      "paper_id": "paper_demo_001",
+      "page_count": 2,
+      "content_sha256": null,
+      "pages": [
+        {
+          "page": 1,
+          "text": "This is a fictional paper used only to test the PaperPath data contract. Evidence-based reading links an explanation to a specific passage in a source.",
+          "method": "mock"
+        },
+        {
+          "page": 2,
+          "text": "A source passage supports only claims consistent with its wording and scope. Recording the page and quote makes the support inspectable; it does not establish that every generated claim is correct.",
+          "method": "mock"
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "evidence_demo_001",
+      "paper_id": "paper_demo_001",
+      "page": 2,
+      "quote": "A source passage supports only claims consistent with its wording and scope. Recording the page and quote makes the support inspectable; it does not establish that every generated claim is correct.",
+      "confidence": null,
+      "measurement": null
+    }
+  ],
+  "path": {
+    "path_id": "path_demo_001",
+    "revision": 1,
+    "replan_reason": null,
+    "steps": [
+      {
+        "step_id": "step_demo_001",
+        "paper_id": "paper_demo_001",
+        "order": 1,
+        "concept_ids": [
+          "concept_evidence"
+        ],
+        "prerequisite_step_ids": [],
+        "goal": "区分引用可定位与结论有依据。",
+        "rationale": "从一篇虚构的入门文献开始，验证字段与引用关联。",
+        "status": "completed"
+      }
+    ]
+  },
+  "contents": [
+    {
+      "content_id": "content_demo_001",
+      "step_id": "step_demo_001",
+      "paper_id": "paper_demo_001",
+      "explanations": [
+        {
+          "text": "原文片段只能支持与其措辞和范围一致的结论。保留页码和引用便于核查，仍需判断它是否支持当前解读。",
+          "evidence_ids": [
+            "evidence_demo_001"
+          ]
+        }
+      ],
+      "terms": [
+        {
+          "term_id": "term_evidence",
+          "name": "原文证据",
+          "explanation": {
+            "text": "用于核对结论的来源片段，应关注其具体措辞与适用范围。",
+            "evidence_ids": [
+              "evidence_demo_001"
+            ]
+          }
+        }
+      ],
+      "questions": [
+        {
+          "question_id": "question_reading_001",
+          "concept_id": "concept_evidence",
+          "prompt": "为什么记录了页码与原文，仍不能直接认定生成的解读正确？",
+          "difficulty": 3,
+          "evidence_ids": [
+            "evidence_demo_001"
+          ]
+        }
+      ]
+    }
+  ],
+  "validations": [
+    {
+      "validation_id": "validation_demo_001",
+      "content_id": "content_demo_001",
+      "status": "passed",
+      "reviewer": "llm",
+      "checks": [
+        {
+          "check_id": "check_refs",
+          "rule": "reference_integrity",
+          "evidence_id": null,
+          "status": "passed",
+          "message": "模拟记录：当前带读的证据引用均存在。",
+          "target_path": ""
+        },
+        {
+          "check_id": "check_quote",
+          "rule": "quote_exists",
+          "evidence_id": "evidence_demo_001",
+          "status": "passed",
+          "message": "模拟记录：引用可以在虚构文本第 2 页定位。",
+          "target_path": ""
+        },
+        {
+          "check_id": "check_support_1",
+          "rule": "citation_relevance",
+          "evidence_id": "evidence_demo_001",
+          "status": "passed",
+          "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+          "target_path": "/explanations/0"
+        },
+        {
+          "check_id": "check_support_2",
+          "rule": "citation_relevance",
+          "evidence_id": "evidence_demo_001",
+          "status": "passed",
+          "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+          "target_path": "/terms/0/explanation"
+        },
+        {
+          "check_id": "check_support_3",
+          "rule": "citation_relevance",
+          "evidence_id": "evidence_demo_001",
+          "status": "passed",
+          "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+          "target_path": "/questions/0"
+        }
+      ],
+      "summary": "仅用于联调的通过记录，不代表真实 Critic 执行结果。",
+      "created_at": "2026-11-01T09:02:02Z"
+    }
+  ],
+  "profile": {
+    "profile_id": "profile_demo_001",
+    "learner_id": "learner_demo_001",
+    "revision": 2,
+    "updated_at": "2026-11-01T09:03:00Z",
+    "competencies": [
+      {
+        "concept_id": "concept_evidence",
+        "mastery": 0.7,
+        "assessment_turn_ids": [
+          "turn_demo_001",
+          "turn_demo_002"
+        ]
+      },
+      {
+        "concept_id": "concept_transfer",
+        "mastery": null,
+        "assessment_turn_ids": []
+      }
+    ],
+    "completed_paper_ids": [
+      "paper_demo_001"
+    ],
+    "pending_concept_ids": [
+      "concept_transfer"
+    ]
+  },
+  "trajectory": {
+    "nodes": [
+      {
+        "node_id": "node_evidence",
+        "concept_id": "concept_evidence",
+        "status": "learning",
+        "paper_ids": [
+          "paper_demo_001"
+        ]
+      },
+      {
+        "node_id": "node_transfer",
+        "concept_id": "concept_transfer",
+        "status": "unexplored",
+        "paper_ids": []
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "edge_suggested",
+        "from_node_id": "node_evidence",
+        "to_node_id": "node_transfer",
+        "kind": "suggested"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event_id": "event_plan",
+      "at": "2026-11-01T09:01:00Z",
+      "role": "planner",
+      "kind": "plan",
+      "summary": "模拟规划：先学习证据与解读的关系。",
+      "tool_call_id": null
+    },
+    {
+      "event_id": "event_tool",
+      "at": "2026-11-01T09:02:00Z",
+      "role": "tool",
+      "kind": "tool_call",
+      "summary": "模拟调用 validate_content。",
+      "tool_call_id": "call_validate_001"
+    },
+    {
+      "event_id": "event_validate",
+      "at": "2026-11-01T09:02:02Z",
+      "role": "critic",
+      "kind": "validation",
+      "summary": "模拟通过记录，未执行真实 Critic。",
+      "tool_call_id": "call_validate_001"
+    },
+    {
+      "event_id": "event_profile",
+      "at": "2026-11-01T09:03:00Z",
+      "role": "profiler",
+      "kind": "profile_updated",
+      "summary": "模拟更新画像与轨迹；0.7 为虚构掌握度。",
+      "tool_call_id": null
+    }
+  ],
+  "tool_calls": [
+    {
+      "schema_version": "0.1.0",
+      "kind": "tool_request",
+      "call_id": "call_validate_001",
+      "request_id": "request_validate_001",
+      "session_id": "session_demo_001",
+      "operation": "validate_content",
+      "attempt": 1,
+      "timeout_ms": 30000,
+      "is_mock": true,
+      "arguments": {
+        "content": {
+          "content_id": "content_demo_001",
+          "step_id": "step_demo_001",
+          "paper_id": "paper_demo_001",
+          "explanations": [
+            {
+              "text": "原文片段只能支持与其措辞和范围一致的结论。保留页码和引用便于核查，仍需判断它是否支持当前解读。",
+              "evidence_ids": [
+                "evidence_demo_001"
+              ]
+            }
+          ],
+          "terms": [
+            {
+              "term_id": "term_evidence",
+              "name": "原文证据",
+              "explanation": {
+                "text": "用于核对结论的来源片段，应关注其具体措辞与适用范围。",
+                "evidence_ids": [
+                  "evidence_demo_001"
+                ]
+              }
+            }
+          ],
+          "questions": [
+            {
+              "question_id": "question_reading_001",
+              "concept_id": "concept_evidence",
+              "prompt": "为什么记录了页码与原文，仍不能直接认定生成的解读正确？",
+              "difficulty": 3,
+              "evidence_ids": [
+                "evidence_demo_001"
+              ]
+            }
+          ]
+        },
+        "evidence": [
+          {
+            "evidence_id": "evidence_demo_001",
+            "paper_id": "paper_demo_001",
+            "page": 2,
+            "quote": "A source passage supports only claims consistent with its wording and scope. Recording the page and quote makes the support inspectable; it does not establish that every generated claim is correct.",
+            "confidence": null,
+            "measurement": null
+          }
+        ],
+        "parsed_paper": {
+          "paper_id": "paper_demo_001",
+          "page_count": 2,
+          "content_sha256": null,
+          "pages": [
+            {
+              "page": 1,
+              "text": "This is a fictional paper used only to test the PaperPath data contract. Evidence-based reading links an explanation to a specific passage in a source.",
+              "method": "mock"
+            },
+            {
+              "page": 2,
+              "text": "A source passage supports only claims consistent with its wording and scope. Recording the page and quote makes the support inspectable; it does not establish that every generated claim is correct.",
+              "method": "mock"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "tool_results": [
+    {
+      "schema_version": "0.1.0",
+      "kind": "tool_result",
+      "call_id": "call_validate_001",
+      "request_id": "request_validate_001",
+      "session_id": "session_demo_001",
+      "operation": "validate_content",
+      "attempt": 1,
+      "is_mock": true,
+      "status": "succeeded",
+      "data": {
+        "validation": {
+          "validation_id": "validation_demo_001",
+          "content_id": "content_demo_001",
+          "status": "passed",
+          "reviewer": "llm",
+          "checks": [
+            {
+              "check_id": "check_refs",
+              "rule": "reference_integrity",
+              "evidence_id": null,
+              "status": "passed",
+              "message": "模拟记录：当前带读的证据引用均存在。",
+              "target_path": ""
+            },
+            {
+              "check_id": "check_quote",
+              "rule": "quote_exists",
+              "evidence_id": "evidence_demo_001",
+              "status": "passed",
+              "message": "模拟记录：引用可以在虚构文本第 2 页定位。",
+              "target_path": ""
+            },
+            {
+              "check_id": "check_support_1",
+              "rule": "citation_relevance",
+              "evidence_id": "evidence_demo_001",
+              "status": "passed",
+              "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+              "target_path": "/explanations/0"
+            },
+            {
+              "check_id": "check_support_2",
+              "rule": "citation_relevance",
+              "evidence_id": "evidence_demo_001",
+              "status": "passed",
+              "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+              "target_path": "/terms/0/explanation"
+            },
+            {
+              "check_id": "check_support_3",
+              "rule": "citation_relevance",
+              "evidence_id": "evidence_demo_001",
+              "status": "passed",
+              "message": "模拟记录：假定引用支持讲解、术语与问题；没有执行真实模型校验。",
+              "target_path": "/questions/0"
+            }
+          ],
+          "summary": "仅用于联调的通过记录，不代表真实 Critic 执行结果。",
+          "created_at": "2026-11-01T09:02:02Z"
+        }
+      },
+      "error": null,
+      "started_at": "2026-11-01T09:02:00Z",
+      "finished_at": "2026-11-01T09:02:02Z"
+    }
+  ],
+  "last_error": null,
+  "extensions": {
+    "demo.description": "人工构造的完成态快照；执行记录只示例一次原文校验，所有论文、分数和结论均为虚构。"
+  },
+  "concepts": [
+    {
+      "concept_id": "concept_evidence",
+      "name": "原文证据与解读",
+      "description": "区分原文片段可以定位，以及该片段是否支持当前解读。"
+    },
+    {
+      "concept_id": "concept_transfer",
+      "name": "结论的适用范围",
+      "description": "进一步学习结论是否可以推广到其他条件或对象。"
+    }
+  ]
+}
