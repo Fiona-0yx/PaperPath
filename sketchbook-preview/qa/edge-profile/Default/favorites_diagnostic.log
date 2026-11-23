@@ -1,0 +1,34 @@
+2026-11-20 04:59:29.947: [INFO] CurrentProfilePath: C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default
+2026-11-20 04:59:29.947: [INFO] Profiles total count: 1
+2026-11-20 04:59:29.947: [INFO] Profile: name=用户配置 1 path=C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default lastActive=null
+2026-11-20 04:59:29.947: [INFO] LastUsedProfileDir: C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default
+2026-11-20 04:59:29.947: [INFO] VisibilityChanged: 0
+2026-11-20 04:59:29.962: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:59:29.962: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:59:29.962: [INFO] OnDoneLoading sync enabled: 0
+2026-11-20 04:59:29.962: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-20 04:59:29.962: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-20 04:59:29.962: [INFO] BookmarksSnapshot Startup total=2 bar=2 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-20 04:59:29.992: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:59:30.098: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:59:30.100: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:30.101: [INFO] Primary account changed.
+2026-11-20 04:59:30.101: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
+2026-11-20 04:59:30.106: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:30.116: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:30.140: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 04:59:30.141: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 05:01:46.246: [INFO] CurrentProfilePath: C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default
+2026-11-20 05:01:46.246: [INFO] Profiles total count: 1
+2026-11-20 05:01:46.246: [INFO] Profile: name=用户配置 1 path=C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default lastActive=null
+2026-11-20 05:01:46.246: [INFO] LastUsedProfileDir: C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default
+2026-11-20 05:01:46.246: [INFO] VisibilityChanged: 0
+2026-11-20 05:01:46.260: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 05:01:46.260: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 05:01:46.260: [INFO] OnDoneLoading sync enabled: 0
+2026-11-20 05:01:46.260: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-20 05:01:46.260: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-20 05:01:46.260: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-20 05:01:46.286: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 05:01:46.317: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 05:01:53.425: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1

@@ -1,0 +1,51 @@
+import { browser } from './browser.mjs';
+import { writeFile } from 'node:fs/promises';
+const b=await browser(),checks=[];
+const check=(v,label)=>{if(!v)throw Error(label);checks.push(label);};
+const ready=async()=>{await b.until("document.querySelector('#grove-frame')?.contentWindow?.__ready === true",45000);await b.delay(3300);};
+const state=()=>b.evaluate("document.querySelector('#grove-frame').contentWindow.__groveTravel.getState()");
+const jump=async p=>{await b.evaluate(`scrollTo({top:(document.querySelector('.grove-shell').offsetHeight-innerHeight)*${p},behavior:'instant'})`);await b.until(`Math.abs(document.querySelector('#grove-frame').contentWindow.__groveTravel.getState().progress-${p})<.015`);await b.delay(400);};
+async function clickNative(selector){
+  const rect=await b.evaluate(`(()=>{const outer=document.querySelector('#grove-frame').getBoundingClientRect(),inner=document.querySelector('#grove-frame').contentDocument.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:outer.left+inner.left+inner.width/2,y:outer.top+inner.top+inner.height/2};})()`);
+  check(rect.x>0&&rect.x<1440&&rect.y>0&&rect.y<1000,'branch target remains in the viewport');
+  await b.send('Input.dispatchMouseEvent',{type:'mousePressed',x:rect.x,y:rect.y,button:'left',clickCount:1});
+  await b.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:rect.x,y:rect.y,button:'left',clickCount:1});
+}
+try{
+  await b.viewport(1440,1000);await b.send('Page.navigate',{url:'http://127.0.0.1:5180/#/home'});await ready();await b.delay(3200);
+  check(await b.evaluate('document.documentElement.scrollHeight>innerHeight*3'),'vine has a real vertical exploration range');
+  await b.shot('travel-00-start');
+  await b.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:700,y:720,deltaX:0,deltaY:900});
+  await b.until('scrollY>500');await b.delay(650);
+  check((await state()).progress>.15,'real wheel input over the iframe advances the journey');
+  await jump(.30);await b.shot('travel-01-foundations');
+  check((await state()).phase===1,'first stop focuses the foundations branch');
+  await clickNative('.foundation-caption');await b.until("location.hash==='#/shelf/foundations'");
+  check(true,'foundation branch remains clickable after travelling');
+  await b.evaluate("location.hash='#/garden'");await ready();await jump(.65);await b.shot('travel-02-methods');
+  check((await state()).phase===2,'second stop focuses the methods branch');
+  await clickNative('.card--about');await b.until("location.hash==='#/shelf/methods'");
+  check(true,'methods branch remains clickable after travelling');
+  await b.evaluate("location.hash='#/garden'");await ready();await jump(1);await b.shot('travel-03-practice');
+  check((await state()).phase===3,'the end of the path focuses the practice branch');
+  await clickNative('.card--stove');await b.until("location.hash==='#/shelf/practice'");
+  check(true,'practice branch remains clickable at the end of the journey');
+  await b.evaluate("location.hash='#/garden'");await ready();await jump(1);
+  await b.evaluate("document.querySelector('#grove-frame').contentDocument.querySelector('.scroll').click()");await b.until('scrollY<15');
+  check(true,'end-of-path control returns to the beginning');
+  await b.viewport(820,1180,true);await jump(.65);await b.shot('travel-tablet-methods');
+  check(await b.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'tablet exploration has no horizontal overflow');
+  await b.viewport(390,844,true);await jump(1);await b.shot('travel-mobile-practice');
+  check(await b.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'mobile exploration has no horizontal overflow');
+  await jump(.30);const beforeTouch=await b.evaluate('scrollY');
+  await b.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+  await b.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:190,y:550,id:1}]});
+  await b.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:190,y:450,id:1}]});await b.delay(30);
+  await b.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:190,y:350,id:1}]});
+  await b.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await b.delay(500);
+  check(await b.evaluate(`scrollY>${beforeTouch+100}`),'one-finger swipe advances the vine on mobile');
+  await b.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await jump(.30);
+  check((await state()).phase===1,'reduced-motion mode still follows the scroll position');
+  const result={checks,errors:b.errors,network:b.network};await writeFile('qa/travel-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+  check(b.errors.length===0,'no browser exceptions');
+}finally{b.close();}

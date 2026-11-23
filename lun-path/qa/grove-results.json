@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "original scene spans the entire viewport width",
+    "old split layout and ivory mask are absent",
+    "authored portal cards remain in the original scene",
+    "welcome and learning garden retain the same live scene",
+    "method branch opens its existing paper shelf",
+    "foundation branch opens its own shelf",
+    "native branch labels switch to English",
+    "native main button enters the learning flow",
+    "tablet has no horizontal overflow",
+    "mobile has no horizontal overflow"
+  ],
+  "errors": [],
+  "network": []
+}

@@ -1,0 +1,19 @@
+{"logTime": "1120/032036", "session": "START"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_service_log.cc:326 EdgeLogSessionServiceMessage", "message": "SessionServiceEvent: kStart - {\r\n   \"crashed\": true,\r\n   \"type\": 0\r\n}\r\n"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\ui\\startup\\startup_browser_creator_impl.cc:452 EdgeLogLastSessionExitTypeOnStartup", "message": "Previous Session Exit Type: PreviousSessionExitType::kBrowserCrash"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\ui\\startup\\startup_browser_creator_impl.cc:1757 DetermineURLsAndLaunch", "message": "Startup Preference: 3"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\ui\\startup\\startup_browser_creator_impl.cc:1759 DetermineURLsAndLaunch", "message": "Browser Open Behavior: 1"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:3251 RestoreSession", "message": "Session restore started"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:3276 RestoreSession", "message": "Last session exit type : Session ended due to browser crash"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:3303 RestoreSession", "message": "Session restore started with behavior bitmask: 30, last session exit type: Session ended due to browser crash"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:3307 RestoreSession", "message": "Session Restore source: SessionRestoreAttemptSource::kAutoRestore"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_service_log.cc:326 EdgeLogSessionServiceMessage", "message": "SessionServiceEvent: kRestoreInitiated - {\r\n   \"restore_browser\": true,\r\n   \"synchronous\": true,\r\n   \"type\": 5\r\n}\r\n"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:837 Restore", "message": "Session service data found"}
+{"logTime": "1120/032036", "level": "INFO", "location": "components\\sessions\\core\\command_storage_manager.cc:644 operator()", "message": "No session files found for SessionType SessionRestore"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:1489 ProcessSessionWindowsIfReady", "message": "All session reads complete (session data read succeeded)"}
+{"logTime": "1120/032036", "level": "INFO", "location": "components\\sessions\\core\\edge_session_restore_telemetry_helper.cc:221 RecordProcessingStarted", "message": "Processing session windows: 0"}
+{"logTime": "1120/032036", "level": "INFO", "location": "components\\sessions\\core\\edge_session_restore_telemetry_helper.cc:239 RecordPostPruningResult", "message": "After PruneWindows: 0 windows remaining"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:1693 ProcessSessionWindows", "message": "Restore was unsuccessful: No session windows to restore"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:1301 FinishedTabCreation", "message": "Creating all tabs/browsers completed"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_restore.cc:1338 FinishedTabCreation", "message": "No tab browsers were created and no URLs were supplied on the command line"}
+{"logTime": "1120/032036", "level": "INFO", "location": "chrome\\browser\\sessions\\session_service_log.cc:326 EdgeLogSessionServiceMessage", "message": "SessionServiceEvent: kRestore - {\r\n   \"errored_reading\": false,\r\n   \"tab_count\": 0,\r\n   \"type\": 1,\r\n   \"window_count\": 0\r\n}\r\n"}

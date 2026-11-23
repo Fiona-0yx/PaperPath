@@ -1,0 +1,34 @@
+2026-11-20 04:59:22.836: [INFO] CurrentProfilePath: C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default
+2026-11-20 04:59:22.836: [INFO] Profiles total count: 1
+2026-11-20 04:59:22.836: [INFO] Profile: name=用户配置 1 path=C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default lastActive=null
+2026-11-20 04:59:22.836: [INFO] LastUsedProfileDir: C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default
+2026-11-20 04:59:22.836: [INFO] VisibilityChanged: 0
+2026-11-20 04:59:22.849: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:59:22.850: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:59:22.850: [INFO] OnDoneLoading sync enabled: 0
+2026-11-20 04:59:22.850: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-20 04:59:22.850: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-20 04:59:22.850: [INFO] BookmarksSnapshot Startup total=2 bar=2 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-20 04:59:22.884: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:59:23.085: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:59:23.087: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:23.089: [INFO] Primary account changed.
+2026-11-20 04:59:23.089: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
+2026-11-20 04:59:23.095: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:23.114: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:59:23.163: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 04:59:23.166: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 05:01:41.004: [INFO] CurrentProfilePath: C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default
+2026-11-20 05:01:41.004: [INFO] Profiles total count: 1
+2026-11-20 05:01:41.004: [INFO] Profile: name=用户配置 1 path=C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default lastActive=null
+2026-11-20 05:01:41.004: [INFO] LastUsedProfileDir: C:\Users\lenovo\Desktop\人工智能挑战赛\sylva-preview\qa\edge-profile\Default
+2026-11-20 05:01:41.004: [INFO] VisibilityChanged: 0
+2026-11-20 05:01:41.022: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 05:01:41.022: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 05:01:41.022: [INFO] OnDoneLoading sync enabled: 0
+2026-11-20 05:01:41.022: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-20 05:01:41.022: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-20 05:01:41.022: [INFO] BookmarksSnapshot Startup total=4 bar=4 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-20 05:01:41.056: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 05:01:41.100: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 05:01:41.101: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1

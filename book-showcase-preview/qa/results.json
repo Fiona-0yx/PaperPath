@@ -1,0 +1,25 @@
+{
+  "results": [
+    "codex: open, save, close passed",
+    "claude: open, save, close passed",
+    "cursor: open, save, close passed",
+    "tablet: layout and details passed (emulation)",
+    "mobile: layout and details passed (emulation)"
+  ],
+  "reducedMotion": true,
+  "videos": [
+    {
+      "ready": 4,
+      "error": null
+    },
+    {
+      "ready": 4,
+      "error": null
+    },
+    {
+      "ready": 4,
+      "error": null
+    }
+  ],
+  "runtimeErrors": []
+}

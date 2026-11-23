@@ -1,0 +1,22 @@
+{
+  "checks": [
+    "vine has a real vertical exploration range",
+    "real wheel input over the iframe advances the journey",
+    "first stop focuses the foundations branch",
+    "branch target remains in the viewport",
+    "foundation branch remains clickable after travelling",
+    "second stop focuses the methods branch",
+    "branch target remains in the viewport",
+    "methods branch remains clickable after travelling",
+    "the end of the path focuses the practice branch",
+    "branch target remains in the viewport",
+    "practice branch remains clickable at the end of the journey",
+    "end-of-path control returns to the beginning",
+    "tablet exploration has no horizontal overflow",
+    "mobile exploration has no horizontal overflow",
+    "one-finger swipe advances the vine on mobile",
+    "reduced-motion mode still follows the scroll position"
+  ],
+  "errors": [],
+  "network": []
+}

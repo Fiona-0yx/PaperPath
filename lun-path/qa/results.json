@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "trial answer has source evidence",
+    "shelf selection updates paper details",
+    "authored 3D opening enters the matching paper",
+    "tutor reply has a navigable source",
+    "completed paper changes learning path",
+    "English interface switching",
+    "progress survives page reload",
+    "margin note survives page reload",
+    "paper text unchanged by interface language",
+    "tablet has no horizontal overflow",
+    "mobile home has no horizontal overflow",
+    "mobile reading has no horizontal overflow",
+    "mobile notebook has no horizontal overflow",
+    "open answer survives language switching",
+    "open introduction answer is retained",
+    "skipped questions advance instead of repeating",
+    "returning allows a skipped answer to be edited",
+    "portable journal round-trip retains notes"
+  ],
+  "errors": [],
+  "network": []
+}

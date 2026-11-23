@@ -1,0 +1,10 @@
+{
+  "kind": "sylva",
+  "checks": [
+    "WebGL scene rendered; pointer move dispatched"
+  ],
+  "tabletHorizontalOverflow": false,
+  "images": [],
+  "runtimeErrors": [],
+  "failedRequests": []
+}

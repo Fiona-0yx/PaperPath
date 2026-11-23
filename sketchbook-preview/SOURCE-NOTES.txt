@@ -1,0 +1,11 @@
+官方示例原样预览，未加入论径功能。
+运行：在此目录执行 npm start，然后打开 http://127.0.0.1:5176/
+源码清单：https://threeui.com/source-code/meng-to-sketchbook-landing-page.json
+HTML：https://threeui.com/landing-pages/meng-to-sketchbook.html
+HTML 当前 SHA256：518737cbcbd8250813613bca7c0bd06959b91a84d905de2b0f5ec8c32a5f9fcc
+清单 SHA256：e0330548b1ac905cf1b81698163ffa29f8a3a8c39b8d39f9b71ba5b9255b6dd1
+二者不同，官网已更新，不能宣称为清单历史版本。
+原 HTML 保持原样；仍有在线媒体引用，需要联网。
+React 宿主等注册源码已保存到 src；此预览直接运行 HTML，无需安装依赖。
+
+本地化补充：原始下载保存在 originals，运行文件仅将清单中图片与字体的外链改为本地路径，保持设计、渲染与交互逻辑。清单中的全部资源已下载并通过 SHA256 校验。

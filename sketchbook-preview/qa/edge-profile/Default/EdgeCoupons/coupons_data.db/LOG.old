@@ -1,0 +1,5 @@
+2026/11/20-12:59:32.111 a76c Creating DB C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/11/20-12:59:32.150 a76c Reusing MANIFEST C:\Users\lenovo\Desktop\人工智能挑战赛\sketchbook-preview\qa\edge-profile\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/11/20-12:59:33.767 5708 Level-0 table #5: started
+2026/11/20-12:59:33.772 5708 Level-0 table #5: 683284 bytes OK
+2026/11/20-12:59:33.777 5708 Delete type=0 #3

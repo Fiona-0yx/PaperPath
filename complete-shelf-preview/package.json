@@ -1,0 +1,6 @@
+{
+  "name": "complete-shelf-preview",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node serve.mjs" }
+}
