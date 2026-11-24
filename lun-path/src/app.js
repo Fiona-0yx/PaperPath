@@ -4,12 +4,14 @@ import { learning } from './services.js';
 import { escape as h, leaf } from './components.js';
 import * as views from './views.js';
 import { groveState } from './grove.js';
+import { groveCategories } from '../shared/grove-categories.js';
 
 let s=restore();
 let ui={question:null,choice:null,other:'',stage:'diagnostic',help:'guide',mobilePane:'read',section:null,shelfPaper:null,assessmentResult:null,inQuestions:false};
 let busy=false,toastTimer;
-let groveScrollTick=0;
 const root=document.querySelector('#app');
+const groveHost=document.createElement('div');
+groveHost.id='grove-host';groveHost.hidden=true;root.after(groveHost);
 const L=(zh,en)=>s.language==='en'?en:zh;
 const loc=value=>typeof value==='object'&&value?value[s.language]||value.en||value.zh||'':String(value??'');
 const fieldLabels={goal:['学习目的','Learning goal'],direction:['研究方向','Direction'],experience:['相关经历','Experience'],deadline:['时间安排','Time frame'],output:['期望成果','Desired outcome']};
@@ -22,42 +24,45 @@ function record(zh,en){s.activity.push({at:new Date().toISOString(),text:{zh,en}
 function go(path){const target='#/'+path;if(location.hash===target){render();return;}location.hash=target;}
 function toast(text){clearTimeout(toastTimer);const el=document.querySelector('#toast');el.textContent=text;el.classList.add('show');toastTimer=setTimeout(()=>el.classList.remove('show'),3200);}
 const ctx=()=>({s,ui,L,loc,route:route(),papers,branches,fieldLabel,fieldValue,recommended:s.evidence.some(e=>['incorrect','uncertain'].includes(e.status))?'foundations':s.completed.some(id=>papers.find(p=>p.id===id)?.branch==='methods')?'practice':s.evidence.some(e=>e.status==='correct')?'methods':'foundations'});
-function header(r){const nav=[['home',L('花园入口','Welcome')],['garden',L('学习花园','My garden')],['shelf/foundations',L('论文书架','Paper shelf')],['profile',L('我的成长','My growth')]];return `<header class="site-header"><a class="brand" href="#/home" aria-label="${L('论径，回到首页','Lun Jing, home')}">${leaf}<span><span class="brand-name">${L('论径','Lun Jing')}</span><span class="brand-caption">A GROWING FIELD JOURNAL</span></span></a><nav class="main-nav" aria-label="${L('主导航','Main navigation')}">${nav.map(([path,label])=>`<a href="#/${path}" class="${r.name===path.split('/')[0]?'active':''}" ${r.name===path.split('/')[0]?'aria-current="page"':''}>${label}</a>`).join('')}</nav><div class="header-tools"><button class="demo-label" data-action="about">${L('演示手记','Demo journal')}</button><div class="language-toggle" aria-label="${L('界面语言','Interface language')}"><button data-lang="zh" class="${s.language==='zh'?'active':''}" aria-pressed="${s.language==='zh'}">中文</button><span>/</span><button data-lang="en" class="${s.language==='en'?'active':''}" aria-pressed="${s.language==='en'}">EN</button></div></div></header>`;}
+function header(r){const nav=[['home',L('路径','Path')],['overview',L('全景','Overview')],['profile',L('画像','Profile')]];return `<header class="site-header"><a class="brand" href="#/home" aria-label="${L('论径，回到首页','Lun Jing, home')}">${leaf}<span><span class="brand-name">${L('论径','Lun Jing')}</span><span class="brand-caption">A GROWING FIELD JOURNAL</span></span></a><nav class="main-nav" aria-label="${L('主导航','Main navigation')}">${nav.map(([path,label])=>`<a href="#/${path}" class="${r.name===path.split('/')[0]?'active':''}" ${r.name===path.split('/')[0]?'aria-current="page"':''}>${label}</a>`).join('')}</nav><div class="header-tools"><button class="demo-label" data-action="about">${L('演示手记','Demo journal')}</button><div class="language-toggle" aria-label="${L('界面语言','Interface language')}"><button data-lang="zh" class="${s.language==='zh'?'active':''}" aria-pressed="${s.language==='zh'}">中文</button><span>/</span><button data-lang="en" class="${s.language==='en'?'active':''}" aria-pressed="${s.language==='en'}">EN</button></div></div></header>`;}
 function footer(){return `<footer class="site-footer"><span>© 2026 ${L('论径 · 保持好奇，允许慢慢来。','Lun Jing · Stay curious. Take your time.')}</span><span class="footer-middle">LITTLE BY LITTLE, LEAF BY LEAF.</span><button data-action="export">${L('带走我的学习手记','Take my journal with me')}</button></footer>`;}
 function render(){const r=route(),c=ctx();document.documentElement.lang=s.language==='en'?'en':'zh-CN';document.title=L('论径 · 一册生长的学习手记','Lun Jing · A growing field journal');let content;
   if(r.name==='home')content=views.home(c);
+  else if(r.name==='overview')content=views.home(c);
   else if(r.name==='journal')content=views.journal(c);
   else if(r.name==='confirm')content=views.confirm(c);
   else if(r.name==='trial')content=`<section class="screen">${views.assessment(c,papers.find(p=>p.id===r.id)||papers[0],'diagnostic',{trial:true})}</section>`;
   else if(r.name==='garden')content=views.garden(c);
-  else if(r.name==='shelf')content=views.shelf(c);
+  else if(r.name==='shelf')content=groveCategories.some(b=>b.id===r.id)?'':views.shelf(c);
   else if(r.name==='paper')content=views.paper(c);
   else if(r.name==='profile')content=views.profile(c);
   else content=views.missing(c);
-  const isGrove=['home','garden'].includes(r.name);
+  const isGrove=['home','garden','overview'].includes(r.name);
+  if(isGrove)document.title=r.name==='overview'?L('论径 · 全景','Lun Jing · Overview'):L('论径 · 循径而读，渐入佳境。','Lun Jing · Follow the path. Read your way in.');
+  const isBlank=r.name==='shelf'&&groveCategories.some(b=>b.id===r.id);
+  document.body.classList.toggle('is-category-blank',isBlank);
   document.body.classList.toggle('is-grove',isGrove);
-  const existingGrove=root.querySelector('#grove-frame');
+  root.hidden=isGrove;groveHost.hidden=!isGrove;
+  if(isGrove&&!groveHost.querySelector('#grove-frame'))groveHost.innerHTML=`<main id="grove-main" tabindex="-1">${content}</main>`;
+  const existingGrove=groveHost.querySelector('#grove-frame');
+  existingGrove?.contentWindow?.postMessage({type:'grove-visibility',visible:isGrove},location.origin);
   if(isGrove&&existingGrove){
     existingGrove.contentWindow?.postMessage({type:'grove-state',state:groveState(c)},location.origin);
-    root.querySelector('.grove-shell').dataset.view=r.name;
-    const brand=root.querySelector('.grove-brand');brand.innerHTML=leaf+`<span>${L('论径','Lun Jing')}<small>A LIVING FIELD JOURNAL</small></span>`;
-    root.querySelector('.grove-demo').textContent=L('演示手记','Demo journal');
-    root.querySelectorAll('[data-lang]').forEach(el=>{el.classList.toggle('active',el.dataset.lang===s.language);el.setAttribute('aria-pressed',String(el.dataset.lang===s.language));});
-  }else root.innerHTML=isGrove?`<main id="main" tabindex="-1">${content}</main>`:header(r)+`<main id="main" tabindex="-1">${content}</main>`+footer();
+    groveHost.querySelector('.grove-shell').dataset.view=r.name;
+    const brand=groveHost.querySelector('.grove-brand');brand.innerHTML=leaf+`<span>${L('论径','Lun Jing')}</span>`;
+    groveHost.querySelector('.grove-demo').textContent=L('演示手记','Demo journal');
+    groveHost.querySelectorAll('[data-lang]').forEach(el=>{el.classList.toggle('active',el.dataset.lang===s.language);el.setAttribute('aria-pressed',String(el.dataset.lang===s.language));});
+  }else root.innerHTML=isBlank?'<main id="main" class="category-blank" tabindex="-1"></main>':header(r)+`<main id="main" tabindex="-1">${content}</main>`+footer();
+  document.querySelector('.skip-link').href=isGrove?'#grove-main':'#main';
   if(busy)root.querySelectorAll('button[type="submit"]').forEach(el=>el.disabled=true);
 }
 function resetUI(){ui.choice=null;ui.other='';ui.assessmentResult=null;ui.highlight=null;}
-function onRoute(){const r=route();const keepGroveScroll=r.name==='garden'&&Boolean(root.querySelector('#grove-frame'));resetUI();if(r.name==='paper'){
+function onRoute(){const r=route();resetUI();if(r.name==='paper'){
     const p=papers.find(p=>p.id===r.id);if(p){s.lastPaper=p.id;ui.stage=r.stage||((s.attempts.some(a=>a.paperId===p.id&&a.stage==='diagnostic'))?'read':'diagnostic');ui.section=s.lastSection[p.id]||p.sections[0].id;ui.mobilePane='read';s.visited=[...new Set([...s.visited,p.id])];save();}
   }
   if(r.name==='shelf'){ui.shelfPaper=null;}
-  render();if(!keepGroveScroll)window.scrollTo({top:0,behavior:'instant'});syncGroveTravel();
+  render();window.scrollTo({top:0,behavior:'instant'});
 }
-function groveRange(){const shell=root.querySelector('.grove-shell');if(!shell)return null;const top=shell.getBoundingClientRect().top+scrollY;const range=Math.max(1,shell.offsetHeight-innerHeight);return {top,range,progress:Math.max(0,Math.min(1,(scrollY-top)/range))};}
-function syncGroveTravel(){const range=groveRange(),frame=root.querySelector('#grove-frame');if(range&&frame)frame.contentWindow?.postMessage({type:'grove-travel',progress:range.progress},location.origin);}
-function jumpGrove(progress){const range=groveRange();if(!range)return;window.scrollTo({top:range.top+Math.max(0,Math.min(1,progress))*range.range,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
-window.addEventListener('scroll',()=>{if(groveScrollTick)return;groveScrollTick=requestAnimationFrame(()=>{groveScrollTick=0;syncGroveTravel();});},{passive:true});
-window.addEventListener('resize',syncGroveTravel,{passive:true});
 async function task(fn,button){if(busy)return;busy=true;if(button){button.disabled=true;button.dataset.original=button.textContent;button.textContent=L('正在整理…','One moment…');}try{await fn();}catch(error){console.error(error);toast(L('这一步暂时没有完成，记录仍在。请再试一次。','This step did not finish. Your notes are safe; please try again.'));}finally{busy=false;root.querySelectorAll('button[type="submit"]').forEach(el=>el.disabled=false);if(button&&button.isConnected){button.disabled=false;button.textContent=button.dataset.original||button.textContent;}}}
 async function askNext(){const result=await learning.next(s.profile,s.history,s.language);resetUI();if(result.action==='complete'){ui.question=null;ui.inQuestions=false;s.profile={...s.profile,...result.profile};save();go('confirm');}else{ui.question=result.question;ui.inQuestions=true;if(route().name!=='journal')go('journal');else{render();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelector('.right-page')?.animate([{opacity:.4,transform:'rotateY(-4deg)'},{opacity:1,transform:'rotateY(0)'}],{duration:320,easing:'ease-out'});}}}
 function paperNow(){return papers.find(p=>p.id===route().id)||papers[0];}
@@ -90,8 +95,9 @@ root.addEventListener('submit',event=>{const form=event.target.closest('[data-fo
   }
 },button);});
 
-root.addEventListener('click',event=>{
+document.addEventListener('click',event=>{
   const el=event.target.closest('button,a');if(!el)return;
+  if(el.classList.contains('skip-link')){event.preventDefault();document.querySelector(el.getAttribute('href'))?.focus();return;}
   if(el.dataset.go){go(el.dataset.go);return;}
   if(el.dataset.lang){s.language=el.dataset.lang;document.querySelector('#toast').classList.remove('show');save();render();return;}
   if(el.dataset.example){const texts={project:L('我会一点 Python，想在两周内复现一个植物病害识别模型，用来参加竞赛，还没有读过相关论文。','I know some Python. I want to reproduce a plant disease classification model for a competition in two weeks. I have not read research papers yet.'),report:L('我需要在一周内写一份植物病害识别方向的课程报告，想比较不同方法和实验依据，刚开始读论文。','I need a course report on plant disease classification within a week. I am new to papers and want to compare methods and experimental evidence.'),explore:L('我想了解植物病害识别这个方向，目前是初学者，没有固定期限，先建立一个研究概览。','I am a beginner exploring plant disease classification. I have no deadline and want a research overview first.')};s.intro=texts[el.dataset.example];document.querySelector('#intro').value=s.intro;save();return;}
@@ -146,13 +152,10 @@ window.addEventListener('hashchange',onRoute);
 window.addEventListener('message',event=>{
   const frame=document.querySelector('#grove-frame');
   if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;
-  if(event.data?.type==='grove-mounted'){frame.contentWindow.postMessage({type:'grove-state',state:groveState(ctx())},location.origin);syncGroveTravel();}
-  if(event.data?.type==='grove-wheel'&&Number.isFinite(event.data.delta))window.scrollBy({top:Math.max(-innerHeight*2,Math.min(innerHeight*2,event.data.delta)),behavior:'instant'});
-  if(event.data?.type==='grove-advance'){const range=groveRange();if(range)jumpGrove(range.progress>.97?0:[.30,.65,1].find(p=>p>range.progress+.04)??1);}
-  if(event.data?.type==='grove-jump'&&Number.isFinite(event.data.progress))jumpGrove(event.data.progress);
+  if(event.data?.type==='grove-mounted'){frame.contentWindow.postMessage({type:'grove-state',state:groveState(ctx())},location.origin);}
   if(event.data?.type==='grove-go'){
     const path=event.data.path;
-    const allowed=['home','garden','journal','profile','confirm',...branches.map(b=>'shelf/'+b.id),...papers.map(p=>'paper/'+p.id)];
+    const allowed=['home','garden','overview','journal','profile','confirm',...groveCategories.map(b=>'shelf/'+b.id),...branches.map(b=>'shelf/'+b.id),...papers.map(p=>'paper/'+p.id)];
     if(allowed.includes(path))go(path);
   }
 });

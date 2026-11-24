@@ -13,9 +13,13 @@ export async function prepareGrove(){
   if(!originalCamera.test(html)||!html.includes('  var frames = 0;'))throw Error('Authored camera hook not found');
   html=html.replace(originalCamera,'updateTravel(dt);');
   html=html.replace('  var frames = 0;',travel+'\n  var frames = 0;');
+  html=html.replace('    buildAmbient();','    buildJourney();\n    buildAmbient();');
+  html=html.replace('if (renderer && clock) renderFrame();','if (renderer && clock && !window.__grovePaused) renderFrame();');
+  html=html.replace('  function layout() {','  function layout() {\n    if (!hero.clientWidth || !hero.clientHeight) return;');
   html=html.replace('<title>Sylva', '<title>论径');
   html=html.replace('</head>',`<link rel="stylesheet" href="/assets/grove-adaptation.css"></head>`);
-  html=html.replace('</body>',`<script src="/assets/grove-bridge.js"></script></body>`);
+  // Bind/clone the original cards before Sylva measures its portals and dock.
+  html=html.replace('<script src="inner-green-assets/three.min.js">', '<script src="/assets/grove-bridge.js"></script>\n<script src="inner-green-assets/three.min.js">');
   await writeFile(path.join(root,'public/scenes/grove.html'),html);
   console.log('Prepared complete Sylva page with product text and navigation bindings.');
 }

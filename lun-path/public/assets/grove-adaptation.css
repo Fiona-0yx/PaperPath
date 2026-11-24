@@ -1,55 +1,68 @@
-/* Small adaptations on top of the complete authored Sylva stylesheet.
-   The background, geometry, shaders, stage and native portal structure stay intact. */
+/* Original Sylva remains the source of materials, cards and animation. */
 body{font-family:Lexend,'PingFang SC','Microsoft YaHei',sans-serif}
 html,body{height:100%;overflow:hidden}
+:root{--u:min(calc(100vw / 1600),calc(100svh / 880))}
 .hero{height:100svh;min-height:0}
-.headline,.lede,.pill-clip,.stat,.ghost{opacity:var(--travel-intro,1)!important}
-.play-wrap{opacity:var(--foundations-visibility,1)!important}
-.card--about,.knob-float{opacity:var(--methods-visibility,1)!important}
-.card--stove{opacity:var(--practice-visibility,1)!important}
-.play-wrap,.play-wrap *{pointer-events:var(--foundations-events,auto)!important}
-.card--about,.card--about *,.knob-float,.knob-float *{pointer-events:var(--methods-events,auto)!important}
-.card--stove,.card--stove *{pointer-events:var(--practice-events,auto)!important}
-.headline{top:calc(112 * var(--u));font-size:calc(43 * var(--u));line-height:1.3;max-width:calc(430 * var(--u));letter-spacing:.01em}
-.lede{left:calc(46 * var(--u));top:calc(255 * var(--u));width:calc(310 * var(--u));font-size:max(13px,calc(16 * var(--u)));line-height:1.8}
-.pill-clip{left:calc(191 * var(--u));top:calc(407 * var(--u))}
-.ghost{font-size:calc(222 * var(--u));letter-spacing:calc(15 * var(--u))}
-.card{cursor:pointer}
-.card:focus-visible{outline:2px solid #fff7da;outline-offset:6px}
-.card--about h2,.card--stove h2{font-size:calc(30 * var(--u));letter-spacing:0;line-height:1.35}
-.card--about h2{width:calc(255 * var(--u));max-width:calc(100% - 55 * var(--u))}
-.card .label{font-size:max(11px,calc(14 * var(--u)))}
-.stat dd{max-width:calc(190 * var(--u));font-weight:400;overflow-wrap:anywhere}
-.scroll{position:fixed!important;left:50%!important;top:auto!important;bottom:24px!important;transform:translateX(-50%)!important;z-index:15;display:flex;align-items:center;gap:15px;width:max-content!important;max-width:90vw;height:auto!important;min-height:44px;writing-mode:horizontal-tb!important;white-space:nowrap;color:#f0f2df;font-size:12px;line-height:1.4;letter-spacing:.06em;cursor:pointer;padding:10px 18px;background:#24301b55;border:1px solid #c5d4b02b;border-radius:30px;backdrop-filter:blur(8px)}
-.scroll .track{display:block;position:relative;width:44px;height:1px;margin:0;background:#dbe3c85c;overflow:visible}
-.scroll .track:before,.scroll .track:after{display:none}
-.foundation-caption{position:absolute;z-index:5;left:calc(143 * var(--u));top:calc(51 * var(--u));width:calc(225 * var(--u));pointer-events:auto;border:0;background:transparent;color:#f1f1df;text-align:left;cursor:pointer;font:400 max(15px,calc(22 * var(--u)))/1.5 Lexend,'Microsoft YaHei',sans-serif;text-shadow:0 2px 15px #1c2714}
-.foundation-caption small{display:block;font-size:max(11px,calc(13 * var(--u)));font-weight:300;color:#d6ddc5;margin-top:2px;letter-spacing:.03em}
-.foundation-caption .branch-progress{margin-top:8px;font-size:max(10px,calc(12 * var(--u)));color:#bfcfaf}
-.liquid-button--play .ico{margin-left:0}
-.branch-hint{position:fixed;left:calc(50 * var(--u));bottom:38px;color:#d4dec7;font-size:max(11px,calc(13 * var(--u)));letter-spacing:.02em;z-index:5;max-width:30vw}
-.grove-recommended:after{content:attr(data-recommendation);position:absolute;right:calc(19 * var(--u));bottom:calc(12 * var(--u));font-size:max(10px,calc(11 * var(--u)));color:#586b44;letter-spacing:0}
-.play-wrap.grove-recommended:after{left:calc(143 * var(--u));right:auto;bottom:calc(20 * var(--u));color:#e5edcc;white-space:nowrap;font-size:max(10px,calc(12 * var(--u)))}
-@media(min-width:901px){
-  html,body{height:100%;overflow:hidden}
-  :root{--u:min(calc(100vw / 1600),calc(100svh / 880))}
-  .hero{height:100svh;min-height:0}
-  .dock-wrap{top:28px}
+.stage{position:absolute;inset:0;width:100%;height:100%;max-width:none;transform:none;margin:0}
+.dock-wrap{top:25px;z-index:20}
+.dock-item{font-size:14px;min-height:40px}
+.dock-item span:not(.glyph){display:inline}
+@media(max-width:900px){.dock-item{width:auto;min-width:82px;padding:0 12px;gap:6px}.play-wrap{display:block}}
+.headline{left:6vw;top:21vh;font-size:clamp(30px,3.3vw,54px);line-height:1.35;letter-spacing:.02em;max-width:48vw}
+.lede{left:6vw;top:37vh;width:28vw;font-size:16px;line-height:1.8}
+.direction-label{position:absolute;left:6vw;top:16vh;font-size:13px;letter-spacing:.18em;color:#d2d9c7;z-index:4}
+.pill-clip{left:6vw;top:47vh;margin:calc(-167 * var(--u)) 0 0 calc(-79 * var(--u))}
+.ghost{display:none}
+.play-wrap{left:12vw;top:64vh;width:clamp(100px,10.6vw,170px);height:clamp(100px,10.6vw,170px)}
+.card[data-category]{z-index:4;cursor:pointer;container-type:inline-size;will-change:translate;border-radius:clamp(28px,3vw,46px)}
+.card[data-category]:focus-visible{outline:3px solid #e5eccf;outline-offset:7px}
+.card[data-category] .label{left:10%;top:51%;max-width:84%;font-size:clamp(11px,4cqw,14px);line-height:1.35;letter-spacing:0}
+.card[data-category] h2{left:10%;top:62%;width:80%;max-width:none;font-size:clamp(19px,7.4cqw,28px);line-height:1.25;letter-spacing:0}
+.card[data-category] figure{left:4%;right:4%;top:4%;bottom:auto;width:auto;height:41%;border-radius:10cqw}
+.card[data-category] .knob{position:absolute;left:auto;top:auto;right:7%;bottom:7%;width:15cqw;height:15cqw}
+.card[data-category] .knob svg{width:45%;height:45%}
+.card--stove[data-category] .label{top:12%}
+.card--stove[data-category] h2{top:24%}
+.card--stove[data-category] figure{top:auto;bottom:4%;height:47%}
+.card--about[data-category] .knob{bottom:5%;right:6%;width:13cqw;height:13cqw}
+.scroll{position:fixed!important;left:50%!important;top:auto!important;bottom:20px!important;transform:translateX(-50%)!important;z-index:15;display:flex;align-items:center;gap:14px;writing-mode:horizontal-tb!important;width:max-content!important;height:auto!important;padding:12px 20px;font-size:14px;color:#eef0e7;background:#30382c99;border:1px solid #dce4ce33;border-radius:28px;backdrop-filter:blur(8px)}
+.scroll .track{width:30px;height:1px;margin:0}
+.scroll .track:after{display:none}
+.overview-title{display:none}
+.is-overview .headline,.is-overview .lede,.is-overview .pill-clip,.is-overview .play-wrap,.is-overview .ghost,.is-overview .scroll,.is-overview .direction-label{display:none}
+.is-overview .overview-title{display:block;position:absolute;top:10vh;left:0;width:100%;text-align:center;font-size:26px;font-weight:400;letter-spacing:.16em;color:#e9eddf}
+.is-overview .stage{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:4vh 4vw;padding:18vh 7vw 12vh;box-sizing:border-box}
+.is-overview .card[data-category]{position:relative;left:auto;top:auto;width:100%;height:100%;grid-column:span 2;translate:none!important;transform:none!important;border-radius:clamp(24px,3vw,46px)}
+.is-overview .card[data-category]:nth-of-type(4){grid-column:2 / span 2}
+.is-overview .card[data-category]:nth-of-type(5){grid-column:4 / span 2}
+.is-overview .card figure{height:45%}
+.is-overview .card--about .label{top:55%}
+.is-overview .card--about h2{top:67%;width:78%}
+.is-overview .card--stove h2{top:25%}
+/* Sylva's more-specific entrance selectors otherwise replay when an iframe
+   becomes visible again. Keep the first entrance, then expose the full photo. */
+.intro-done .card .portal-media{animation:none!important;clip-path:none!important}
+.intro-done .card figure:after{animation:none!important;opacity:0!important}
+@media(max-width:700px){
+  :root{--u:calc(100vw / 760)}
+  .dock-wrap{top:76px}
+  .dock-item{font-size:13px;min-height:38px}
+  .dock-item span:not(.glyph){display:inline}
+  .headline{top:20vh;left:7vw;font-size:32px;max-width:90vw}
+  .headline span{display:inline}.headline i{display:inline}
+  .lede{top:30vh;left:7vw;width:80vw;font-size:14px}
+  .direction-label{top:17vh;left:7vw;font-size:12px}
+  .pill-clip{top:38vh;left:7vw}
+  .play-wrap{display:block;left:7vw;top:76vh;width:96px;height:96px}
+  .ghost{top:70vh;font-size:45vw}
+  .is-overview .hero{overflow-y:auto;overflow-x:hidden}
+  .is-overview .stage{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;gap:20px;padding:175px 18px 70px;height:auto;min-height:100svh}
+  .is-overview .overview-title{top:132px;font-size:22px}
+  .is-overview .card[data-category]{grid-column:span 1!important;min-height:235px;border-radius:24px}
+  .is-overview .card[data-category]:nth-of-type(5){grid-column:1 / -1!important;width:calc(50% - 10px);justify-self:center}
+  .is-overview .card[data-category] h2{font-size:19px}
+  .is-overview .card--about[data-category] h2{top:73%}
+  .is-overview .card[data-category] .label{font-size:11px}
+  .is-overview .card[data-category] .knob{width:32px;height:32px}
 }
-@media(max-width:900px){
-  .dock-wrap{top:78px}
-  .headline{top:calc(255 * var(--u));left:calc(34 * var(--u));font-size:calc(47 * var(--u));max-width:calc(620 * var(--u))}
-  .lede{left:calc(34 * var(--u));top:calc(390 * var(--u));width:calc(470 * var(--u));font-size:max(13px,calc(18 * var(--u)));line-height:1.75}
-  .pill-clip{left:calc(34 * var(--u));top:calc(620 * var(--u));margin:calc(-167 * var(--u)) 0 0 calc(-79 * var(--u))}
-  .stat--a{left:calc(470 * var(--u));top:calc(305 * var(--u));max-width:calc(240 * var(--u))}
-  .stat--b{display:none}
-  .stat dd{font-size:max(12px,calc(16 * var(--u)));line-height:1.7;max-width:calc(220 * var(--u))}
-  .stat dt{font-size:max(11px,calc(14 * var(--u)))}
-  .stat .mark{display:none}
-  .play-wrap{display:block;left:calc(82 * var(--u));top:calc(705 * var(--u))}
-  .foundation-caption{left:calc(165 * var(--u));top:calc(45 * var(--u));font-size:max(15px,calc(25 * var(--u)));width:calc(390 * var(--u))}
-  .play-wrap.grove-recommended:after{left:calc(165 * var(--u));bottom:calc(8 * var(--u))}
-  .card--about h2,.card--stove h2{font-size:calc(33 * var(--u))}
-  .branch-hint{left:calc(35 * var(--u));bottom:90px;font-size:max(10px,calc(13 * var(--u)));max-width:80vw}
-}
-@media(prefers-reduced-motion:reduce){.headline,.card,.play-wrap{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.card,.play-wrap{transition:none!important}}

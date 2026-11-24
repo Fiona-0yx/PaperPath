@@ -1,0 +1,72 @@
+import { browser } from './browser.mjs';
+import { writeFile } from 'node:fs/promises';
+const b=await browser(),checks=[];
+const check=(value,label)=>{if(!value)throw Error(label);checks.push(label);console.log('PASS '+label);};
+const frame='document.querySelector("#grove-frame")';
+const inside=expression=>b.evaluate(`(()=>{const w=${frame}.contentWindow,d=w.document;return ${expression};})()`);
+const nav=async view=>{await b.evaluate(`location.hash=${JSON.stringify('#/'+view)}`);await b.delay(450);};
+const click=selector=>inside(`d.querySelector(${JSON.stringify(selector)}).click()`);
+const travel=async p=>{await inside(`w.__groveTravel.setProgress(${p})`);await b.until(`${frame}.contentWindow.__groveTravel.getState().progress===${p}`);await b.delay(200);};
+async function realClick(selector){
+  const r=await inside(`(()=>{const r=d.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  await b.send('Input.dispatchMouseEvent',{type:'mousePressed',...r,button:'left',clickCount:1});
+  await b.send('Input.dispatchMouseEvent',{type:'mouseReleased',...r,button:'left',clickCount:1});
+}
+try{
+  await b.viewport(1440,1000);
+  await b.send('Page.navigate',{url:'http://127.0.0.1:5180/#/home'});
+  await b.until(`${frame}?.contentWindow?.__ready === true`,60000);await b.delay(4500);
+  await inside('w.__identity="preserved"');
+  check(await inside('d.querySelectorAll(".dock-item").length===3'),'exactly three navigation items');
+  check(await inside('d.querySelectorAll(".card[data-category]").length===5'),'exactly five original cards');
+  check(await inside('!/(60 FPS|4 VARIANTS|Canopy restored|Native species)/.test(d.body.innerText)'),'old showcase copy removed');
+  check(await inside('getComputedStyle(d.querySelector(".ghost")).display==="none"'),'no transparent background wordmark');
+  const radius=await inside('parseFloat(getComputedStyle(d.querySelector(".card")).borderTopLeftRadius)');
+  check(radius>20&&radius<55,'homepage card keeps a rounded rectangle');
+  await b.shot('v2-home');
+  await realClick('.liquid-button--play');
+  await b.until(`${frame}.contentWindow.__groveTravel.getState().progress>.1`);await b.delay(1700);
+  check(await inside('d.querySelector(".play-wrap").getBoundingClientRect().left>=w.innerWidth'),'node stops just outside the viewport');
+  check(await inside('w.__groveTravel.getState().x<0&&w.__groveTravel.getState().y===0'),'node moves camera left without vertical travel');
+  await travel(0);
+  await b.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:700,y:720,deltaX:0,deltaY:650});
+  await b.delay(1400);
+  check(await inside('w.__groveTravel.getState().x<-500'),'real downward wheel moves the camera left');
+  const ids=await inside('[...d.querySelectorAll(".card[data-category]")].map(c=>c.dataset.category)');
+  for(let i=0;i<5;i++){
+    await travel(i/4);
+    const selector=`[data-category="${ids[i]}"]`;
+    check(await inside(`(()=>{const r=d.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return r.left>0&&r.right<w.innerWidth&&r.top>0&&r.bottom<w.innerHeight;})()`),'path card '+(i+1)+' fully visible');
+    await b.shot('v2-path-'+(i+1));
+    await realClick(selector);
+    await b.until(`location.hash==='#/shelf/${ids[i]}'`);
+    check(await b.evaluate('document.querySelector(".category-blank")!==null&&document.querySelector("#app").innerText.trim()===""'),'category '+(i+1)+' opens white page');
+    await nav('garden');
+    check(await inside('w.__identity==="preserved"&&w.__groveBuildCount===1'),'return preserves scene '+(i+1));
+  }
+  await nav('overview');await b.delay(600);await b.shot('v2-overview');
+  check(await inside('[...d.querySelectorAll(".card")].every(c=>{const r=c.getBoundingClientRect();return r.left>=0&&r.right<=w.innerWidth&&r.bottom<=w.innerHeight;})'),'overview fits all five cards');
+  check(await inside('[...d.querySelectorAll(".portal-media")].every(c=>getComputedStyle(c).clipPath==="none")'),'returning does not restart or crop photo reveals');
+  await b.click('#grove-host [data-lang=en]');await b.delay(400);await b.shot('v2-overview-en');
+  check(await inside('[...d.querySelectorAll(".card .label")].every(c=>/^0[1-5]$/.test(c.textContent))'),'English labels contain only numbers');
+  await nav('profile');check(await b.evaluate('document.querySelectorAll(".site-header nav a").length===3'),'profile links use the three approved destinations');
+  await nav('home');check(await inside('w.__groveBuildCount===1&&w.__groveTravel.getState().progress===1'),'profile return preserves the path');
+  await b.click('#grove-host [data-lang=zh]');
+  await b.viewport(820,1180,true);await travel(0);await b.delay(700);await b.shot('v2-tablet-home');
+  await nav('overview');await b.shot('v2-tablet-overview');
+  await b.viewport(390,844,true);await b.delay(800);await b.shot('v2-mobile-overview');
+  check(await inside('d.documentElement.scrollWidth<=w.innerWidth+1'),'mobile has no horizontal page overflow');
+  check(await inside('[...d.querySelectorAll(".dock-item")].every(c=>c.getBoundingClientRect().width>=80)'),'mobile navigation labels have room');
+  await inside('d.querySelector(".hero").scrollTop=1000');await b.delay(250);await b.shot('v2-mobile-overview-bottom');
+  await realClick('[data-category="natural-language"]');await b.until('location.hash==="#/shelf/natural-language"');
+  check(true,'mobile overview last card is reachable and opens its white page');
+  await nav('home');await travel(0);await b.delay(600);await b.shot('v2-mobile-home');
+  await travel(1);await b.shot('v2-mobile-end');
+  check(await inside('(()=>{const r=d.querySelectorAll(".card")[4].getBoundingClientRect();return r.left>=0&&r.right<=w.innerWidth&&r.bottom<=w.innerHeight;})()'),'mobile last branch is visible');
+  await b.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+  await b.send('Page.reload');await b.until(`${frame}?.contentWindow?.__ready === true`,60000);
+  await inside('w.__groveTravel.setProgress(.5)');await b.delay(300);
+  check(await inside('w.__groveTravel.getState().progress===.5'),'reduced motion skips travel interpolation');
+  check(!b.errors.length,'no JavaScript exceptions');check(!b.network.length,'no failed asset requests');
+  await writeFile('qa/v2-results.json',JSON.stringify({checks,errors:b.errors,network:b.network},null,2));
+}finally{b.close();}

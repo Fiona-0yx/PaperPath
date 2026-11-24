@@ -1,4 +1,5 @@
 import { escape as h, leaf } from './components.js';
+import { groveCategories } from '../shared/grove-categories.js';
 
 export function groveState(c){
   return {
@@ -6,6 +7,8 @@ export function groveState(c){
     view:c.route.name,
     onboarded:c.s.onboarded,
     lastPaper:c.s.lastPaper,
+    hasProgress:Boolean(c.s.lastPaper||c.s.onboarded||c.s.history.length||c.s.completed.length),
+    categories:groveCategories,
     completed:c.s.completed.length,
     direction:c.fieldValue('direction',c.s.profile.direction),
     recommended:c.recommended,
