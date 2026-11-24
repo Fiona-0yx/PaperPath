@@ -1,0 +1,11 @@
+/* Shared shell for the current vine and overview only. */
+@font-face{font-family:JournalSerif;src:url('/assets/botanical/instrument-serif.woff2') format('woff2');font-display:swap}
+:root{--serif:JournalSerif,'Songti SC','STSong','SimSun',serif;--body:'Microsoft YaHei','PingFang SC',system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#303a31;font-family:var(--body);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:2px solid #7d956b;outline-offset:5px}
+.skip-link{position:fixed;top:-100px;left:20px;background:#fff;z-index:300;padding:10px}.skip-link:focus{top:10px}
+.language-toggle{display:flex;align-items:center;gap:7px;font-size:12px;letter-spacing:.05em}
+.language-toggle button{padding:5px 2px}.language-toggle button.active{border-bottom:1px solid currentColor}
+.site-header{padding:24px;text-align:center}.site-header nav{display:flex;gap:28px;justify-content:center}.site-header [aria-current=page]{text-decoration:underline;text-underline-offset:6px}

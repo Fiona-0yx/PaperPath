@@ -27,7 +27,7 @@ try{
   check(await inside('d.querySelector(".liquid-button--explore").getBoundingClientRect().width>100'),'start/continue button has the enlarged hit target');
   await realClick('.liquid-button--explore');
   await b.until('location.hash==="#/journal"||location.hash.startsWith("#/paper/")');
-  check(true,'enlarged start/continue button opens the learning flow');
+  check(await b.evaluate('document.querySelector("#app").innerText.trim()===""'),'start opens the placeholder without the deleted journal');
   await nav('home');await b.delay(400);
   await realClick('.liquid-button--play');
   await b.until(`${frame}.contentWindow.__groveTravel.getState().progress>.01`);await b.delay(1700);
