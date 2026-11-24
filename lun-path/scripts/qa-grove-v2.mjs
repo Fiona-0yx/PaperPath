@@ -24,14 +24,19 @@ try{
   const radius=await inside('parseFloat(getComputedStyle(d.querySelector(".card")).borderTopLeftRadius)');
   check(radius>20&&radius<55,'homepage card keeps a rounded rectangle');
   await b.shot('v2-home');
+  check(await inside('d.querySelector(".liquid-button--explore").getBoundingClientRect().width>100'),'start/continue button has the enlarged hit target');
+  await realClick('.liquid-button--explore');
+  await b.until('location.hash==="#/journal"||location.hash.startsWith("#/paper/")');
+  check(true,'enlarged start/continue button opens the learning flow');
+  await nav('home');await b.delay(400);
   await realClick('.liquid-button--play');
-  await b.until(`${frame}.contentWindow.__groveTravel.getState().progress>.1`);await b.delay(1700);
-  check(await inside('d.querySelector(".play-wrap").getBoundingClientRect().left>=w.innerWidth'),'node stops just outside the viewport');
-  check(await inside('w.__groveTravel.getState().x<0&&w.__groveTravel.getState().y===0'),'node moves camera left without vertical travel');
+  await b.until(`${frame}.contentWindow.__groveTravel.getState().progress>.01`);await b.delay(1700);
+  check(await inside('d.querySelector(".play-wrap").getBoundingClientRect().right<=0'),'node stops just outside the left edge');
+  check(await inside('w.__groveTravel.getState().x>0&&w.__groveTravel.getState().y===0'),'node moves camera right without vertical travel');
   await travel(0);
   await b.send('Input.dispatchMouseEvent',{type:'mouseWheel',x:700,y:720,deltaX:0,deltaY:650});
   await b.delay(1400);
-  check(await inside('w.__groveTravel.getState().x<-500'),'real downward wheel moves the camera left');
+  check(await inside('w.__groveTravel.getState().x>500'),'real downward wheel moves the camera right');
   const ids=await inside('[...d.querySelectorAll(".card[data-category]")].map(c=>c.dataset.category)');
   for(let i=0;i<5;i++){
     await travel(i/4);

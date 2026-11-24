@@ -11,7 +11,7 @@ html,body{height:100%;overflow:hidden}
 .headline{left:6vw;top:21vh;font-size:clamp(30px,3.3vw,54px);line-height:1.35;letter-spacing:.02em;max-width:48vw}
 .lede{left:6vw;top:37vh;width:28vw;font-size:16px;line-height:1.8}
 .direction-label{position:absolute;left:6vw;top:16vh;font-size:13px;letter-spacing:.18em;color:#d2d9c7;z-index:4}
-.pill-clip{left:6vw;top:47vh;margin:calc(-167 * var(--u)) 0 0 calc(-79 * var(--u))}
+.pill-clip{left:8vw;top:47vh;margin:calc(-167 * var(--u)) 0 0 calc(-79 * var(--u));scale:1.24;transform-origin:38% 50%}
 .ghost{display:none}
 .play-wrap{left:12vw;top:64vh;width:clamp(100px,10.6vw,170px);height:clamp(100px,10.6vw,170px)}
 .card[data-category]{z-index:4;cursor:pointer;container-type:inline-size;will-change:translate;border-radius:clamp(28px,3vw,46px)}
@@ -52,7 +52,7 @@ html,body{height:100%;overflow:hidden}
   .headline span{display:inline}.headline i{display:inline}
   .lede{top:30vh;left:7vw;width:80vw;font-size:14px}
   .direction-label{top:17vh;left:7vw;font-size:12px}
-  .pill-clip{top:38vh;left:7vw}
+  .pill-clip{top:38vh;left:10vw;scale:1.2}
   .play-wrap{display:block;left:7vw;top:76vh;width:96px;height:96px}
   .ghost{top:70vh;font-size:45vw}
   .is-overview .hero{overflow-y:auto;overflow-x:hidden}

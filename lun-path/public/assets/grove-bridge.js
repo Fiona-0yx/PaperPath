@@ -64,7 +64,7 @@
       card.querySelector('.knob').setAttribute('aria-label',L('打开分类：','Open category: ')+category.title[state.language]);
       card.querySelector('img').alt=L(i%2===0?'苔藓覆盖的岩石':'薄雾中的苔藓岩石',i%2===0?'Moss-covered rocks':'Mossy rocks in a misty grove');
     });
-    document.querySelector('.liquid-button--play').setAttribute('aria-label',L('向左移动视角','Move the view left'));
+    document.querySelector('.liquid-button--play').setAttribute('aria-label',L('向右移动视角','Move the view right'));
     window.__groveTravel?.setOverview(overview());updateCue();
   }
   function scroll(delta){
@@ -94,7 +94,7 @@
     if(card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();navigate(card.dataset.grovePath);return;}
     if(overview()||e.target.closest('button,a,input,textarea'))return;
     if(e.key==='Home'||e.key==='End'){e.preventDefault();window.__groveTravel?.setProgress(e.key==='Home'?0:1);return;}
-    const delta={ArrowDown:100,ArrowUp:-100,ArrowLeft:100,ArrowRight:-100,PageDown:innerWidth*.8,PageUp:-innerWidth*.8,' ':innerWidth*.8}[e.key];
+    const delta={ArrowDown:100,ArrowUp:-100,ArrowLeft:-100,ArrowRight:100,PageDown:innerWidth*.8,PageUp:-innerWidth*.8,' ':innerWidth*.8}[e.key];
     if(delta){e.preventDefault();scroll(delta);}
   });
   window.addEventListener('grove-travel-frame',e=>{pose=e.detail;updateCue();});
