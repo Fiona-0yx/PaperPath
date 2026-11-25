@@ -1,5 +1,6 @@
 import { grove, groveState } from './grove.js';
 import { groveCategories } from '../shared/grove-categories.js';
+import { intake, persistIntake, recordCheck, submitPortrait } from './journal-state.js';
 
 const root=document.querySelector('#app');
 const host=document.createElement('div');
@@ -8,15 +9,29 @@ let language='zh';
 try { language=localStorage.getItem('lunjing-interface-language')==='en'?'en':'zh'; } catch {}
 const L=(zh,en)=>language==='en'?en:zh;
 const route=()=>({name:(location.hash.replace(/^#\/?/,'')||'home').split('/')[0]});
-const context=()=>({s:{language},L,route:route()});
-const navigation=()=>`<header class="site-header"><nav aria-label="${L('主导航','Primary navigation')}">${[['home',L('路径','Path')],['overview',L('全景','Overview')],['profile',L('画像','Profile')]].map(([path,label])=>`<a href="#/${path}" ${route().name===path?'aria-current="page"':''}>${label}</a>`).join('')}</nav></header>`;
+const context=()=>({s:{language,hasProgress:intake.started},L,route:route()});
+let reveal=null;
+function setLanguage(value){
+  language=value==='en'?'en':'zh';
+  try{localStorage.setItem('lunjing-interface-language',language)}catch{}
+  render();
+}
+// The embedded book and grove use the shell's language and journal state.
+window.journalShell={intake,save:persistIntake,recordCheck,submitPortrait,setLanguage,get language(){return language}};
+const navigation=()=>`<header class="site-header"><nav aria-label="${L('主导航','Primary navigation')}">${[['home',L('路径','Path')],['overview',L('全景','Overview')],['profile',L('画像','Profile')]].map(([path,label])=>`<a href="#/${path}" ${route().name===path?'aria-current="page"':''}>${label}</a>`).join('')}</nav>
+  <button class="profile-language" data-lang="${L('en','zh')}" lang="${L('en','zh-CN')}">${L('English','中文')}</button></header>`;
 function render(){
   const r=route(),isGrove=['home','garden','overview'].includes(r.name);
   document.documentElement.lang=language==='en'?'en':'zh-CN';
   document.body.classList.toggle('is-grove',isGrove);
-  document.body.classList.toggle('is-category-blank',!isGrove);
+  const isJournal=r.name==='journal';
+  if(!isJournal)reveal=null;
+  const isProfile=r.name==='profile';
+  document.body.classList.toggle('is-profile',isProfile);
+  document.body.classList.toggle('is-category-blank',!isGrove&&!isJournal&&!isProfile);
+  document.body.classList.toggle('is-journal',isJournal);
   document.title=L('论径','Lun Jing')+' · '+(r.name==='overview'?L('全景','Overview'):r.name==='profile'?L('画像','Profile'):L('循径而读，渐入佳境。','Follow the path. Read your way in.'));
-  root.hidden=isGrove;host.hidden=!isGrove;
+  root.hidden=isGrove;host.hidden=!isGrove&&!(isJournal&&reveal);
   if(isGrove&&!host.querySelector('iframe'))host.innerHTML=`<main id="grove-main" tabindex="-1">${grove(context())}</main>`;
   const frame=host.querySelector('iframe');
   frame?.contentWindow?.postMessage({type:'grove-visibility',visible:isGrove},location.origin);
@@ -29,25 +44,55 @@ function render(){
       button.setAttribute('aria-pressed',String(button.dataset.lang===language));
     });
     frame.title=L('论径学习花园：藤蔓场景与方向分支','Lun Jing learning grove and reading branches');
+  }else if(isJournal){
+    root.innerHTML='<main id="main" tabindex="-1"><iframe class="journal-frame" title="'+L('画像采集手账','Intake sketchbook')+'" src="/scenes/journal.html"></iframe></main>';
+    root.style.clipPath=reveal?'circle(0px at '+reveal.x+'px '+reveal.y+'px)':'';
+  }else if(isProfile){
+    const content=intake.portraitReady
+      ? '<iframe class="profile-book" title="'+L('我的初始画像','My starting portrait')+'" src="/scenes/journal.html?view=portrait"></iframe>'
+      : '<article class="portrait-paper"><h1>'+L('我的学习画像','My learning portrait')+'</h1><p>'+
+        L('完成手账并查看初始画像后，就能在这里再次打开。','Complete your journal and view your starting portrait to see it here.')+
+        '</p><a href="#/journal">'+L('打开手账','Open journal')+'</a></article>';
+    root.innerHTML=navigation()+'<main id="main" class="portrait-view" tabindex="-1">'+content+'</main>';
   }else{
-    // Learning and profile pages will be rebuilt from the original references.
-    root.innerHTML=(r.name==='profile'?navigation():'')+'<main id="main" class="category-blank" tabindex="-1"></main>';
+    root.innerHTML='<main id="main" class="category-blank" tabindex="-1"></main>';
   }
+  if(!isJournal)root.style.clipPath='';
   document.querySelector('.skip-link').href=isGrove?'#grove-main':'#main';
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-lang]');
-  if(button){language=button.dataset.lang;try{localStorage.setItem('lunjing-interface-language',language);}catch{}render();}
+  if(button)setLanguage(button.dataset.lang);
   if(event.target.closest('.skip-link')){event.preventDefault();document.querySelector(event.target.closest('a').getAttribute('href'))?.focus();}
 });
 window.addEventListener('hashchange',render);
 window.addEventListener('message',event=>{
+  if(event.origin!==location.origin)return;
+  const journal=root.querySelector('.journal-frame');
+  if(journal && event.source===journal.contentWindow && ['journal-ready','journal-error'].includes(event.data?.type)){
+    const origin=reveal;
+    reveal=null;root.style.clipPath='';
+    if(origin&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+      const at=' at '+origin.x+'px '+origin.y+'px)';
+      const animation=root.animate([{clipPath:'circle(0px'+at},{clipPath:'circle('+Math.ceil(Math.hypot(innerWidth,innerHeight))+'px'+at}],{duration:760,easing:'cubic-bezier(.3,.05,.2,1)'});
+      animation.onfinish=()=>{if(route().name==='journal')host.hidden=true};
+    }else host.hidden=true;
+    journal.focus();
+    return;
+  }
   const frame=host.querySelector('iframe');
   if(event.origin!==location.origin||event.source!==frame?.contentWindow)return;
   if(event.data?.type==='grove-mounted')frame.contentWindow.postMessage({type:'grove-state',state:groveState(context())},location.origin);
   if(event.data?.type==='grove-go'){
     const allowed=['home','garden','overview','profile','journal',...groveCategories.map(c=>'shelf/'+c.id)];
-    if(allowed.includes(event.data.path))location.hash='#/'+event.data.path;
+    if(allowed.includes(event.data.path)){
+      if(event.data.path==='journal'){
+        const rect=frame.contentDocument.querySelector('.liquid-button--explore').getBoundingClientRect();
+        const outer=frame.getBoundingClientRect();
+        reveal={x:outer.x+rect.x+rect.width/2,y:outer.y+rect.y+rect.height/2};
+      }
+      location.hash='#/'+event.data.path;
+    }
   }
 });
 render();

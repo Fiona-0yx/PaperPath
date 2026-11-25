@@ -22,6 +22,17 @@ export async function prepareGrove(){
   html=html.replace('blades: BLADES_NEAR, ferns: small ? 26 : 46, flowers: small ? 120 : 260,','blades: BLADES_NEAR + (small ? 80000 : 180000), ferns: small ? 54 : 108, flowers: small ? 220 : 460,');
   html=html.replace('if (renderer && clock) renderFrame();','if (renderer && clock && !window.__grovePaused) renderFrame();');
   html=html.replace('  function layout() {','  function layout() {\n    if (!hero.clientWidth || !hero.clientHeight) return;');
+  const origin='var ox = s.left - h.left, oy = s.top - h.top;';
+  if(!html.includes(origin))throw Error('Authored root layout not found');
+  html=html.replace(origin,`${origin}
+    if (!narrow) {
+      // The right leg ends at 118% of the traced arch box; include its bark radius.
+      var fullHeight = ARCH.top + 1.18 * ARCH.w / ARCH.aspect + 0.04 * ARCH.w;
+      // Leave room below the silhouette for the fixed exploration cue.
+      u = Math.min(u, Math.max(H * 0.8, H - 64) / fullHeight);
+      // Keep the trunk entering from the left even when more of the path is visible.
+      ox += Math.min((s.width - 1600 * u) / 2, -ARCH.left * u);
+    }`);
   html=html.replace('<title>Sylva', '<title>论径');
   html=html.replace('</head>',`<link rel="stylesheet" href="/assets/grove-adaptation.css"></head>`);
   // Bind/clone the original cards before Sylva measures its portals and dock.

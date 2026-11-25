@@ -5,7 +5,7 @@ export function groveState(c){
   return {
     language:c.s.language,
     view:c.route.name,
-    hasProgress:false,
+    hasProgress:c.s.hasProgress,
     categories:groveCategories,
   };
 }
