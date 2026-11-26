@@ -2,11 +2,35 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFile, realpath, stat } from 'node:fs/promises';
+import { generateInternalReport } from './questionnaire-api.mjs';
+import { paperCatalog } from './paper-catalog.mjs';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const MIME = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.woff2':'font/woff2' };
 const fail=(status,code,message)=>{throw Object.assign(new Error(message),{status,code});};
 function json(res,value,status=200){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 const within = (base, target) => { const rel = path.relative(base, target); return rel === '' || (!rel.startsWith(`..${path.sep}`) && rel !== '..' && !path.isAbsolute(rel)); };
+function servePaperSample(req, res, pathname) {
+  if (!['GET', 'HEAD'].includes(req.method)) {
+    res.setHeader('Allow', 'GET, HEAD');
+    fail(405, 'METHOD_NOT_ALLOWED', 'Sample papers support GET and HEAD.');
+  }
+  const paper = paperCatalog.find(({id}) => pathname === '/papers/' + id);
+  if (!paper) fail(404, 'NOT_FOUND', 'Sample paper not found.');
+  const title = paper.title.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  const html = `<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<style>
+  body { margin: 0; padding: clamp(24px, 8vw, 100px); background: #faf7ec; color: #353a2e; }
+  h1 { max-width: 24ch; margin: 0 auto; font: 400 clamp(28px, 5vw, 58px)/1.17 Georgia, serif; overflow-wrap: anywhere; }
+</style>
+<main><h1>${title}</h1></main>
+</html>`;
+  res.writeHead(200, {'Content-Type': MIME['.html'], 'X-Content-Type-Options': 'nosniff'});
+  res.end(req.method === 'HEAD' ? undefined : html);
+}
 async function serveStatic(req, res, url) {
   if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); fail(405, 'METHOD_NOT_ALLOWED', 'Unsupported HTTP method'); }
   let decoded;
@@ -26,12 +50,19 @@ async function serveStatic(req, res, url) {
     res.end(req.method === 'HEAD' ? undefined : buffer);
   } catch (error) { if (['ENOENT', 'ENOTDIR'].includes(error.code)) fail(404, 'NOT_FOUND', 'File not found'); throw error; }
 }
-export function createServer() {
+export function createServer({ reportDirectory } = {}) {
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/api/health') json(res, {ok:true,service:'lun-path',scope:'vine-and-overview'});
+      else if (url.pathname === '/api/questionnaire/analyze') {
+        json(res, await generateInternalReport(req, res, reportDirectory, {
+          includeReport: url.searchParams.get('include') === 'report',
+          locale: url.searchParams.get('lang') === 'en' ? 'en' : 'zh'
+        }));
+      }
       else if (url.pathname.startsWith('/api/')) fail(404,'NOT_FOUND','Unknown API route');
+      else if (url.pathname.startsWith('/papers/')) servePaperSample(req, res, url.pathname);
       else await serveStatic(req, res, url);
     } catch (error) {
       if (res.headersSent || res.destroyed) return;

@@ -8,7 +8,9 @@
     "start": "node server/index.mjs",
     "dev": "node --watch server/index.mjs",
     "prepare:scenes": "node scripts/prepare-grove.mjs",
-    "test": "node scripts/qa-grove-v2.mjs"
+    "test": "node scripts/qa-grove-v2.mjs",
+    "test:questionnaire": "node --test tests/questionnaire*.test.mjs",
+    "report:read": "node scripts/read-questionnaire-report.mjs"
   },
   "engines": {
     "node": ">=22"

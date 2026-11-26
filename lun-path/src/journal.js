@@ -1,13 +1,7 @@
 import {escape as esc} from './components.js';
 import {makeJournalArt} from './journal-art.js';
 import {loadQuestions, answerText, provenance, evidenceDetails} from './portrait.js';
-
-// Only exact, explicit statements are recognised in this fixed-question demo.
-const explicit = [
-  ['想入门神经网络','direction',1],['I want to get into neural networks','direction',1],
-  ['不知道从哪篇开始','difficulty',3],['I am not sure which paper to start with','difficulty',3],
-  ['为了完成课程作业','purpose',0],['我还没用过 Python','python',0]
-];
+import {introInferences} from '../shared/journal-intro-rules.js';
 
 export async function openJournal() {
   const shell = parent.journalShell;
@@ -48,7 +42,7 @@ export async function openJournal() {
     const summaryPage={key:'summary',title:L('我的初始画像','My starting portrait'),url:art.sheet};
     if(profileOnly){pages.splice(0,pages.length,summaryPage);index=0;return}
     const intro=questions[0];
-    const active=questions.slice(1,-1).filter(q=>state.answers[q.id]?.source!=='intro');
+    const active=questions.slice(1,-1).filter(q=>state.reviewAll || state.answers[q.id]?.source!=='intro');
     const groups=[[intro]];
     const size=mobile.matches?1:2;
     for(let i=0;i<active.length;i+=size)groups.push(active.slice(i,i+size));
@@ -89,7 +83,7 @@ export async function openJournal() {
   }
   rebuild(state.position);
   if(!profileOnly && state.position==='summary')index=summaryTarget();
-  const draft=q=>state.drafts[q.id]||{};
+  const draft=q=>state.drafts[q.id] || state.answers[q.id] || {};
   function note(q) {
     const a=state.answers[q.id];
     if(!a)return '';
@@ -170,10 +164,8 @@ export async function openJournal() {
     if(infer){
       const value=draft(byId.intro).text||'';
       recordAnswer(byId.intro,{text:value});
-      for(const clause of value.split(/[，。！？；,;.!?\n]/).map(s=>s.trim())){
-        for(const [quote,id,option] of explicit){
-          if(quote===clause&&!state.answers[id]&&!state.drafts[id])state.answers[id]={source:'intro',values:[option],quote};
-        }
+      for(const {quote,id,option} of introInferences(value)){
+        if(!state.answers[id]&&!state.drafts[id])state.answers[id]={source:'intro',values:[option],quote};
       }
     }else state.answers.intro={source:'unknown'};
     rebuild('intro');save();
@@ -212,7 +204,7 @@ export async function openJournal() {
         if(field==='intro'){
           state.drafts.intro={text};
           for(const [id,answer] of Object.entries(state.answers)){
-            if(answer.source==='intro'&&!text.includes(answer.quote)){
+            if(answer.source==='intro'&&!introInferences(text).some(({quote})=>quote===answer.quote)){
               delete state.answers[id];
               const related=book.querySelector('[data-edit="'+id+'"]');
               if(related){related.value='';related.nextElementSibling.textContent=provenance(byId[id],null,L)}
@@ -226,11 +218,19 @@ export async function openJournal() {
       const id=e.target.closest('form')?.dataset.q;
       if(state.answers[id]?.source==='check'){shell.recordCheck(id,state.answers[id]);save()}
     });
-    book.addEventListener('click',e=>{
+    book.addEventListener('click',async e=>{
       const b=e.target.closest('button'),form=b?.closest('form');
       if(b?.hasAttribute('data-view-portrait')){step('next');return}
       if(b?.hasAttribute('data-submit-portrait')){
-        if(shell.submitPortrait())parent.location.hash='#/profile';
+        b.disabled=true;
+        b.textContent=L('提交中…','Submitting…');
+        const result=await shell.submitPortrait();
+        if(!b.isConnected)return;
+        b.disabled=false;
+        b.textContent=L('提交','Submit');
+        if(result==='saved')return;
+        if(result==='changed')notice.textContent=L('作答已修改，请提交当前版本。','Your answers changed. Submit the current version.');
+        else if(result==='report-error')notice.textContent=L('画像已保存在本机，分析服务暂未完成。请重新提交。','Your portrait is saved locally. Please submit again to finish the analysis.');
         else notice.textContent=L('画像未能保存，请重新提交。','Your portrait could not be saved. Please submit again.');
         return;
       }

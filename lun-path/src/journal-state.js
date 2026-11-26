@@ -18,12 +18,55 @@ export function recordCheck(id, answer) {
 for (const [id, answer] of Object.entries(intake.answers)) {
   if (answer.source === 'check') recordCheck(id, answer);
 }
-export function submitPortrait() {
-  const previous = intake.submitted;
-  intake.submitted = structuredClone({answers:intake.answers, evidence:intake.evidence});
-  if (persistIntake()) return true;
-  intake.submitted = previous;
-  return false;
+export function openQuestionnaire(fresh) {
+  if (fresh) {
+    Object.assign(intake, {answers:{}, drafts:{}, evidence:{}, portraitReady:false, autoSave:true});
+  }
+  intake.reviewAll = !fresh;
+  intake.position = 'intro';
+  intake.started = true;
+  persistIntake();
+}
+let latestRequest;
+export async function submitPortrait(language) {
+  const snapshot = structuredClone({answers:intake.answers, evidence:intake.evidence});
+  if (!persistIntake()) return { status: 'storage-error' };
+  latestRequest = snapshot;
+  const body = JSON.stringify(snapshot);
+  let receipt;
+  try {
+    const params = new URLSearchParams({ include: 'report', lang: language });
+    const response = await fetch('/api/questionnaire/analyze?' + params, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body,
+      // Allow the server's longest Codex deadline plus time to write the report.
+      signal: AbortSignal.timeout(135000)
+    });
+    if (!response.ok) return { status: 'report-error' };
+    receipt = await response.json();
+    if (!/^[a-f0-9]{64}$/.test(receipt.reportId) || receipt.report?.id !== receipt.reportId) {
+      return { status: 'report-error' };
+    }
+  } catch {
+    return { status: 'report-error' };
+  }
+  if (latestRequest !== snapshot) return { status: 'changed' };
+  try {
+    // Another tab may have saved a newer draft while the report was generated.
+    const latest = JSON.parse(localStorage.getItem(key));
+    if (!latest || [intake, latest].some(state =>
+      body !== JSON.stringify({answers:state.answers, evidence:state.evidence}))) {
+      return { status: 'changed' };
+    }
+    snapshot.reportId = receipt.reportId;
+    latest.submitted = snapshot;
+    localStorage.setItem(key, JSON.stringify(latest));
+    intake.submitted = snapshot;
+    return { status: 'saved', report: receipt.report };
+  } catch {
+    return { status: 'storage-error' };
+  }
 }
 export function persistIntake() {
   try { localStorage.setItem(key, JSON.stringify(intake)); return true; }

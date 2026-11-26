@@ -54,6 +54,7 @@ try{
   await next('difficulty');await next('outcome');
   await click('a[href="/#/trial"]');await b.until('location.hash==="#/trial"');
   assert.equal(await b.evaluate('document.querySelector("#main").textContent'),'');
+  await b.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await b.evaluate('history.back()');await ready();await at('outcome');
   await click('#sbRight');await at('outcome');
   assert.equal(await read('d.querySelector(".needs-answer").dataset.q'),'outcome');
@@ -69,7 +70,7 @@ try{
   await click('#sbLeft');await at('outcome');
   assert.equal(await read('!!d.querySelector("#sbBook .journal-face.full .journal-exits")'),true);
   await click('[data-view-portrait]');await at('summary');
-  await click('#language');await b.until(doc+'?.documentElement.lang==="en"');await ready();
+  await click('#language');await b.until(doc+'?.documentElement?.lang==="en"');await ready();
   assert.equal(await read('d.querySelector("[data-edit=outcome]").value'),'讲清楚主要实验');
   await read('(()=>{const el=d.querySelector("[data-edit=foundation]");el.value="还想再练习";el.dispatchEvent(new Event("input",{bubbles:true}))})()');
   assert.equal((await state()).submitted,undefined);
@@ -77,7 +78,21 @@ try{
   assert.equal(await read('d.querySelector("[data-edit=foundation]").value'),'还想再练习');
   assert.equal(await read('d.querySelectorAll("#sbBook [data-edit]").length'),10);
   await b.evaluate('location.hash="#/journal"');await ready();await at('summary');
-  await click('[data-submit-portrait]');await b.until('!!document.querySelector(".profile-book")');await ready();
+  await click('[data-submit-portrait]');
+  await b.until('!!document.querySelector(".profile-book") && !!document.querySelector(".report-dialog[open] article")',135000);
+  assert.match(await b.evaluate('document.querySelector(".report-dialog").innerText'),/Recommended reading/);
+  const sample = await b.evaluate('document.querySelector(".report-dialog article a").href');
+  assert.ok(sample.startsWith(origin+'/papers/'));
+  assert.equal(await b.evaluate('fetch('+JSON.stringify(sample)+').then(r=>r.ok)'),true);
+  assert.match(await b.evaluate('document.querySelectorAll(".report-dialog article a")[1].href'),/^https:\/\//);
+  assert.ok(await b.evaluate('document.querySelector(".report-dialog").getBoundingClientRect().width <= innerWidth'));
+  await b.click('.report-dialog header button');
+  await b.until('!document.querySelector(".report-dialog[open]")');
+  await b.click('[data-show-report]');
+  await b.until('!!document.querySelector(".report-dialog[open] article a")');
+  await b.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await b.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await b.until('!document.querySelector(".report-dialog[open]")');await ready();
   assert.equal((await state()).submitted.answers.foundation.text,'还想再练习');
   assert.deepEqual((await state()).submitted.evidence.foundation[0].values,[1]);
   await b.send('Page.reload');await ready();await at('summary');
@@ -85,7 +100,7 @@ try{
   assert.equal(await b.evaluate('document.documentElement.scrollWidth<=390'),true);
   await click('.check-record summary');
   assert.match(await read('d.querySelector(".check-record").innerText'),/Opposite to the gradient/);
-  await b.click('.profile-language');await b.until(doc+'?.documentElement.lang==="zh-CN"');await ready();
+  await b.click('.profile-language');await b.until(doc+'?.documentElement?.lang==="zh-CN"');await ready();
   assert.equal(await read('d.querySelector("[data-edit=outcome]").value'),'讲清楚主要实验');
   await b.viewport(1360,840);await b.until(doc+'?.querySelector("#sbBook .journal-face.right")');await b.shot('journal-submitted-portrait');
   await b.evaluate('location.hash="#/journal"');await ready();await at('summary');
@@ -93,9 +108,55 @@ try{
   await b.evaluate('location.hash="#/profile"');await ready();await at('summary');
   assert.equal(await read('d.querySelector("[data-edit=outcome]").value'),'新草稿');
   assert.equal((await state()).answers.outcome.text,'新草稿');
+  const oldId = (await state()).submitted.reportId;
+  await b.click('[data-update-report]');
+  await b.until('!!document.querySelector(".report-dialog[open] article")',135000);
+  assert.notEqual((await state()).submitted.reportId,oldId);
+  assert.equal((await state()).submitted.answers.outcome.text,'新草稿');
+  assert.ok(await b.evaluate('!!document.querySelector(".report-dialog article a")'));
+  await b.click('.report-dialog header button');
+  await b.click('[data-edit-questions]');await ready();await at('intro');
+  assert.equal(await read('d.querySelector("[name=free]").value'),'想入门神经网络');
+  await click('[data-q=intro] button[type=submit]');await at('education');
+  assert.equal(await read('d.querySelector("[data-q=purpose] input:checked").value'),'1');
+  await click('[data-q=purpose] input[value="0"]');
+  await b.evaluate('location.hash="#/profile"');await ready();await at('summary');
+  await b.click('[data-restart-questions]');
+  await b.click('.restart-dialog button[autofocus]');
+  assert.deepEqual((await state()).answers.purpose.values,[0]);
+  await b.click('[data-update-report]');
+  await b.until('!!document.querySelector(".report-dialog[open] article")',135000);
+  const edited = (await state()).submitted;
+  assert.deepEqual(edited.answers.purpose.values,[0]);
+  await b.click('.report-dialog header button');
+  await b.click('[data-restart-questions]');await b.click('.restart-dialog [value=restart]');
+  await ready();await at('intro');
+  await b.send('Page.reload');await ready();await at('intro');
+  assert.equal(await read('d.querySelector("[name=free]").value'),'');
+  assert.deepEqual((await state()).drafts,{});
+  assert.deepEqual((await state()).answers,{});
+  assert.deepEqual((await state()).evidence,{});
+  assert.equal((await state()).submitted.reportId,edited.reportId);
+  await click('[data-direct]');await at('education');
+  for (const [spread, following] of [['education','direction'],['direction','english'],['english','python'],['python','outcome'],['outcome','summary']]) {
+    await at(spread);
+    for (const id of await read('Array.from(d.querySelectorAll("#sbBook [data-q]"), f=>f.dataset.q)')) {
+      await click('[data-q='+id+'] [data-skip]');
+    }
+    await next(following);
+  }
+  await click('[data-submit-portrait]');
+  await b.until('!!document.querySelector(".profile-book") && !!document.querySelector(\'.report-dialog[open][aria-busy="false"]\')',135000);
+  assert.match(await b.evaluate('document.querySelector(".report-dialog").textContent'),/兴趣方向/);
+  assert.notEqual((await state()).submitted.reportId,edited.reportId);
+  assert.deepEqual((await state()).submitted.evidence,{});
+  await b.click('.report-dialog header button');
   await b.evaluate('localStorage.removeItem("lunjing-intake-v1");location.reload()');
   await b.until('document.querySelector(".portrait-paper a")?.hash==="#/journal"');
   assert.equal(await b.evaluate('document.querySelector(".profile-book")'),null);
   assert.deepEqual(b.errors,[]);assert.deepEqual(b.network,[]);
-  console.log('PASS journal intake, trial, submission, original evidence, reload, saved portrait, empty state, mobile layout and language switch');
+  console.log('PASS journal intake, updated reports, edit and retake after submission, reload, evidence, mobile layout and language switch');
+}catch(error){
+  console.error(await read('({url:d?.URL, text:d?.body?.innerText.slice(-450), size:d?.defaultView?.innerHeight})'),b.errors,b.network);
+  throw error;
 }finally{b.close()}

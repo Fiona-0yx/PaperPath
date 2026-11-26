@@ -26,7 +26,9 @@ button:focus-visible,a:focus-visible{outline:2px solid #7d956b;outline-offset:5p
 .profile-language { position: absolute; right: 4vw; top: 50%; transform: translateY(-50%); }
 .portrait-view { padding: 0 clamp(12px, 4vw, 64px) 48px; }
 .portrait-view:has(.profile-book){padding:0}
-.profile-book{width:100%;height:calc(100svh - 68px);display:block;border:0}
+.is-profile #app:has(.profile-book){height:100svh;display:flex;flex-direction:column}
+.portrait-view:has(.profile-book){display:flex;flex:1;min-height:0;flex-direction:column}
+.profile-book{width:100%;flex:1;min-height:0;display:block;border:0}
 .portrait-paper {
   width: min(100%, 1040px);
   margin: 0 auto;
@@ -44,6 +46,60 @@ button:focus-visible,a:focus-visible{outline:2px solid #7d956b;outline-offset:5p
   letter-spacing: .06em;
 }
 .portrait-paper a { text-decoration: underline; text-underline-offset: 3px; }
+.report-dialog {
+  width: min(700px, calc(100vw - 24px));
+  max-height: min(84dvh, 900px);
+  padding: 0;
+  border: 1px solid #b9b49c;
+  border-radius: 8px;
+  background: #faf7ec url('/assets/botanical/portrait-paper.png') repeat;
+  color: #353a2e;
+  box-shadow: 0 16px 72px #29302155;
+  font: 16px/1.7 var(--body);
+  overflow: hidden;
+}
+.report-dialog[open] { display: flex; flex-direction: column; }
+.report-dialog::backdrop { background: #20291ec2; }
+.report-dialog header {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: clamp(12px, 3vw, 18px) clamp(16px, 5vw, 36px); border-bottom: 1px solid #c9c7b4;
+}
+.report-dialog header button { flex: none; min-height: 44px; }
+.report-dialog h1, .report-dialog h2, .report-dialog h3 { font-family: var(--serif); line-height: 1.35; margin: 0; }
+.report-dialog h1 { font-size: clamp(23px, 4vw, 32px); }
+.report-dialog h2 { font-size: 22px; color: #41543e; }
+.report-dialog h3 { font-size: 19px; }
+.report-dialog header button, .profile-actions button, .restart-dialog button { border: 1px solid #8c947d; border-radius: 4px; padding: 5px 12px; }
+.profile-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 10px; padding:0 10px 8px; font-size:14px; }
+.profile-actions [data-update-report], .restart-dialog [value=restart] { background:#4c6046; color:#fff; }
+.profile-notice { text-align:center; margin:0; }
+.restart-dialog { width:min(390px, calc(100vw - 32px)); padding:24px; border:1px solid #a99e86; border-radius:6px; background:#faf7ec; color:inherit; }
+.restart-dialog::backdrop { background:#252d2380; }
+.restart-dialog h2 { margin:0; font-size:22px; }
+.report-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  padding: clamp(16px, 4vw, 24px) clamp(16px, 5vw, 36px);
+}
+.report-content section + section, .report-content p + section {
+  border-top: 1px solid #cfcebc;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+.report-content article {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-left: 2px solid #8c9c7e;
+  background: #87917614;
+}
+.report-content p { margin: 0; }
+.report-content article p { margin-top: 5px; }
+.report-content a { color: #354f32; text-decoration: underline; text-underline-offset: 3px; }
+.report-content ul { margin: 6px 0 0; padding-inline-start: 1.25em; }
+.report-content li + li { margin-top: 4px; }
 @media(max-width: 660px) {
   .is-profile .site-header { padding-right: 76px; }
 }

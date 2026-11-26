@@ -5,7 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 export async function browser(){
   await mkdir('qa',{recursive:true});
   const child=spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',[
-    '--headless=new','--enable-unsafe-swiftshader','--no-first-run','--no-default-browser-check','--remote-debugging-port=9340',`--user-data-dir=${path.resolve('qa/edge-profile')}`,'about:blank'
+    '--headless=new','--disable-extensions','--disable-renderer-backgrounding','--disable-background-timer-throttling','--enable-unsafe-swiftshader','--no-first-run','--no-default-browser-check','--remote-debugging-port=9340',`--user-data-dir=${path.resolve('qa/edge-profile')}`,'about:blank'
   ],{windowsHide:true,stdio:'ignore'});
   let tabs;
   for(let i=0;i<80;i++){try{tabs=await(await fetch('http://127.0.0.1:9340/json')).json();if(tabs.some(t=>t.type==='page'))break;}catch{}await delay(250);}
@@ -20,6 +20,6 @@ export async function browser(){
   const fill=(selector,value)=>evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));})()`);
   const shot=async name=>{const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(`qa/${name}.png`,Buffer.from(r.data,'base64'));};
   const viewport=async(width,height,mobile=false)=>send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});
-  await send('Page.enable');await send('Runtime.enable');await send('Network.enable');
+  await send('Page.enable');await send('Page.bringToFront');await send('Runtime.enable');await send('Network.enable');
   return {send,evaluate,until,click,fill,shot,viewport,errors,network,delay,close(){for(const p of pending.values())clearTimeout(p.timer);ws.close();child.kill();}};
 }
