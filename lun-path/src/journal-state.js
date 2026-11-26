@@ -11,6 +11,31 @@ export const intake = load();
 intake.portraitReady ??= intake.position === 'summary' || Boolean(intake.submitted);
 // Older journals kept only the current self-check answer.
 intake.evidence ??= {};
+// Reading notes are added by the paper reader (bookmark / question / explain).
+// They live beside the portrait so the reader and the portrait read the same
+// state; missing arrays are tolerated so older saved journals keep working.
+intake.readingNotes ??= [];
+export function readingNoteId() {
+  return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+export function addReadingNote(note) {
+  const entry = {...note, id: note.id || readingNoteId(), createdAt: note.createdAt || Date.now()};
+  intake.readingNotes.push(entry);
+  persistIntake();
+  return entry;
+}
+export function removeReadingNote(id) {
+  const at = intake.readingNotes.findIndex(note => note.id === id);
+  if (at < 0) return false;
+  intake.readingNotes.splice(at, 1);
+  return persistIntake();
+}
+export function updateReadingNote(id, patch) {
+  const note = intake.readingNotes.find(note => note.id === id);
+  if (!note) return false;
+  Object.assign(note, patch);
+  return persistIntake();
+}
 export function recordCheck(id, answer) {
   const history = intake.evidence[id] ??= [];
   if (JSON.stringify(history.at(-1)) !== JSON.stringify(answer)) history.push(structuredClone(answer));
