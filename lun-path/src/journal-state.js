@@ -15,6 +15,9 @@ intake.evidence ??= {};
 // They live beside the portrait so the reader and the portrait read the same
 // state; missing arrays are tolerated so older saved journals keep working.
 intake.readingNotes ??= [];
+// Cached rule-based reading statistics (right-click / note activity), refreshed
+// from /api/reader/summary when the portrait opens and kept for later profiling.
+intake.readerStats ??= null;
 export function readingNoteId() {
   return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }

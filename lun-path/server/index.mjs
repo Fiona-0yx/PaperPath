@@ -12,7 +12,7 @@ const within = (base, target) => { const rel = path.relative(base, target); retu
 const DATA_DIR = path.join(ROOT, 'data');
 const EVENTS_FILE = path.join(DATA_DIR, 'reader-events.jsonl');
 const MAX_EVENT_BYTES = 16 * 1024;
-const EVENT_FIELDS = ['kind', 'action', 'paperId', 'paperTitle', 'categoryId', 'sectionId', 'sectionHeading', 'paragraphIndex', 'textLength', 'text', 'lang'];
+const EVENT_FIELDS = ['kind', 'action', 'source', 'userId', 'noteId', 'noteType', 'filter', 'reason', 'resolved', 'status', 'crossPaper', 'paperId', 'paperTitle', 'categoryId', 'sectionId', 'sectionHeading', 'paragraphIndex', 'textLength', 'text', 'lang'];
 function readBody(req, limit) {
   return new Promise((resolve, reject) => {
     let size = 0, done = false; const chunks = [];
@@ -31,7 +31,9 @@ function cleanEvent(raw) {
   for (const key of EVENT_FIELDS) {
     const value = raw[key];
     if (value === undefined || value === null) continue;
-    out[key] = typeof value === 'number' ? (Number.isFinite(value) ? value : 0) : String(value).slice(0, 300);
+    if (typeof value === 'number') out[key] = Number.isFinite(value) ? value : 0;
+    else if (typeof value === 'boolean') out[key] = value;
+    else out[key] = String(value).slice(0, 300);
   }
   out.at = Number(raw.at) || Date.now();
   out.receivedAt = Date.now();
@@ -50,6 +52,10 @@ async function handleReaderEvent(req, res) {
   res.writeHead(204, {'Cache-Control': 'no-store'});
   res.end();
 }
+// Normalise a selected phrase into a stable comparison key.
+function termKey(text) {
+  return String(text || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 60);
+}
 async function handleReaderSummary(req, res) {
   if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); fail(405, 'METHOD_NOT_ALLOWED', 'Unsupported HTTP method'); }
   let lines = [];
@@ -57,14 +63,57 @@ async function handleReaderSummary(req, res) {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const events = [];
   for (const line of lines) { try { events.push(JSON.parse(line)); } catch { /* skip malformed line */ } }
-  const byKind = {}, byAction = {}, byPaper = {};
+  const byKind = {}, byAction = {}, byPaper = {}, bySection = {}, byUser = {}, byReason = {};
+  const terms = new Map();
+  let menuOpened = 0, dismissed = 0, acted = 0;
+  let resolvedCount = 0, reopenedCount = 0, deletedCount = 0, jumpedCount = 0;
+  let firstAt = null, lastAt = null;
+  const days = new Set();
   for (const event of events) {
+    const time = Number(event.at) || Number(event.receivedAt) || 0;
+    if (time) {
+      if (!firstAt || time < firstAt) firstAt = time;
+      if (!lastAt || time > lastAt) lastAt = time;
+      days.add(new Date(time).toISOString().slice(0, 10));
+    }
     byKind[event.kind] = (byKind[event.kind] || 0) + 1;
     if (event.action) byAction[event.action] = (byAction[event.action] || 0) + 1;
-    const key = event.paperId || 'unknown';
-    byPaper[key] = (byPaper[key] || 0) + 1;
+    if (event.paperId) byPaper[event.paperId] = (byPaper[event.paperId] || 0) + 1;
+    if (event.sectionId) bySection[event.sectionId] = (bySection[event.sectionId] || 0) + 1;
+    if (event.userId) byUser[event.userId] = (byUser[event.userId] || 0) + 1;
+    if (event.kind === 'menu-opened') menuOpened += 1;
+    if (event.kind === 'menu-dismissed') { dismissed += 1; const reason = event.reason || 'unknown'; byReason[reason] = (byReason[reason] || 0) + 1; }
+    if (event.kind === 'action') {
+      acted += 1;
+      if (event.action === 'question' || event.action === 'explain') {
+        const key = termKey(event.text);
+        if (key) terms.set(key, (terms.get(key) || 0) + 1);
+      }
+    }
+    if (event.kind === 'note-resolve') { if (event.resolved === true) resolvedCount += 1; else if (event.resolved === false) reopenedCount += 1; }
+    if (event.kind === 'note-delete') deletedCount += 1;
+    if (event.kind === 'note-jump') jumpedCount += 1;
   }
-  json(res, {total: events.length, byKind, byAction, byPaper, recent: events.slice(-20)});
+  const weakTerms = [...terms.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 10)
+    .map(([term, count]) => ({term, count}));
+  const topSections = Object.entries(bySection)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([section, count]) => ({section, count}));
+  json(res, {
+    total: events.length,
+    updatedAt: Date.now(),
+    byKind, byAction, byPaper, byUser, byReason,
+    weakTerms,
+    topSections,
+    papers: Object.keys(byPaper).length,
+    funnel: {menuOpened, dismissed, acted, conversion: menuOpened ? Number((acted / menuOpened).toFixed(3)) : null},
+    lifecycle: {created: acted, resolved: resolvedCount, reopened: reopenedCount, deleted: deletedCount, jumped: jumpedCount},
+    span: {firstAt, lastAt, days: days.size},
+    recent: events.slice(-20),
+  });
 }
 async function serveStatic(req, res, url) {
   if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); fail(405, 'METHOD_NOT_ALLOWED', 'Unsupported HTTP method'); }
