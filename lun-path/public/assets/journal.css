@@ -58,6 +58,12 @@ body:not([data-spread=cover]) .loupe,body:not([data-spread=cover]) .zoomwrap,bod
 .portrait-actions{align-items:center;gap:1.5em;margin-bottom:1em}
 .portrait-actions .done,.portrait-actions button{padding:.4em .8em;font:inherit;text-decoration:none}
 .portrait-actions button{border:1px solid #6b7459;border-radius:3px;color:#37472d}
+.reading-observations{margin:1.1em 0 .8em;border-top:1px solid #cbbca6;padding-top:.7em}
+.reading-observations h3{margin:0 0 .3em;font:500 .95em/1.3 var(--book-type);color:#4e4234}
+.reading-observations .obs-hint{margin:0 0 .5em;font-size:.76em;color:#7a6c5a;line-height:1.5}
+.reading-observations ol{margin:0;padding-left:1.1em;font-size:.8em;line-height:1.45;color:#5b5044}
+.reading-observations .observation{margin:.3em 0;overflow-wrap:anywhere}
+.reading-observations .observation small{display:block;color:#8a7a64;font-size:.86em;margin-top:1px}
 @media(max-width:660px){
   .sb-3d{max-width:100vw}.journal-nav{padding:14px 5vw}
   .single-sheet .sb-book{aspect-ratio:auto;height:min(1020px,118svh);min-height:670px}

@@ -46,7 +46,7 @@ try{
     await b.shot('v2-path-'+(i+1));
     await realClick(selector);
     await b.until(`location.hash==='#/shelf/${ids[i]}'`);
-    check(await b.evaluate('document.querySelector(".category-blank")!==null&&document.querySelector("#app").innerText.trim()===""'),'category '+(i+1)+' opens white page');
+    check(await b.evaluate('document.querySelector(".shelf-view")!==null'),'category '+(i+1)+' opens its paper shelf');
     await nav('garden');
     check(await inside('w.__identity==="preserved"&&w.__groveBuildCount===1'),'return preserves scene '+(i+1));
   }
