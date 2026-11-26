@@ -41,20 +41,34 @@ function boot(shell) {
 
   // ——— event reporting (backend statistics for later agent analysis) ———
   // Fire-and-forget: reading must never be blocked by a logging failure.
-  function reportEvent(kind, info, action) {
+  // The id is anonymous, local to this browser, and never leaves this machine.
+  const userId = (() => {
+    try {
+      let id = localStorage.getItem('lunjing-reader-uid');
+      if (!id || id.length < 6) {
+        id = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('lunjing-reader-uid', id);
+      }
+      return id;
+    } catch { return 'u-anon'; }
+  })();
+
+  function reportEvent(kind, info, extra) {
+    const text = info?.text || '';
     const payload = {
       kind,
-      action: action || null,
+      userId,
       paperId: paper.id,
       paperTitle: paper.title,
       categoryId: paper.categoryId,
       sectionId: info?.sectionId || '',
       sectionHeading: info?.sectionHeading || '',
       paragraphIndex: info?.paragraphIndex ?? -1,
-      textLength: info?.text ? info.text.length : 0,
-      text: info?.text ? info.text.slice(0, 200) : '',
+      textLength: text.length,
+      text: text.slice(0, 200),
       lang: shell.language,
       at: Date.now(),
+      ...(extra || {}),
     };
     const body = JSON.stringify(payload);
     try {
@@ -143,10 +157,13 @@ function boot(shell) {
     menuEl.querySelector('button')?.focus({preventScroll: true});
   }
 
-  function closeMenu() {
+  function closeMenu(reason) {
+    const wasOpen = !menuEl.hidden && Boolean(menuInfo);
+    const info = menuInfo;
     menuEl.hidden = true;
     menuEl.innerHTML = '';
     menuInfo = null;
+    if (wasOpen && reason) reportEvent('menu-dismissed', info, {reason});
   }
 
   paperEl.addEventListener('contextmenu', event => {
@@ -164,15 +181,14 @@ function boot(shell) {
     closeMenu();
     handleMenuAction(button.dataset.action, info);
   });
-
   document.addEventListener('mousedown', event => {
-    if (!menuEl.hidden && !menuEl.contains(event.target)) closeMenu();
+    if (!menuEl.hidden && !menuEl.contains(event.target)) closeMenu('outside');
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') closeMenu();
+    if (event.key === 'Escape') closeMenu('escape');
   });
-  window.addEventListener('scroll', closeMenu, {passive: true});
-  window.addEventListener('resize', closeMenu);
+  window.addEventListener('scroll', () => closeMenu('scroll'), {passive: true});
+  window.addEventListener('resize', () => closeMenu('resize'));
 
   // ——— notes write path ———
   function handleMenuAction(action, info) {
@@ -191,7 +207,7 @@ function boot(shell) {
     };
     if (action === 'explain') note.status = 'pending';
     const entry = shell.addReadingNote(note);
-    reportEvent('action', info, action);
+    reportEvent('action', info, {action, noteId: entry.id, noteType: action, source: 'menu'});
     renderNotes();
     if (action === 'bookmark') toast(L('已收藏，可在右侧笔记中查看', 'Saved to reading notes'));
     else if (action === 'question') toast(L('已记录疑问，可在右侧整理', 'Doubt recorded in the sidebar'));
@@ -219,10 +235,16 @@ function boot(shell) {
       if (!response.ok) throw new Error('HTTP ' + response.status);
       const data = await response.json();
       const explanation = data?.explanation || data?.summary;
-      if (explanation) shell.updateReadingNote(note.id, {status: 'done', explanation: String(explanation)});
-      else shell.updateReadingNote(note.id, {status: 'unavailable'});
+      if (explanation) {
+        shell.updateReadingNote(note.id, {status: 'done', explanation: String(explanation)});
+        reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'done'});
+      } else {
+        shell.updateReadingNote(note.id, {status: 'unavailable'});
+        reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'unavailable'});
+      }
     } catch {
       shell.updateReadingNote(note.id, {status: 'unavailable'});
+      reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'unavailable'});
     }
     renderNotes();
   }
@@ -241,6 +263,7 @@ function boot(shell) {
     const button = event.target.closest('[data-filter]');
     if (!button) return;
     filter = button.dataset.filter;
+    reportEvent('filter', null, {filter});
     renderNotes();
   });
 
@@ -313,13 +336,18 @@ function boot(shell) {
     if (!note) return;
     if (button.dataset.action === 'delete') {
       shell.removeReadingNote(id);
+      reportEvent('note-delete', note, {noteId: id, noteType: note.type});
       renderNotes();
       toast(L('已删除', 'Deleted'));
     } else if (button.dataset.action === 'resolve') {
-      shell.updateReadingNote(id, {resolved: !note.resolved});
+      const next = !note.resolved;
+      shell.updateReadingNote(id, {resolved: next});
+      reportEvent('note-resolve', note, {noteId: id, noteType: note.type, resolved: next});
       renderNotes();
     } else if (button.dataset.action === 'jump') {
-      if (note.paperId === paper.id) {
+      const crossPaper = note.paperId !== paper.id;
+      reportEvent('note-jump', note, {noteId: id, noteType: note.type, crossPaper});
+      if (!crossPaper) {
         jumpTo(note);
       } else {
         parent.location.hash = '#/read/' + note.categoryId + '/' + note.paperId;
@@ -359,4 +387,5 @@ function boot(shell) {
   }
 
   renderNotes();
+  reportEvent('reader-open', null, {});
 }

@@ -87,6 +87,7 @@ export async function openJournal() {
     prompt.textContent=missingId?L('请完成作答','Please complete your answer.'): '';
     return missingId?pages.findIndex(p=>p.items?.some(q=>q.id===missingId)):pages.length-1;
   }
+  loadReaderStats();
   rebuild(state.position);
   if(!profileOnly && state.position==='summary')index=summaryTarget();
   const draft=q=>state.drafts[q.id]||{};
@@ -136,6 +137,77 @@ export async function openJournal() {
     }).join('');
     return '<section class="reading-observations"><h3>'+L('学习观察 · 待分析','Learning observations · pending')+'</h3><p class="obs-hint">'+L('来自论文阅读时记下的疑问；Agent 分析接入后，这里会补充反复出现的薄弱知识点。','Doubts recorded while reading. Weak points will appear here once the agent analysis is connected.')+'</p><ol>'+items+'</ol></section>';
   }
+  // Rule-based statistics from the local interaction log. Counts only: no agent
+  // conclusion is inferred here, and a failed fetch simply shows "unavailable".
+  let stats = null;
+  let statsLoading = true;
+  function statsSnapshot(data) {
+    return {
+      updatedAt: data.updatedAt || Date.now(),
+      total: Number(data.total) || 0,
+      menuOpened: Number(data.funnel?.menuOpened) || 0,
+      dismissed: Number(data.funnel?.dismissed) || 0,
+      acted: Number(data.funnel?.acted) || 0,
+      byAction: data.byAction || {},
+      days: Number(data.span?.days) || 0,
+      weakTerms: Array.isArray(data.weakTerms) ? data.weakTerms.slice(0, 5) : [],
+      topSections: Array.isArray(data.topSections) ? data.topSections.slice(0, 3) : [],
+      lifecycle: data.lifecycle || {},
+    };
+  }
+  async function loadReaderStats() {
+    try {
+      const response = await fetch('/api/reader/summary', {cache: 'no-store'});
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      stats = statsSnapshot(await response.json());
+      state.readerStats = stats;
+      save();
+    } catch {
+      stats = state.readerStats || null;
+    } finally {
+      statsLoading = false;
+      if (typeof repaint === 'function') repaint();
+    }
+  }
+  function readingStats() {
+    const head = '<h3>' + L('阅读行为统计 · 系统规则统计', 'Reading activity · rule-based') + '</h3>';
+    if (statsLoading && !stats) {
+      return '<section class="reading-stats">' + head + '<p class="stats-hint">' + L('正在读取本机阅读记录…', 'Reading the local activity log…') + '</p></section>';
+    }
+    if (!stats) {
+      return '<section class="reading-stats">' + head + '<p class="stats-hint">' + L('暂未取得统计（需要启动本地服务）。', 'Statistics unavailable (start the local service).') + '</p></section>';
+    }
+    const n = value => Number(value) || 0;
+    const acts = stats.byAction || {};
+    const life = stats.lifecycle || {};
+    const cells = [
+      [L('右键菜单', 'Context menus'), n(stats.menuOpened)],
+      [L('选择操作', 'Actions'), n(stats.acted)],
+      [L('收藏', 'Saved'), n(acts.bookmark)],
+      [L('有疑问', 'Questions'), n(acts.question)],
+      [L('需解释', 'Explain'), n(acts.explain)],
+      [L('已解决', 'Resolved'), n(life.resolved)],
+      [L('已删除', 'Deleted'), n(life.deleted)],
+      [L('跳回原文', 'Jumped back'), n(life.jumped)],
+    ];
+    const grid = '<dl class="stat-grid">' + cells.map(([label, value]) =>
+      '<div><dt>' + esc(label) + '</dt><dd>' + value + '</dd></div>').join('') + '</dl>';
+    const dismissed = '<p class="stats-line">' + L('右键后未选择即关闭：', 'Closed without choosing: ') + n(stats.dismissed) + L(' 次', ' times') + '</p>';
+    const span = '<p class="stats-line">' + L('活跃天数：', 'Active days: ') + n(stats.days) + L(' 天', ' days') + '</p>';
+    const terms = (stats.weakTerms || []).map(item =>
+      '<li><b>' + esc(item.term) + '</b><span>×' + n(item.count) + '</span></li>').join('');
+    const termsBlock = terms
+      ? '<p class="stats-label">' + L('反复关注的词句', 'Recurring focus') + '</p><ul class="stat-terms">' + terms + '</ul>'
+      : '<p class="stats-line">' + L('还没有重复出现的疑问词。', 'No recurring terms yet.') + '</p>';
+    const sections = (stats.topSections || []).map(item =>
+      '<li>' + esc(item.section) + '<span>×' + n(item.count) + '</span></li>').join('');
+    const sectionsBlock = sections
+      ? '<p class="stats-label">' + L('疑问集中的章节', 'Sections with most doubts') + '</p><ul class="stat-terms">' + sections + '</ul>'
+      : '';
+    return '<section class="reading-stats">' + head +
+      '<p class="stats-hint">' + L('根据本机记录的右键与笔记操作汇总，供后续 Agent 刻画画像使用。', 'Summarised from local right-click and note activity for later agent profiling.') + '</p>' +
+      grid + dismissed + span + termsBlock + sectionsBlock + '</section>';
+  }
   function face(side,html){
     const el=document.createElement('section');el.className='journal-face '+side;el.innerHTML=html;return el;
   }
@@ -157,8 +229,9 @@ export async function openJournal() {
       const heading='<h2>'+L('我的初始画像','My starting portrait')+'</h2><p>'+L('点文字即可修改，留白的地方保持未知。','Edit any entry. Blank fields stay unknown.')+'</p>';
       const done=profileOnly?'':'<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L('提交','Submit')+'</button></div>';
       const observations=readingObservations();
-      if(collapsed)book.append(face('full',heading+summary(questions)+observations+done));
-      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+observations+done));
+      const statistics=readingStats();
+      if(collapsed)book.append(face('full',heading+summary(questions)+observations+statistics+done));
+      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+observations+statistics+done));
     }else if(p.key==='intro'&&!collapsed){
       book.append(face('left intro-art','<img src="/assets/botanical/botany-left.png" alt="">'),face('right',question(p.items[0])));
     }else{
