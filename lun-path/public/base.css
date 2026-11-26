@@ -1,0 +1,49 @@
+/* Shared shell for the current vine and overview only. */
+@font-face{font-family:JournalSerif;src:url('/assets/botanical/instrument-serif.woff2') format('woff2');font-display:swap}
+:root{--serif:JournalSerif,'Songti SC','STSong','SimSun',serif;--body:'Microsoft YaHei','PingFang SC',system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#303a31;font-family:var(--body);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:2px solid #7d956b;outline-offset:5px}
+.skip-link{position:fixed;top:-100px;left:20px;background:#fff;z-index:300;padding:10px}.skip-link:focus{top:10px}
+.language-toggle{display:flex;align-items:center;gap:7px;font-size:12px;letter-spacing:.05em}
+.language-toggle button{padding:5px 2px}.language-toggle button.active{border-bottom:1px solid currentColor}
+.site-header{padding:24px;text-align:center}.site-header nav{display:flex;gap:28px;justify-content:center}.site-header [aria-current=page]{text-decoration:underline;text-underline-offset:6px}
+.is-journal #app{position:fixed;inset:0;z-index:10;background:#ece7dc}
+.journal-frame{display:block;width:100%;height:100svh;border:0}
+
+@font-face {
+  font-family: Newsreader;
+  src: url('/assets/botanical/newsreader.woff2') format('woff2');
+  font-display: swap;
+}
+.is-profile {
+  background: #eae6da url('/assets/botanical/bg-wash.jpg') center top / cover fixed;
+  color: #443e31;
+  font-family: Newsreader, 'Songti SC', SimSun, Georgia, serif;
+}
+.is-profile .site-header { padding: 20px 16px; position: relative; }
+.profile-language { position: absolute; right: 4vw; top: 50%; transform: translateY(-50%); }
+.portrait-view { padding: 0 clamp(12px, 4vw, 64px) 48px; }
+.portrait-view:has(.profile-book){padding:0}
+.profile-book{width:100%;height:calc(100svh - 68px);display:block;border:0}
+.portrait-paper {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 72px);
+  background: #f6efdf url('/assets/botanical/portrait-paper.png') repeat;
+  box-shadow: 0 2px 4px #43331c30, 0 16px 44px #43331c19;
+  border-radius: 2px 5px 5px 2px;
+  overflow-wrap: anywhere;
+}
+.portrait-paper h1 {
+  margin: 0 0 1em;
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: .06em;
+}
+.portrait-paper a { text-decoration: underline; text-underline-offset: 3px; }
+@media(max-width: 660px) {
+  .is-profile .site-header { padding-right: 76px; }
+}

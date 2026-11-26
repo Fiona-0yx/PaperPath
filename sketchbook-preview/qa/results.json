@@ -1,0 +1,15 @@
+{
+  "kind": "sketchbook",
+  "checks": [
+    "Nine plates; next/previous page, zoom, magnifier passed"
+  ],
+  "tabletHorizontalOverflow": false,
+  "images": [],
+  "runtimeErrors": [],
+  "failedRequests": [
+    {
+      "url": "http://127.0.0.1:5176/favicon.ico",
+      "status": 404
+    }
+  ]
+}

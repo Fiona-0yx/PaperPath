@@ -1,0 +1,1 @@
+创建快捷图标：shell:AppsFolder

@@ -1,0 +1,15 @@
+运行方式：在本目录运行 npm start，打开 http://127.0.0.1:5174/。
+无需安装 npm 依赖；Three.js r165、字体和图片由原页面的在线地址提供。
+按新 prompt 指定的 CompleteShelfLandingPage 运行，与先前 BestsellersBookShowcase 分开保存。
+收到的“单本书.txt”为空，“单本数代码.txt”为另一组件的 skill，未包含此组件实现。
+
+官方来源：
+https://threeui.com/source-code/complete-shelf-landing-page.json
+https://threeui.com/landing-pages/complete-shelf-v2.html
+
+本预览直接运行官方完整 HTML，未重写其渲染、动画、文案和交互。
+三个含 code 字段的注册源码文件已通过清单 SHA-256 校验并保存在 src 中。
+当前 HTML SHA-256：8f1256796bab42b0d60e187176dfcc9d9df33cec1d22ca6f3c3767dcfeca4cb9
+历史清单 HTML SHA-256：606f200fed8602c243f40a11c8c364f0e625c57f80e7c97dc76419da207f198e
+官网页面与历史清单不同，不能宣称与历史版本逐字节相同。
+本次为原始 HTML 预览，不包含 React 包集成和 prompt 中的 React 属性定制。

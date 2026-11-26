@@ -1,0 +1,16 @@
+{
+  "name": "lun-path",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "论径 · A field journal for learning through papers",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node --watch server/index.mjs",
+    "prepare:scenes": "node scripts/prepare-grove.mjs",
+    "test": "node scripts/qa-grove-v2.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

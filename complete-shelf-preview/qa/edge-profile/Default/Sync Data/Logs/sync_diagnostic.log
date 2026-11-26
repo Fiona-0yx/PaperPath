@@ -1,0 +1,109 @@
+2026-11-20 04:07:18.140: [INFO][Sync] Reset engine, reason: 8
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Bookmarks
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Preferences
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Passwords
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Autofill Profiles
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Autofill
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Extensions
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Sessions
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Extension settings
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: History Delete Directives
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Device Info
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: User Consents
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Send Tab To Self
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Web Apps
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: History
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Saved Tab Group
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: WebAuthn Credentials
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Edge Hub App Usage
+2026-11-20 04:07:18.140: [INFO][Sync] Stopped: Edge Workspace
+2026-11-20 04:07:18.140: [INFO][Sync] SyncState after authenticated was: NotSignedIn
+2026-11-20 04:07:18.308: [INFO][Sync] Reset engine, reason: 8
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Bookmarks
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Preferences
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Passwords
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Autofill Profiles
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Autofill
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Extensions
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Sessions
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Extension settings
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: History Delete Directives
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Device Info
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: User Consents
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Send Tab To Self
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Web Apps
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: History
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Saved Tab Group
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: WebAuthn Credentials
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Edge Hub App Usage
+2026-11-20 04:07:18.308: [INFO][Sync] Stopped: Edge Workspace
+2026-11-20 04:07:18.788: [INFO][Sync] Try to start sync engine
+2026-11-20 04:07:18.789: [INFO][SyncManagerImpl::NudgeForInitialDownload] Initial download nudge for Encryption Keys
+2026-11-20 04:07:18.789: [INFO][SyncEngineBackend::LoadAndConnectNigoriController] Load and connect Nigori controller
+2026-11-20 04:07:18.789: [INFO][SyncEngineBackend::DoInitialize] Control Types added: Encryption Keys
+2026-11-20 04:07:18.789: [INFO][SyncManagerImpl::ConfigureSyncer] Types to download: Encryption Keys with reason: 3
+2026-11-20 04:07:18.789: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Configure job was blocked
+2026-11-20 04:07:18.813: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2026-11-20 04:07:18.813: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: MSA
+2026-11-20 04:07:18.813: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2026-11-20 04:07:18.847: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: PERSISTENT_ERROR, EDGE_AUTH_ERROR: 3, 24, 4b0
+2026-11-20 04:07:18.847: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2026-11-20 04:07:18.847: [ERROR][Sync]     Engine is not allowed to run, reason: 0000000
+2026-11-20 04:07:18.847: [INFO][Sync] Reset engine, reason: 6
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Bookmarks
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Preferences
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Passwords
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Autofill Profiles
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Autofill
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Extensions
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Sessions
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Extension settings
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: History Delete Directives
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Device Info
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: User Consents
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Send Tab To Self
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Web Apps
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: History
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Saved Tab Group
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: WebAuthn Credentials
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Edge Hub App Usage
+2026-11-20 04:07:18.847: [INFO][Sync] Stopped: Edge Workspace
+2026-11-20 04:07:18.847: [INFO][Sync] Reset engine with reason: 6
+2026-11-20 04:07:18.851: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: PERSISTENT_ERROR, EDGE_AUTH_ERROR: 3, 24, 4b0
+2026-11-20 04:07:18.851: [INFO][Sync] Credentials changed for: EdgeSyncKeyDataScope
+2026-11-20 04:07:48.908: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: Edge auth error: Exceeded max duration. for account type: MSA
+2026-11-20 04:07:48.908: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2026-11-20 04:07:48.908: [ERROR][Sync]     Engine is not allowed to run, reason: 0000000
+2026-11-20 04:07:48.910: [INFO][Sync] Reset engine, reason: 6
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Bookmarks
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Preferences
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Passwords
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Autofill Profiles
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Autofill
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Extensions
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Sessions
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Extension settings
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: History Delete Directives
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Device Info
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: User Consents
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Send Tab To Self
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Web Apps
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: History
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Saved Tab Group
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: WebAuthn Credentials
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Edge Hub App Usage
+2026-11-20 04:07:48.910: [INFO][Sync] Stopped: Edge Workspace
+2026-11-20 04:07:48.915: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: EDGE_AUTH_ERROR: 9, 2, 0 for account type: MSA
+2026-11-20 04:07:48.915: [INFO][Sync] Credentials changed for: EdgeSyncKeyDataScope
+2026-11-20 04:07:48.922: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: None
+2026-11-20 04:07:48.922: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: None for account type: MSA
+2026-11-20 04:07:48.922: [INFO][Sync] Credentials changed for: EdgeSyncScopeNew
+2026-11-20 04:07:48.922: [INFO][Sync] Try to start sync engine
+2026-11-20 04:07:48.923: [INFO][SyncManagerImpl::NudgeForInitialDownload] Initial download nudge for Encryption Keys
+2026-11-20 04:07:48.923: [INFO][SyncEngineBackend::LoadAndConnectNigoriController] Load and connect Nigori controller
+2026-11-20 04:07:48.923: [INFO][SyncEngineBackend::DoInitialize] Control Types added: Encryption Keys
+2026-11-20 04:07:48.923: [INFO][SyncManagerImpl::ConfigureSyncer] Types to download: Encryption Keys with reason: 3
+2026-11-20 04:07:48.923: [INFO][SyncSchedulerImpl::DoConfigurationSyncCycleJob] Blocked types:  and types to download: Encryption Keys
+2026-11-20 04:07:48.958: [INFO][SyncAuthManager::SetLastAuthError] Current auth error: PERSISTENT_ERROR, EDGE_AUTH_ERROR: 3, 24, 4b0
+2026-11-20 04:07:48.958: [INFO][SyncAuthManager::EdgeLogTokenErrorState] Token error with: PERSISTENT_ERROR, EDGE_AUTH_ERROR: 3, 24, 4b0 for account type: MSA
+2026-11-20 04:07:48.958: [INFO][Sync] Credentials changed for: EdgeSyncKeyDataScope

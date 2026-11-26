@@ -1,0 +1,4804 @@
+# Bestsellers Book Showcase — Complete source
+
+Component: `BestsellersBookShowcase`
+Runtime: Full HTML + DOM/CSS + embedded media
+Source revision: `SHA-256 7c1ed1ca4a4c`
+
+## Current configured usage
+
+```tsx
+import { BestsellersBookShowcase } from "@designcodeio/threeui";
+import "@designcodeio/threeui/style.css";
+
+export function Scene() {
+  return (
+    <div className="shader-frame">
+      <BestsellersBookShowcase
+        headingFont="iowan-old-style"
+        bodyFont="iowan-old-style"
+        headingWeight="500"
+        bodyWeight="400"
+        primaryColor="#c3a47b"
+        headingSize={325}
+        bodySize={17}
+        headingLetterSpacing={-0.085}
+      />
+    </div>
+  );
+}
+```
+
+## Required assets
+
+No binary assets are required.
+
+## Full implementation source
+
+This bundle contains all 4 required text source files. Preserve their paths and contents; none are excerpts.
+
+### `src/shaders/landing-pages/LandingPages.tsx`
+
+Role: component · 915 lines · 40525 bytes · SHA-256 `4d379461ad00eb4de7900df312878035383de7e1ed4e13283b8143a2eea9d30a`
+
+```tsx
+import { useCallback, useMemo } from "react";
+
+import {
+  splitTypographyProps,
+  usePageTypography,
+  type PageTypographyProps,
+} from "./pageTypography";
+import { LandingPageFrame, type LandingPageProps } from "./LandingPageFrame";
+export { LandingPageFrame, applyBackgroundPresentation } from "./LandingPageFrame";
+export type { LandingPageFrameProps, LandingPageProps } from "./LandingPageFrame";
+import {
+  ANTHRA_A40_TYPOGRAPHY,
+  ATTUNE_TYPOGRAPHY,
+  AURELLO_TYPOGRAPHY,
+  AXONIS_TYPOGRAPHY,
+  BESTSELLERS_TYPOGRAPHY,
+  BETAWISE_HERO_TYPOGRAPHY,
+  BETAWISE_TYPOGRAPHY,
+  COMPLETE_SHELF_TYPOGRAPHY,
+  INKBOUND_TYPOGRAPHY,
+  ECHO_VALE_TYPOGRAPHY,
+  HALVORSEN_TYPOGRAPHY,
+  KAGE_TYPOGRAPHY,
+  KAIRO_TYPOGRAPHY,
+  MK78_KEYBOARD_TYPOGRAPHY,
+  MARA_VOSS_TYPOGRAPHY,
+  NOEMA_N1_TYPOGRAPHY,
+  RENDERLAB_TYPOGRAPHY,
+  MENG_TO_SKETCHBOOK_TYPOGRAPHY,
+  NOCTURNE_TYPOGRAPHY,
+  SYLVA_TYPOGRAPHY,
+  TIDECREST_TYPOGRAPHY,
+  VOLTA_ATELIER_TYPOGRAPHY,
+} from "./pageRecipes";
+import innerGreenSource from "../sylva-living-world/sources/inner-green-3d.html?raw";
+/* Only the seam is imported here: the packaged Tidecrest document and its
+   rewrites sit behind a module the public build guard stubs. */
+import { buildTidecrestDocument } from "../tidecrest-hero/tidecrestDocument.js";
+/* Same seam for Meridian's three sibling bodies. */
+import { buildMeridianDocument } from "../meridian-landing-page/meridianDocument.js";
+/* Same seam for the ASCII field's three generated sibling scenes. */
+import { buildAsciiFieldDocument } from "../ascii-field/asciiFieldDocuments.js";
+/* And for the Betawise globe's four other worlds. */
+import { buildBetawiseGlobeDocument } from "../betawise-globe/betawiseGlobeDocument.js";
+import axonisArborSource from "../axonis-field/axonis-arbor.html?raw";
+import axonisVortexSource from "../axonis-field/axonis-vortex.html?raw";
+import axonisTideSource from "../axonis-field/axonis-tide.html?raw";
+import axonisDuneSource from "../axonis-field/axonis-dune.html?raw";
+import {
+  NOCTURNE_TITLES,
+  NOCTURNE_VARIANTS,
+  buildNocturneDocument,
+  type NocturneVariant,
+} from "../nocturne-hero/NocturneScene";
+import { buildSandboxedPageDocument } from "./sandboxedPageDocument";
+import {
+  MAPLE_AUTUMN_STYLE,
+  SAKURA_SUNSET_STYLE,
+  SEQUOIA_MIST_STYLE,
+  applyMapleAutumnVariant,
+  applySakuraSunsetVariant,
+  applySequoiaMistVariant,
+} from "../sylva-living-world/SylvaLivingWorldScene";
+
+export function KageLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(KAGE_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Kage — Where stillness reveals the unseen" sourceUrl="/landing-pages/kage.html" />;
+}
+
+export function CompleteShelfLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(COMPLETE_SHELF_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Working Volumes — Seven Tools for Making" sourceUrl="/landing-pages/complete-shelf-v2.html" />;
+}
+
+export function BestsellersBookShowcase(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(BESTSELLERS_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Field Manuals — Tools for Thought" sourceUrl="/landing-pages/bestsellers-book-showcase.html" />;
+}
+
+export function InkboundRiverStory(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(INKBOUND_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="The River Remembers — Inkbound" sourceUrl="/landing-pages/inkbound-river-story.html" />;
+}
+
+export function NoctilucaLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Noctiluca — The dark is not empty" sourceUrl="/landing-pages/noctiluca.html" />;
+}
+
+export function AgentArcanaLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Meng To — Agent Arcana" sourceUrl="/landing-pages/agent-arcana.html" />;
+}
+
+export const ASCII_FIELD_VARIANTS = ["vortex", "tide", "ridge", "canopy"] as const;
+export type AsciiFieldVariant = (typeof ASCII_FIELD_VARIANTS)[number];
+
+/* The vortex is the packaged page itself, loaded from its own URL. The other
+   three are complete documents of their own, built by
+   `scripts/build-ascii-scenes.mjs`: each carries the authored drawing system —
+   the layer depth rig, the near/far light ramp, the shading-cloud and grain
+   passes, the glyph-sampling pointer dust and its suction well — and replaces
+   only what the field is made of, its palette and its sky. None of them carries
+   any page chrome, so there is no copy to suppress. */
+const ASCII_FIELD_TITLES: Record<AsciiFieldVariant, string> = {
+  vortex: "Sable — ASCII vortex background",
+  tide: "ASCII Tide — glyph swell background",
+  ridge: "ASCII Ridge — glyph range background",
+  canopy: "ASCII Canopy — glyph tree background",
+};
+
+export type AsciiPageTransitionHeroProps = LandingPageProps & {
+  variant?: AsciiFieldVariant;
+  presentation?: "page" | "background";
+};
+
+export function AsciiPageTransitionHero({ variant = "vortex", presentation = "background", ...props }: AsciiPageTransitionHeroProps) {
+  const safeVariant = ASCII_FIELD_VARIANTS.includes(variant) ? variant : "vortex";
+  return (
+    <LandingPageFrame
+      {...props}
+      key={safeVariant}
+      backgroundCanvasSelector={presentation === "background" ? "#vortex" : undefined}
+      title={presentation === "page" && safeVariant === "vortex" ? "Sable — Agents should ship, not start over" : ASCII_FIELD_TITLES[safeVariant]}
+      sourceUrl="/landing-pages/ascii-page-transition-v1.html"
+      srcDoc={buildAsciiFieldDocument(safeVariant)}
+    />
+  );
+}
+
+export function AsciiPageTransitionPage(props: Omit<AsciiPageTransitionHeroProps, "presentation">) {
+  return <AsciiPageTransitionHero {...props} presentation="page" />;
+}
+
+export function TrochilHero(props: LandingPageProps) {
+  return <LandingPageFrame {...props} backgroundCanvasSelector="#gl" title="Trochil — particle field background" sourceUrl="/landing-pages/trochil-hero.html" />;
+}
+
+export function AttuneHero(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(ATTUNE_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="attune — Tuned to every visitor" sourceUrl="/landing-pages/attune-hero.html" />;
+}
+
+export const BETAWISE_GLOBE_VARIANTS = ["betawise", "moon", "mars", "saturn", "sun"] as const;
+export type BetawiseGlobeVariant = (typeof BETAWISE_GLOBE_VARIANTS)[number];
+
+const BETAWISE_GLOBE_TITLES: Record<BetawiseGlobeVariant, string> = {
+  betawise: "Betawise — network globe background",
+  moon: "Moon — mare and highland background",
+  mars: "Mars — albedo and crater background",
+  saturn: "Saturn — ring system background",
+  sun: "Sun — granulation and prominence background",
+};
+
+/**
+ * The packaged document ends its IIFE by publishing `window.__betawise`, whose
+ * `set()` writes into the scene's own CFG block and re-runs its `apply()`. Every
+ * slider below is one CFG key, so the controls drive the authored renderer
+ * rather than a second copy of its numbers — and they work identically on the
+ * byte-exact Earth document and on the four derived worlds.
+ */
+export type BetawiseGlobeSceneProps = {
+  /** Obliquity, radians. Read live by the frame loop, so it never jumps. */
+  tilt?: number;
+  /** How far the dark half of the surface map is pulled down: 1 - CFG.SEA_DIM. */
+  surfaceContrast?: number;
+  /** CFG.RIM_LIGHT — the halo the limb lights on its own. */
+  limbGlow?: number;
+  /** CFG.EXPOSURE, the tonemap's shoulder. */
+  exposure?: number;
+  /** CFG.BLOOM, how much of the three-mip chain is summed back. */
+  bloom?: number;
+  /** CFG.DUST_GAIN — the star volume, or the corona on the Sun. */
+  starGlow?: number;
+  /** CFG.ARC_GAIN — Earth's routes, Saturn's rings, the Sun's prominences. */
+  arcGlow?: number;
+};
+
+export type BetawiseLandingPageProps = LandingPageProps & PageTypographyProps & BetawiseGlobeSceneProps & {
+  variant?: BetawiseGlobeVariant;
+  presentation?: "page" | "background";
+};
+
+/** Lifts the scene sliders out so the rest can go on to the frame untouched. */
+function splitBetawiseSceneProps<T extends BetawiseGlobeSceneProps>(
+  { tilt, surfaceContrast, limbGlow, exposure, bloom, starGlow, arcGlow, ...rest }: T,
+): [BetawiseGlobeSceneProps, Omit<T, keyof BetawiseGlobeSceneProps>] {
+  return [{ tilt, surfaceContrast, limbGlow, exposure, bloom, starGlow, arcGlow }, rest];
+}
+
+/** `undefined` means "leave the document's own value alone". */
+function betawiseSceneSettings(scene: BetawiseGlobeSceneProps) {
+  const settings: Record<string, number> = {};
+  if (scene.tilt !== undefined) settings.TILT_X = scene.tilt;
+  if (scene.surfaceContrast !== undefined) settings.SEA_DIM = 1 - scene.surfaceContrast;
+  if (scene.limbGlow !== undefined) settings.RIM_LIGHT = scene.limbGlow;
+  if (scene.exposure !== undefined) settings.EXPOSURE = scene.exposure;
+  if (scene.bloom !== undefined) settings.BLOOM = scene.bloom;
+  if (scene.starGlow !== undefined) settings.DUST_GAIN = scene.starGlow;
+  if (scene.arcGlow !== undefined) settings.ARC_GAIN = scene.arcGlow;
+  return settings;
+}
+
+/**
+ * Re-identified only when a value actually moves, so the frame effect re-runs on
+ * a slider drag and on nothing else. `set()` writes CFG and calls the document's
+ * own apply(); TILT_X needs neither, because the frame loop reads it live.
+ */
+function useSceneSettings(settings: Record<string, number>) {
+  const signature = JSON.stringify(settings);
+  return useCallback((element: HTMLIFrameElement) => {
+    const scene = betawiseScene(element);
+    const values = JSON.parse(signature) as Record<string, number>;
+    if (scene && Object.keys(values).length > 0) scene.set(values);
+  }, [signature]);
+}
+
+/** Reads the scene's published hook, which is absent until the frame has run. */
+function betawiseScene(element: HTMLIFrameElement) {
+  const view = element.contentWindow as { __betawise?: { set: (values: Record<string, number>) => void } } | null;
+  return view?.__betawise;
+}
+
+/**
+ * The authored page is served byte-for-byte for the base entry — the frame loads it
+ * from its packaged URL, exactly as it did before the variants existed. The four
+ * other worlds are derived: the same authored document with anchored rewrites applied
+ * to its tuning block, the surface the stroke field samples, the star volume, and
+ * what the arc and marker layers carry. The rewrites live in betawiseGlobeVariants.js
+ * so the node test can assert every anchor against the packaged file rather than
+ * against a copy of it.
+ */
+export function BetawiseLandingPage({ variant = "betawise", presentation = "background", ...props }: BetawiseLandingPageProps) {
+  const safeVariant = BETAWISE_GLOBE_VARIANTS.includes(variant) ? variant : "betawise";
+  const [type, rest] = splitTypographyProps(props);
+  const customization = usePageTypography(BETAWISE_TYPOGRAPHY, type);
+  const [scene, frame] = splitBetawiseSceneProps(rest);
+  const srcDoc = useMemo(() => buildBetawiseGlobeDocument?.(safeVariant), [safeVariant]);
+  const settings = betawiseSceneSettings(scene);
+  const applyScene = useSceneSettings(settings);
+
+  return (
+    <LandingPageFrame
+      {...frame}
+      key={safeVariant}
+      backgroundCanvasSelector={presentation === "background" ? "#gl" : undefined}
+      applyScene={applyScene}
+      backgroundVisualSelector={presentation === "background" ? ".veil" : undefined}
+      customization={safeVariant === "betawise" ? customization : undefined}
+      title={BETAWISE_GLOBE_TITLES[safeVariant]}
+      sourceUrl="/landing-pages/betawise.html"
+      srcDoc={srcDoc}
+    />
+  );
+}
+
+export function BetawiseGlobePage(props: Omit<BetawiseLandingPageProps, "presentation">) {
+  return <BetawiseLandingPage {...props} presentation="page" />;
+}
+
+export function KairoLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(KAIRO_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="KAIRO — Heat With Intent." sourceUrl="/landing-pages/kairo-culinary.html" />;
+}
+
+export function VoltaAtelierLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(VOLTA_ATELIER_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Volta Atelier — Creative Design & 3D Studio" sourceUrl="/landing-pages/volta-atelier.html" />;
+}
+
+export type BetawiseHeroProps = LandingPageProps & PageTypographyProps & { presentation?: "page" | "background" };
+
+export function BetawiseHero({ presentation = "background", ...props }: BetawiseHeroProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(BETAWISE_HERO_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} backgroundCanvasSelector={presentation === "background" ? "#gl" : undefined} backgroundVisualSelector={presentation === "background" ? "#veil" : undefined} customization={customization} title={presentation === "background" ? "Betawise — particle bust background" : "Betawise — Redefining Attribution with AI-Powered Data Precision"} sourceUrl="/landing-pages/betawise-hero.html" />;
+}
+
+export function BetawiseParticlePage(props: Omit<BetawiseHeroProps, "presentation">) {
+  return <BetawiseHero {...props} presentation="page" />;
+}
+
+export const AXONIS_VARIANTS = ["signal-tree", "arbor", "vortex", "tide", "dune"] as const;
+export type AxonisVariant = (typeof AXONIS_VARIANTS)[number];
+
+/* The signal tree is the packaged page itself, loaded from its own URL so it
+   stays byte-exact. The other four are complete documents of their own, built
+   by `scripts/build-axonis-scenes.mjs`: each carries the authored drawing
+   system — the GPU-extruded ribbons, the dual-filter bloom, the composite and
+   its grain — and replaces the curve the strands follow, the palette and the
+   sky. None of them carries any page chrome, so there is no copy to suppress. */
+const AXONIS_DOCUMENTS: Record<Exclude<AxonisVariant, "signal-tree">, string> = {
+  arbor: axonisArborSource,
+  vortex: axonisVortexSource,
+  tide: axonisTideSource,
+  dune: axonisDuneSource,
+};
+
+const AXONIS_TITLES: Record<AxonisVariant, string> = {
+  "signal-tree": "Axonis — signal tree background",
+  arbor: "Axonis — canopy and root background",
+  vortex: "Axonis — deep field funnel background",
+  tide: "Axonis — open water background",
+  dune: "Axonis — sand sea background",
+};
+
+export type AxonisLandingPageProps = LandingPageProps & PageTypographyProps & {
+  variant?: AxonisVariant;
+  presentation?: "page" | "background";
+};
+
+export function AxonisLandingPage({ variant = "signal-tree", presentation = "background", ...props }: AxonisLandingPageProps) {
+  const safeVariant = AXONIS_VARIANTS.includes(variant) ? variant : "signal-tree";
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(AXONIS_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} backgroundCanvasSelector={presentation === "background" ? "#scene" : undefined} key={safeVariant} customization={safeVariant === "signal-tree" ? customization : undefined} title={presentation === "page" && safeVariant === "signal-tree" ? "Axonis — Adaptive intelligence systems" : AXONIS_TITLES[safeVariant]} sourceUrl="/landing-pages/axonis.html" srcDoc={safeVariant === "signal-tree" ? undefined : AXONIS_DOCUMENTS[safeVariant]} />;
+}
+
+export function AxonisPage(props: Omit<AxonisLandingPageProps, "presentation">) {
+  return <AxonisLandingPage {...props} presentation="page" />;
+}
+
+export function HalfwaveLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Halfwave — analogue design studio" sourceUrl="/landing-pages/codescan.html" />;
+}
+
+// The Halfwave build re-authored as a solo motion designer's portfolio.
+export type MiraSolvangLandingPageProps = LandingPageProps & { presentation?: "page" | "background" };
+
+export function MiraSolvangLandingPage({ presentation = "background", ...props }: MiraSolvangLandingPageProps) {
+  return <LandingPageFrame {...props} backgroundCanvasSelector={presentation === "background" ? "#gl" : undefined} title={presentation === "background" ? "Mira Solvang — monitor wall background" : "Mira Solvang — Motion Designer"} sourceUrl="/landing-pages/mira-solvang.html" />;
+}
+
+export function MiraSolvangPage(props: Omit<MiraSolvangLandingPageProps, "presentation">) {
+  return <MiraSolvangLandingPage {...props} presentation="page" />;
+}
+
+export const TIDECREST_HERO_VARIANTS = ["tidecrest", "harbour-nights", "dune-reach", "river-hollow"] as const;
+export type TidecrestHeroVariant = (typeof TIDECREST_HERO_VARIANTS)[number];
+
+export type TidecrestHeroProps = LandingPageProps & PageTypographyProps & { variant?: TidecrestHeroVariant; presentation?: "page" | "background" };
+
+const TIDECREST_HERO_BASE_URL = "/landing-pages/tidecrest-hero.html";
+
+const TIDECREST_HERO_TITLES: Record<TidecrestHeroVariant, string> = {
+  tidecrest: "Tidecrest — ridgeline field background",
+  "harbour-nights": "Tidecrest — harbour nights background",
+  "dune-reach": "Tidecrest — dune reach background",
+  "river-hollow": "Tidecrest — river hollow background",
+};
+
+/**
+ * The authored page is served byte-for-byte for the base entry — the frame loads it
+ * from its packaged URL, exactly as it did before the variants existed. The three
+ * re-dressings are derived: the same authored document with anchored rewrites applied
+ * to the height field, the extra vertices folded into its terrain buffers, and the
+ * four colours the whole scene is graded through. The rewrites live in
+ * tidecrestVariants.js so the node test can assert every anchor against the packaged
+ * file rather than against a copy of it.
+ */
+export function TidecrestHero({ variant = "tidecrest", presentation = "background", ...props }: TidecrestHeroProps) {
+  const safeVariant = TIDECREST_HERO_VARIANTS.includes(variant) ? variant : "tidecrest";
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(TIDECREST_TYPOGRAPHY, type);
+  /* the optional call is not defensiveness: on the public site the builder is a
+     stub, and the Pro entry it belongs to is never mounted there */
+  const srcDoc = useMemo(() => {
+    const source = buildTidecrestDocument?.(safeVariant);
+    if (!source) return undefined;
+    return buildSandboxedPageDocument(source, {
+      presentation,
+      canvasSelector: "#gl",
+    });
+  }, [presentation, safeVariant]);
+
+  return (
+    <LandingPageFrame
+      {...frame}
+      key={safeVariant}
+      backgroundCanvasSelector={presentation === "background" ? "#gl" : undefined}
+      customization={customization}
+      title={TIDECREST_HERO_TITLES[safeVariant]}
+      sourceUrl={TIDECREST_HERO_BASE_URL}
+      srcDoc={srcDoc}
+    />
+  );
+}
+
+export function TidecrestPage(props: Omit<TidecrestHeroProps, "presentation">) {
+  return <TidecrestHero {...props} presentation="page" />;
+}
+
+export function CentraLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Centra — Intelligence In The Open" sourceUrl="/landing-pages/centra.html" />;
+}
+
+export const NOCTURNE_CONTROL_KEYS = [
+  "objectScale",
+  "floatMotion",
+  "metalHighlight",
+  "haloScale",
+  "haloGlow",
+  "planetScale",
+  "sunAzimuth",
+  "planetGlow",
+  "surfaceRelief",
+  "clouds",
+  "cityLights",
+  "atmosphere",
+  "stars",
+  "waterMotion",
+  "pointerOrbit",
+] as const;
+export type NocturneControlKey = (typeof NOCTURNE_CONTROL_KEYS)[number];
+
+export type NocturneHeroProps = LandingPageProps & PageTypographyProps &
+  Partial<Record<NocturneControlKey, number>> & { variant?: NocturneVariant; presentation?: "page" | "background" };
+
+/**
+ * The authored page is lumen.html; the page it holds is Nocturne. This entry
+ * serves its scene alone — the marketing layer is gone from the document rather
+ * than hidden inside the frame — and each variant swaps the body in the sky and
+ * the object over the water. The canvas selector is kept so the presentation
+ * pass still owns the layer if anything else ever lands in the document.
+ */
+export function NocturneHero({
+  variant = "midnight",
+  presentation = "background",
+  objectScale,
+  floatMotion,
+  metalHighlight,
+  haloScale,
+  haloGlow,
+  planetScale,
+  sunAzimuth,
+  planetGlow,
+  surfaceRelief,
+  clouds,
+  cityLights,
+  atmosphere,
+  stars,
+  waterMotion,
+  pointerOrbit,
+  ...props
+}: NocturneHeroProps) {
+  const safeVariant = NOCTURNE_VARIANTS.includes(variant) ? variant : "midnight";
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(NOCTURNE_TYPOGRAPHY, type);
+  const srcDoc = useMemo(
+    () => presentation === "page" && safeVariant === "midnight" ? undefined : buildNocturneDocument(safeVariant),
+    [presentation, safeVariant],
+  );
+  const applyScene = useCallback((element: HTMLIFrameElement) => {
+    const given = {
+      objectScale,
+      floatMotion,
+      metalHighlight,
+      haloScale,
+      haloGlow,
+      planetScale,
+      sunAzimuth,
+      planetGlow,
+      surfaceRelief,
+      clouds,
+      cityLights,
+      atmosphere,
+      stars,
+      waterMotion,
+      pointerOrbit,
+    };
+    const values: Record<string, number> = {};
+    for (const [key, value] of Object.entries(given)) {
+      if (typeof value === "number" && Number.isFinite(value)) values[key] = value;
+    }
+    element.contentWindow?.postMessage({ type: "threeui-nocturne-controls", values }, "*");
+  }, [
+    atmosphere,
+    cityLights,
+    clouds,
+    floatMotion,
+    haloGlow,
+    haloScale,
+    metalHighlight,
+    objectScale,
+    planetGlow,
+    planetScale,
+    pointerOrbit,
+    stars,
+    sunAzimuth,
+    surfaceRelief,
+    waterMotion,
+  ]);
+  return (
+    <LandingPageFrame
+      {...frame}
+      key={safeVariant}
+      applyScene={applyScene}
+      backgroundCanvasSelector={presentation === "background" ? "#gl" : undefined}
+      customization={customization}
+      title={NOCTURNE_TITLES[safeVariant]}
+      sourceUrl="/landing-pages/lumen.html"
+      srcDoc={srcDoc}
+    />
+  );
+}
+
+export function NocturnePage(props: Omit<NocturneHeroProps, "presentation">) {
+  return <NocturneHero {...props} presentation="page" />;
+}
+
+export const MERIDIAN_VARIANTS = ["earth", "moon", "mars", "saturn"] as const;
+export type MeridianVariant = (typeof MERIDIAN_VARIANTS)[number];
+
+/** Every knob `window.__meridian` in ascend.html will accept, as a multiplier
+    over what the page was authored with — so 1 is the scene, not the middle of
+    a slider, and one control set fits all four bodies. */
+export const MERIDIAN_CONTROL_KEYS = [
+  "orbitSpeed",
+  "pointerSway",
+  "sunAzimuth",
+  "haze",
+  "halo",
+  "exposure",
+  "relief",
+  "clouds",
+  "stars",
+  "rings",
+] as const;
+export type MeridianControlKey = (typeof MERIDIAN_CONTROL_KEYS)[number];
+
+export type MeridianLandingPageProps = LandingPageProps &
+  Partial<Record<MeridianControlKey, number>> & { variant?: MeridianVariant; presentation?: "page" | "background" };
+
+const MERIDIAN_TITLES: Record<MeridianVariant, string> = {
+  earth: "Meridian — orbital Earth background",
+  moon: "Meridian — orbital Moon background",
+  mars: "Meridian — orbital Mars background",
+  saturn: "Meridian — orbital Saturn background",
+};
+
+/**
+ * The authored file is named ascend.html; the page it holds is Meridian.
+ *
+ * Earth is served from that URL, exactly as it was before the other bodies
+ * existed. The three siblings are derived: the same document with anchored
+ * rewrites applied to what the surface shader builds its albedo out of, how
+ * much air stands over it, and the colours the frame is graded through —
+ * plus, for Saturn, a ring system and the shadow it lays across the disc. The
+ * rewrites live in meridianVariants.js so the node test can assert every
+ * anchor against the packaged file rather than against a copy of it.
+ */
+export function MeridianLandingPage({
+  variant = "earth",
+  presentation = "background",
+  orbitSpeed,
+  pointerSway,
+  sunAzimuth,
+  haze,
+  halo,
+  exposure,
+  relief,
+  clouds,
+  stars,
+  rings,
+  ...props
+}: MeridianLandingPageProps) {
+  const safeVariant = MERIDIAN_VARIANTS.includes(variant) ? variant : "earth";
+  /* the optional call is not defensiveness: on the public site the builder is a
+     stub, and the Pro entry it belongs to is never mounted there */
+  const srcDoc = useMemo(() => buildMeridianDocument?.(safeVariant, presentation), [presentation, safeVariant]);
+
+  /* Rebuilt whenever a slider moves, which is what re-runs the frame effect.
+     A knob left undefined never reaches the document, so the authored value
+     stands rather than being overwritten by a slider's own default. The three
+     that are not uniforms — orbit speed, pointer sway, sun azimuth — need no
+     apply at all: the frame loop reads them every frame. */
+  const applyScene = useCallback((element: HTMLIFrameElement) => {
+    const given = { orbitSpeed, pointerSway, sunAzimuth, haze, halo, exposure, relief, clouds, stars, rings };
+    const values: Record<string, number> = {};
+    for (const [key, value] of Object.entries(given)) {
+      if (typeof value === "number" && Number.isFinite(value)) values[key] = value;
+    }
+    if (Object.keys(values).length === 0) return;
+
+    if (safeVariant === "earth") {
+      const scene = (element.contentWindow as { __meridian?: { set: (values: Record<string, number>) => void } } | null)?.__meridian;
+      scene?.set(values);
+      return;
+    }
+
+    /* Derived documents use srcDoc and intentionally keep an opaque sandbox
+       origin. Reaching into contentWindow throws there, so their control seam
+       travels through the same isolated postMessage bridge as Nocturne. */
+    element.contentWindow?.postMessage({ type: "threeui-meridian-controls", values }, "*");
+  }, [clouds, exposure, halo, haze, orbitSpeed, pointerSway, relief, rings, safeVariant, stars, sunAzimuth]);
+
+  return (
+    <LandingPageFrame
+      {...props}
+      key={safeVariant}
+      applyScene={applyScene}
+      backgroundCanvasSelector={presentation === "background" ? "#scene" : undefined}
+      backgroundVisualSelector={presentation === "background" ? "#veil" : undefined}
+      title={MERIDIAN_TITLES[safeVariant]}
+      sourceUrl="/landing-pages/ascend.html"
+      srcDoc={srcDoc}
+    />
+  );
+}
+
+export function MeridianPage(props: Omit<MeridianLandingPageProps, "presentation">) {
+  return <MeridianLandingPage {...props} presentation="page" />;
+}
+
+export function MengToSketchbookLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(MENG_TO_SKETCHBOOK_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Meng To — Singapore Sketchbook" sourceUrl="/landing-pages/meng-to-sketchbook.html" />;
+}
+
+export function SekiteiLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Sekitei — One day in a dry garden" sourceUrl="/landing-pages/sekitei.html" />;
+}
+
+export function RenderLabLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(RENDERLAB_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="RenderLab — Motion House" sourceUrl="/landing-pages/renderlab-motion-house.html" />;
+}
+
+export function EchoValeLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(ECHO_VALE_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Echo Vale — Follow the signal beneath the stone" sourceUrl="/landing-pages/echo-vale.html" />;
+}
+
+export function AurelloLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(AURELLO_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Aurello — Orange Spritz, Ready to Drink" sourceUrl="/landing-pages/aurello-beverage.html" />;
+}
+
+export function LampLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Latent — We develop film slowly, by hand" sourceUrl="/landing-pages/lamp.html" />;
+}
+
+export function MaraVossLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(MARA_VOSS_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Mara Voss — An Archive of Vanishing Sounds" sourceUrl="/landing-pages/mara-voss.html" />;
+}
+
+export function Mk78KeyboardLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(MK78_KEYBOARD_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="MK·78 — Every key. Every detail." sourceUrl="/landing-pages/mk78-keyboard.html" />;
+}
+
+export function NoemaN1LandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(NOEMA_N1_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="NOEMA N1 — A machine that listens" sourceUrl="/landing-pages/noema-n1.html" />;
+}
+
+export function AnthraA40LandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(ANTHRA_A40_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="Anthra A-40 — The titanium automatic" sourceUrl="/landing-pages/anthra-a40.html" />;
+}
+
+export function AstralAtlasLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Astral Atlas — Singular Objects in Orbit" sourceUrl="/landing-pages/astral-atlas.html" />;
+}
+
+export function MugenLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="MUGEN — The Gate Remembers" sourceUrl="/landing-pages/mugen.html" />;
+}
+
+export function NodalLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="NODAL — Series A 40mm T1.9" sourceUrl="/landing-pages/nodal.html" />;
+}
+
+export function Kestrel65LandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="Kestrel 65" sourceUrl="/landing-pages/kestrel-65.html" />;
+}
+
+export function OscillaM1LandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="OSCILLA M-1 — Blender-baked synthesiser" sourceUrl="/landing-pages/oscilla-m1.html" />;
+}
+
+// Halvorsen is Understory's layout and hand scene recut as a dark monotone
+// portfolio; the 3D pipeline is unchanged, only the page tone around it.
+export function HalvorsenLandingPage(props: LandingPageProps & PageTypographyProps) {
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(HALVORSEN_TYPOGRAPHY, type);
+  return <LandingPageFrame {...frame} customization={customization} title="halvorsen — Interfaces built to disappear" sourceUrl="/landing-pages/halvorsen.html" />;
+}
+
+export function SublevelStudioLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="sublevel.studio — We build the stuff people remember" sourceUrl="/landing-pages/sublevel-studio.html" />;
+}
+
+// The authored file is named cogniwave.html; the page it holds is Understory.
+export function UnderstoryLandingPage(props: LandingPageProps) {
+  return <LandingPageFrame {...props} title="understory — What grows here grows slowly" sourceUrl="/landing-pages/cogniwave.html" />;
+}
+
+export const SYLVA_HERO_VARIANTS = ["living-green", "sakura-sunset", "maple-autumn", "sequoia-mist"] as const;
+export type SylvaHeroVariant = (typeof SYLVA_HERO_VARIANTS)[number];
+
+export type SylvaHeroProps = LandingPageProps & PageTypographyProps & { variant?: SylvaHeroVariant };
+
+const SYLVA_HERO_BASE_URL = "/landing-pages/inner-green-3d.html";
+
+/**
+ * The authored page is served byte-for-byte for Living Green. Sakura Sunset is derived:
+ * the same authored document with the owner's authored Sakura Sunset scene transformation
+ * applied — reused from SylvaLivingWorldScene rather than reimplemented here, so the two
+ * entries can never drift apart. A <base> is injected because a srcdoc frame would otherwise
+ * resolve the authored relative asset paths against the app origin instead of /landing-pages/.
+ */
+const SYLVA_HERO_ASSET_DIR = "inner-green-assets/";
+const SYLVA_HERO_ASSET_BASE = `${SYLVA_HERO_BASE_URL.replace(/[^/]+$/, "")}${SYLVA_HERO_ASSET_DIR}`;
+
+/**
+ * Page chrome for the derived variants. Each one puts a different field behind
+ * the page — dusk plum under Sakura, cold slate under Maple — so the dock is
+ * retoned to sit in that light, and the two native controls get the frosted
+ * backdrop a flat field no longer gives them for free.
+ *
+ * The authored page documents why its dock carries no backdrop-filter: over a
+ * canvas that repaints every frame the backdrop is re-sampled and re-blurred
+ * every frame, which measured ~20 fps off the whole page. That reasoning still
+ * holds for a bar the width of the nav, so the dock keeps its translucent panel
+ * and only its colour changes. The buttons are small and already clipped to
+ * their own silhouette, so the blur is bounded to those two shapes.
+ */
+type SylvaHeroChromeTone = {
+  edge: string;
+  lift: string;
+  panel: string;
+  drop: string;
+  nearPanel: string;
+  mark: string;
+  markInk: string;
+  plate: string;
+};
+
+const SYLVA_HERO_CHROME_TONES: Record<Exclude<SylvaHeroVariant, "living-green">, SylvaHeroChromeTone> = {
+  "sakura-sunset": {
+    edge: "255, 236, 243",
+    lift: "255, 240, 246",
+    panel: "48, 33, 43",
+    drop: "20, 10, 18",
+    nearPanel: "53, 35, 46",
+    mark: "#f3e9ee",
+    markInk: "#33222c",
+    plate: "58, 40, 51",
+  },
+  "maple-autumn": {
+    edge: "228, 240, 246",
+    lift: "232, 244, 250",
+    panel: "33, 41, 47",
+    drop: "8, 14, 18",
+    nearPanel: "37, 46, 53",
+    mark: "#e8eff2",
+    markInk: "#23303a",
+    plate: "34, 46, 54",
+  },
+  /* The fog field is the one pale ground of the four, so this dock is the one
+     that has to hold its own against light rather than sit in the dark. */
+  "sequoia-mist": {
+    edge: "236, 244, 232",
+    lift: "238, 246, 232",
+    panel: "38, 48, 40",
+    drop: "16, 24, 18",
+    nearPanel: "43, 54, 44",
+    mark: "#eef3e8",
+    markInk: "#26302a",
+    plate: "48, 60, 50",
+  },
+};
+
+function sylvaHeroChromeStyle(tone: SylvaHeroChromeTone) {
+  return `<style data-threeui-sylva-hero-chrome>
+/* ── nav: the authored glass, retoned to the field behind it ────────────── */
+.dock {
+  border-color: rgba(${tone.edge}, 0.13) !important;
+  background:
+    linear-gradient(180deg, rgba(${tone.lift}, 0.06), rgba(${tone.lift}, 0) 42%),
+    rgba(${tone.panel}, 0.76) !important;
+  box-shadow: 0 calc(8 * var(--u)) calc(22 * var(--u)) rgba(${tone.drop}, 0.34),
+              inset 0 1px rgba(${tone.lift}, 0.07) !important;
+}
+
+.dock-item[data-near="true"] {
+  border-color: rgba(${tone.edge}, 0.20) !important;
+  background: rgba(${tone.nearPanel}, 0.94) !important;
+  box-shadow: 0 calc(7 * var(--u)) calc(16 * var(--u)) rgba(${tone.drop}, 0.32) !important;
+}
+
+.dock-mark {
+  background: ${tone.mark} !important;
+  border-color: ${tone.mark} !important;
+  color: ${tone.markInk} !important;
+}
+
+.dock-mark[data-near="true"] {
+  background: #fff !important;
+  border-color: #fff !important;
+  color: ${tone.markInk} !important;
+}
+
+.dock-item--enter { background: rgba(${tone.lift}, 0.085) !important; }
+
+/* ── the two native controls ────────────────────────────────────────────
+   The frosted plate cannot go on the clip elements themselves: their clip is
+   cut to the button's whole bloom, so the blur would read as a slab twice the
+   button's size. It cannot go inside them either — clip-path makes a backdrop
+   root, so a child's backdrop-filter would have nothing behind it to sample.
+
+   So each plate is its own layer outside the reveal clip, sized one unit past
+   the native 202 x 60 Explore control and the 88-unit Play control. The small
+   overshoot lets the frost meet the button edge instead of stopping inside it. */
+.pill-glass {
+  position: absolute;
+  z-index: 4;
+  left: calc(644 * var(--u));
+  top: calc(360 * var(--u));
+  width: calc(204 * var(--u));
+  height: calc(62 * var(--u));
+  margin: calc(-31 * var(--u)) 0 0 calc(-102 * var(--u));
+  border-radius: 999px;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(calc(13 * var(--u))) saturate(1.16);
+  backdrop-filter: blur(calc(13 * var(--u))) saturate(1.16);
+  background: rgba(${tone.plate}, 0.22);
+}
+
+.play-wrap::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: calc(90 * var(--u));
+  height: calc(90 * var(--u));
+  margin: calc(-45 * var(--u)) 0 0 calc(-45 * var(--u));
+  border-radius: 50%;
+  -webkit-backdrop-filter: blur(calc(13 * var(--u))) saturate(1.16);
+  backdrop-filter: blur(calc(13 * var(--u))) saturate(1.16);
+  background: rgba(${tone.plate}, 0.22);
+}
+</style>`;
+}
+
+const SYLVA_HERO_SCENES: Record<Exclude<SylvaHeroVariant, "living-green">, {
+  style: string;
+  apply: (source: string) => string;
+}> = {
+  "sakura-sunset": { style: SAKURA_SUNSET_STYLE, apply: applySakuraSunsetVariant },
+  "maple-autumn": { style: MAPLE_AUTUMN_STYLE, apply: applyMapleAutumnVariant },
+  "sequoia-mist": { style: SEQUOIA_MIST_STYLE, apply: applySequoiaMistVariant },
+};
+
+export function buildSylvaHeroDocument(variant: Exclude<SylvaHeroVariant, "living-green">) {
+  const scene = SYLVA_HERO_SCENES[variant];
+  // The authored relative asset paths are rewritten to absolute ones rather than steered with
+  // <base>: a srcdoc frame's preload scanner resolves against the parent document and ignores
+  // <base>, so it would speculatively 404 on every asset before the real parse corrected it.
+  const rooted = innerGreenSource
+    .replaceAll(SYLVA_HERO_ASSET_DIR, SYLVA_HERO_ASSET_BASE)
+    .replace("</head>", `${scene.style}${sylvaHeroChromeStyle(SYLVA_HERO_CHROME_TONES[variant])}</head>`)
+    // The Explore button's frosted plate has to be a sibling of its clip rather
+    // than a child, so it is one added element rather than a CSS-only change.
+    .replace(
+      '<div class="pill-clip">',
+      '<span class="pill-glass" aria-hidden="true"></span>\n    <div class="pill-clip">',
+    );
+  if (!rooted.includes("pill-glass")) throw new Error("Sylva hero chrome no longer matches the authored page.");
+  return scene.apply(rooted);
+}
+
+const SYLVA_HERO_TITLES: Record<SylvaHeroVariant, string> = {
+  "living-green": "Sylva — Into the living world",
+  "sakura-sunset": "Sylva — Sakura Sunset",
+  "maple-autumn": "Sylva — Maple Autumn",
+  "sequoia-mist": "Sylva — Sequoia Mist",
+};
+
+export function SylvaHero({ variant = "living-green", ...props }: SylvaHeroProps) {
+  const safeVariant = SYLVA_HERO_VARIANTS.includes(variant) ? variant : "living-green";
+  const [type, frame] = splitTypographyProps(props);
+  const customization = usePageTypography(SYLVA_TYPOGRAPHY, type);
+  const srcDoc = useMemo(
+    () => (safeVariant === "living-green" ? undefined : buildSylvaHeroDocument(safeVariant)),
+    [safeVariant],
+  );
+
+  return (
+    <LandingPageFrame
+      {...frame}
+      key={safeVariant}
+      customization={customization}
+      title={SYLVA_HERO_TITLES[safeVariant]}
+      sourceUrl={SYLVA_HERO_BASE_URL}
+      srcDoc={srcDoc}
+    />
+  );
+}
+```
+
+### `src/shaders/landing-pages/LandingPageFrame.tsx`
+
+Role: frame-component · 177 lines · 6756 bytes · SHA-256 `61de2cc50888aac4ac5557420b07fa47ed3543bb57c1e0055fafdefa53dbaa78`
+
+```tsx
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+
+import {
+  applyPageCustomization,
+  postPageCustomization,
+  type LandingPageCustomization,
+} from "./pageTypography";
+
+export type LandingPageFrameProps = {
+  /**
+   * CSS selector for the authored visual layer when a complete page is reused
+   * as a scene-only Background. The document stays untouched on disk; its UI
+   * is suppressed only inside this catalog frame.
+   */
+  backgroundCanvasSelector?: string;
+  /** Extra authored atmosphere layers (scrims, veils, vignettes) to retain. */
+  backgroundVisualSelector?: string;
+  className?: string;
+  /** Loaded directly when the packaged document is byte-exact. */
+  sourceUrl: string;
+  /** Set only for derived variants; the frame renders this instead of fetching sourceUrl. */
+  srcDoc?: string;
+  style?: CSSProperties;
+  title: string;
+  /**
+   * Typography and colour overrides, appended to the loaded document's own
+   * head. The packaged file is never rewritten, so it stays byte-exact.
+   */
+  customization?: LandingPageCustomization;
+  /**
+   * Runs against the live frame on every load and whenever the callback's own
+   * identity changes, which is how a page that exposes a scene API of its own
+   * receives slider values. Memoize it on the values it reads.
+   */
+  applyScene?: (frame: HTMLIFrameElement) => void;
+};
+
+export type LandingPageProps = Omit<
+  LandingPageFrameProps,
+  "sourceUrl" | "title" | "customization" | "backgroundCanvasSelector" | "backgroundVisualSelector"
+>;
+
+const URL_FRAME_SANDBOX = "allow-downloads allow-forms allow-modals allow-popups allow-same-origin allow-scripts";
+const SRCDOC_FRAME_SANDBOX = "allow-downloads allow-forms allow-modals allow-popups allow-scripts";
+
+const BACKGROUND_PRESENTATION_STYLE_ID = "threeui-background-presentation";
+
+export function applyBackgroundPresentation(
+  frame: HTMLIFrameElement | null,
+  backgroundCanvasSelector?: string,
+  backgroundVisualSelector?: string,
+) {
+  const document = frame?.contentDocument;
+  if (!document) return;
+
+  document.getElementById(BACKGROUND_PRESENTATION_STYLE_ID)?.remove();
+  document.querySelectorAll("[data-threeui-background-layer]").forEach((element) => {
+    element.removeAttribute("data-threeui-background-layer");
+    element.removeAttribute("data-threeui-background-fill");
+  });
+
+  if (!backgroundCanvasSelector) {
+    document.documentElement.removeAttribute("data-threeui-presentation");
+    return;
+  }
+
+  const canvas = document.querySelector<HTMLElement>(backgroundCanvasSelector);
+  if (!canvas) return;
+
+  canvas.setAttribute("data-threeui-background-layer", "");
+  canvas.setAttribute("data-threeui-background-fill", "");
+  if (backgroundVisualSelector) {
+    document.querySelectorAll<HTMLElement>(backgroundVisualSelector).forEach((element) => {
+      element.setAttribute("data-threeui-background-layer", "");
+    });
+  }
+
+  document.documentElement.setAttribute("data-threeui-presentation", "background");
+  const presentationStyle = document.createElement("style");
+  presentationStyle.id = BACKGROUND_PRESENTATION_STYLE_ID;
+  presentationStyle.textContent = `
+    html[data-threeui-presentation="background"],
+    html[data-threeui-presentation="background"] body {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      overflow: hidden !important;
+    }
+    html[data-threeui-presentation="background"] body * {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    html[data-threeui-presentation="background"] [data-threeui-background-layer],
+    html[data-threeui-presentation="background"] [data-threeui-background-layer] * {
+      visibility: visible !important;
+    }
+    html[data-threeui-presentation="background"] [data-threeui-background-fill] {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      transform: none !important;
+    }
+  `;
+  document.head.appendChild(presentationStyle);
+
+  // The original renderer may have measured a split hero or section-sized
+  // canvas. Re-run its authored resize path after the layer becomes full-frame.
+  frame.contentWindow?.requestAnimationFrame(() => {
+    frame.contentWindow?.dispatchEvent(new Event("resize"));
+  });
+}
+
+export function LandingPageFrame({
+  applyScene,
+  backgroundCanvasSelector,
+  backgroundVisualSelector,
+  className = "",
+  customization,
+  sourceUrl,
+  srcDoc,
+  style,
+  title,
+}: LandingPageFrameProps) {
+  const [ready, setReady] = useState(false);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+
+  // Re-applied on every change; the load handler covers the first paint and
+  // any navigation the page does inside its own frame.
+  useEffect(() => {
+    applyPageCustomization(frameRef.current, customization);
+    postPageCustomization(frameRef.current, customization);
+    applyBackgroundPresentation(frameRef.current, backgroundCanvasSelector, backgroundVisualSelector);
+    if (frameRef.current) applyScene?.(frameRef.current);
+  }, [applyScene, backgroundCanvasSelector, backgroundVisualSelector, customization]);
+
+  return (
+    <div
+      className={`threeui-background landing-page-frame${className ? ` ${className}` : ""}`}
+      data-state={ready ? "ready" : "loading"}
+      style={{ position: "relative", overflow: "hidden", background: "#080808", pointerEvents: "auto", ...style }}
+    >
+      <iframe
+        ref={frameRef}
+        title={title}
+        {...(srcDoc ? { srcDoc } : { src: sourceUrl })}
+        sandbox={srcDoc ? SRCDOC_FRAME_SANDBOX : URL_FRAME_SANDBOX}
+        loading="eager"
+        onLoad={(event) => {
+          applyPageCustomization(event.currentTarget, customization);
+          postPageCustomization(event.currentTarget, customization);
+          applyBackgroundPresentation(event.currentTarget, backgroundCanvasSelector, backgroundVisualSelector);
+          applyScene?.(event.currentTarget);
+          setReady(true);
+        }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "block",
+          width: "100%",
+          height: "100%",
+          border: 0,
+          background: "#080808",
+          // A background presentation begins life as the complete source page.
+          // Keep that page visually sealed until onLoad has installed the
+          // scene-only CSS, otherwise its authored navigation/copy can flash for
+          // one paint before the canvas is isolated.
+          opacity: backgroundCanvasSelector && !ready ? 0 : 1,
+          pointerEvents: backgroundCanvasSelector && !ready ? "none" : "auto",
+        }}
+      />
+    </div>
+  );
+}
+```
+
+### `public/landing-pages/bestsellers-book-showcase.html`
+
+Role: canonical-source · 1871 lines · 3546441 bytes · SHA-256 `7c1ed1ca4a4c58f1c33956c84edd8f7ba450ea0312df718701e634a207568138`
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#29251d">
+  <meta
+    name="description"
+    content="An earth-toned interactive field library for Codex, Claude Code, and Cursor."
+  >
+  <title>Field Manuals — Tools for Thought</title>
+  <style>
+    :root {
+      --ink: #29251d;
+      --ink-deep: #1d1a15;
+      --ink-soft: #3a382b;
+      --pink: #c3a47b;
+      --pink-bright: #dbc39c;
+      --text: #eee2ca;
+      --muted: #c5b79e;
+      --periwinkle: #b7976c;
+      --sage: #89946f;
+      --clay: #a96346;
+      --moss: #5f684f;
+      --paper: #eadfc7;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+        Baskerville, Georgia, serif;
+      --ease: cubic-bezier(.2, .78, .2, 1);
+      --mx: 0px;
+      --my: 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--ink);
+    }
+
+    body {
+      min-height: 100svh;
+      overflow: hidden;
+      color: var(--text);
+      font-family: var(--serif);
+      -webkit-font-smoothing: antialiased;
+      cursor: default;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    .stage {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      min-height: 100svh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 49% 84%, rgba(117, 102, 71, .2), transparent 34%),
+        radial-gradient(circle at 14% 4%, rgba(100, 112, 77, .12), transparent 28%),
+        linear-gradient(180deg, #343025 0%, var(--ink) 48%, #211e18 100%);
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      z-index: 30;
+      inset: 0;
+      pointer-events: none;
+      opacity: .14;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    .topbar {
+      position: fixed;
+      z-index: 50;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 26px 3.2vw;
+      pointer-events: none;
+    }
+
+    .brand {
+      color: var(--pink);
+      font-size: clamp(23px, 2.1vw, 30px);
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: -.035em;
+      line-height: 1;
+      text-decoration: none;
+      pointer-events: auto;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .icon-button,
+    .ticket-button,
+    .close-button,
+    .pill,
+    .book-card {
+      border: 0;
+      outline: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-button,
+    .ticket-button {
+      height: 50px;
+      border: 1px solid rgba(61, 49, 35, .18);
+      background: var(--paper);
+      color: #30291f;
+      box-shadow: 0 8px 26px rgba(28, 22, 14, .13);
+      transition: transform 240ms var(--ease), background-color 240ms ease;
+    }
+
+    .icon-button {
+      display: grid;
+      width: 50px;
+      place-items: center;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .menu-glyph {
+      position: relative;
+      width: 14px;
+      height: 10px;
+    }
+
+    .menu-glyph::before,
+    .menu-glyph::after {
+      content: "";
+      position: absolute;
+      left: 1px;
+      width: 12px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      transition: transform 300ms var(--ease), top 300ms var(--ease);
+    }
+
+    .menu-glyph::before {
+      top: 2px;
+    }
+
+    .menu-glyph::after {
+      top: 7px;
+    }
+
+    [data-menu="open"] .menu-glyph::before {
+      top: 5px;
+      transform: rotate(45deg);
+    }
+
+    [data-menu="open"] .menu-glyph::after {
+      top: 5px;
+      transform: rotate(-45deg);
+    }
+
+    .ticket-button {
+      display: inline-grid;
+      min-width: 138px;
+      padding: 0 25px;
+      place-items: center;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .icon-button:hover,
+    .ticket-button:hover {
+      transform: translateY(-3px);
+      background: #f7edd9;
+    }
+
+    .icon-button:focus-visible,
+    .ticket-button:focus-visible,
+    .close-button:focus-visible,
+    .pill:focus-visible,
+    .menu-link:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 4px;
+    }
+
+    .hero-word {
+      position: absolute;
+      z-index: 1;
+      top: 11.5vh;
+      left: 50%;
+      margin: 0;
+      color: var(--pink);
+      font-size: clamp(184px, 22vw, 325px);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -.085em;
+      line-height: .84;
+      white-space: nowrap;
+      transform: translate3d(calc(-50% + var(--mx) * -.12), calc(var(--my) * -.12), 0);
+      transition: opacity 700ms ease, filter 700ms ease, transform 900ms var(--ease);
+      user-select: none;
+    }
+
+    .gallery {
+      position: absolute;
+      z-index: 5;
+      inset: 0;
+      perspective: 1400px;
+      transform-style: flat;
+    }
+
+    .book-card {
+      --hover-y: 0px;
+      --local-x: 0px;
+      --local-y: 0px;
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--w);
+      aspect-ratio: .672 / 1;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      transform:
+        translate3d(
+          calc(-50% + var(--local-x)),
+          calc(var(--hover-y) + var(--local-y)),
+          0
+        )
+        rotate(var(--r))
+        rotateY(var(--yaw));
+      transform-style: preserve-3d;
+      transition:
+        left 1100ms var(--ease),
+        top 1100ms var(--ease),
+        width 1100ms var(--ease),
+        opacity 500ms ease,
+        filter 500ms ease,
+        transform 520ms var(--ease);
+      will-change: transform, left, top, width;
+    }
+
+    .book-card[data-book="codex"] {
+      --x: 23.2%;
+      --y: 40.5%;
+      --w: min(30.5vw, 435px);
+      --r: -8deg;
+      --yaw: -7deg;
+      z-index: 1;
+    }
+
+    .book-card[data-book="claude"] {
+      --x: 50%;
+      --y: 32.2%;
+      --w: min(33vw, 470px);
+      --r: .8deg;
+      --yaw: -3deg;
+      z-index: 3;
+    }
+
+    .book-card[data-book="cursor"] {
+      --x: 77%;
+      --y: 42%;
+      --w: min(30.5vw, 435px);
+      --r: 8deg;
+      --yaw: 7deg;
+      z-index: 2;
+    }
+
+    .book-card:hover,
+    .book-card[data-hovered="true"] {
+      --hover-y: -28px;
+      z-index: 8;
+    }
+
+    .book {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 800ms var(--ease);
+    }
+
+    .book-card:hover .book {
+      transform: scale(1.035) rotateX(-1.5deg);
+    }
+
+    .book-back,
+    .page-block,
+    .page-fan,
+    .front-cover,
+    .book-shadow {
+      position: absolute;
+      inset: 0;
+      border-radius: 3px 7px 7px 3px;
+    }
+
+    .book-shadow {
+      z-index: -2;
+      inset: 5% -4% -2% 4%;
+      border-radius: 12px;
+      background: rgba(24, 18, 10, .7);
+      filter: blur(22px);
+      opacity: .72;
+      transform: translate3d(18px, 28px, -60px);
+    }
+
+    .book-back {
+      z-index: 0;
+      background: var(--cover-color);
+      box-shadow: 0 18px 30px rgba(24, 18, 10, .4);
+      transform: translate3d(7px, 1px, -26px);
+    }
+
+    .page-block {
+      z-index: 1;
+      inset: 1.7% 1.4% 1.7% 3.8%;
+      overflow: visible;
+      border: 1px solid rgba(84, 68, 45, .25);
+      border-radius: 2px 5px 5px 2px;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(105, 86, 58, .14) 0,
+          rgba(105, 86, 58, .14) 1px,
+          transparent 1px,
+          transparent 2.8px
+        ),
+        linear-gradient(90deg, #cfc1a4 0%, #f2e8d2 14%, #e7dac0 87%, #cbb894 100%);
+      box-shadow: 7px 5px 16px rgba(31, 23, 13, .26);
+      transform: translate3d(7px, 1px, -12px);
+      transition: transform 1100ms var(--ease), inset 1100ms var(--ease);
+    }
+
+    .page-block::before {
+      content: "";
+      position: absolute;
+      top: -7px;
+      right: 1px;
+      left: 1px;
+      height: 8px;
+      border-radius: 2px 4px 0 0;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          #d9cbae 0,
+          #d9cbae 2px,
+          #f2e7cf 2px,
+          #f2e7cf 5px
+        );
+      transform: skewX(-8deg);
+      transform-origin: bottom left;
+    }
+
+    .page-block::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -7px;
+      width: 8px;
+      height: 100%;
+      border-radius: 0 4px 4px 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          #cbb995 0,
+          #cbb995 1px,
+          #eee3cd 1px,
+          #eee3cd 3px
+        );
+      box-shadow: 3px 2px 7px rgba(35, 26, 14, .18);
+      transform: skewY(-2deg);
+      transform-origin: left center;
+    }
+
+    .page-fan {
+      z-index: 2;
+      inset: 2.4% 2% 2.4% 4.3%;
+      pointer-events: none;
+      transform-style: preserve-3d;
+    }
+
+    .page-fan i {
+      position: absolute;
+      inset: 0;
+      display: block;
+      border: 1px solid rgba(102, 83, 55, .22);
+      border-radius: 2px 5px 5px 2px;
+      background:
+        linear-gradient(90deg, rgba(116, 91, 56, .22), transparent 9%),
+        repeating-linear-gradient(
+          0deg,
+          #f0e6d0 0,
+          #f0e6d0 2px,
+          #e6d8ba 2px,
+          #e6d8ba 3px
+        );
+      box-shadow: 3px 5px 10px rgba(37, 28, 16, .08);
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotateY(0);
+      transform-origin: 1.5% center;
+      transition: opacity 500ms ease, transform 1200ms var(--ease);
+    }
+
+    .front-cover {
+      z-index: 3;
+      overflow: hidden;
+      border: 1px solid rgba(238, 224, 194, .2);
+      background-color: var(--cover-color);
+      background-image: var(--cover);
+      background-position: center;
+      background-size: cover;
+      box-shadow:
+        0 25px 38px rgba(24, 18, 10, .4),
+        inset -12px 0 18px rgba(0, 0, 0, .16),
+        inset 4px 0 9px rgba(255, 255, 255, .12);
+      transform: translate3d(0, 0, 12px);
+      transform-origin: 1.5% center;
+      transform-style: preserve-3d;
+      transition: transform 1200ms var(--ease), box-shadow 600ms ease;
+    }
+
+    .front-cover::before {
+      content: "";
+      position: absolute;
+      z-index: 3;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 5.5%;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(0, 0, 0, .35),
+          rgba(255, 255, 255, .08) 35%,
+          rgba(0, 0, 0, .12) 75%,
+          transparent
+        );
+      mix-blend-mode: multiply;
+      opacity: .8;
+    }
+
+    .front-cover::after {
+      content: "";
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      border: 3px solid rgba(255, 255, 255, .04);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .cover-motion {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 420ms ease;
+      pointer-events: none;
+    }
+
+    .cover-motion[data-ready="true"] {
+      opacity: 1;
+    }
+
+    .cover-copy {
+      position: absolute;
+      z-index: 2;
+      inset: 5.8% 7.5% 5.5%;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      align-content: start;
+      color: var(--cover-ink);
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(241, 226, 196, .24);
+    }
+
+    .cover-kicker {
+      font-size: clamp(8px, .72vw, 11px);
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .cover-title {
+      margin-top: 2.2%;
+      font-size: clamp(35px, 4.3vw, 64px);
+      font-weight: 600;
+      letter-spacing: -.055em;
+      line-height: .9;
+    }
+
+    .cover-subtitle {
+      margin-top: 3%;
+      font-size: clamp(10px, 1.05vw, 15px);
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: .035em;
+    }
+
+    .cover-footer {
+      align-self: end;
+      padding-top: 3%;
+      border-top: 1px solid currentColor;
+      font-size: clamp(7px, .62vw, 9px);
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .book-card[data-book="codex"] .cover-copy {
+      --cover-ink: #31291e;
+    }
+
+    .book-card[data-book="claude"] .cover-copy {
+      --cover-ink: #4b281a;
+    }
+
+    .book-card[data-book="cursor"] .cover-copy {
+      --cover-ink: #293024;
+    }
+
+    .open-badge {
+      position: absolute;
+      z-index: 6;
+      top: 47%;
+      left: 50%;
+      display: grid;
+      width: 94px;
+      height: 66px;
+      place-items: center;
+      color: #312a21;
+      background: #efe3ca;
+      clip-path: polygon(
+        3% 22%, 10% 8%, 25% 7%, 38% 1%, 51% 6%, 66% 2%,
+        77% 10%, 92% 11%, 96% 26%, 100% 39%, 95% 52%, 99% 67%,
+        88% 79%, 83% 93%, 68% 94%, 55% 100%, 42% 94%, 27% 98%,
+        17% 88%, 4% 84%, 5% 69%, 0 57%, 5% 43%, 1% 34%
+      );
+      font-size: 11px;
+      font-style: italic;
+      font-weight: 700;
+      letter-spacing: .12em;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.76) rotate(-3deg);
+      transition: opacity 260ms ease, transform 420ms var(--ease), filter 260ms ease;
+      pointer-events: none;
+    }
+
+    .book-card:hover .open-badge,
+    .book-card[data-hovered="true"] .open-badge,
+    .book-card:focus-visible .open-badge {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1) rotate(-3deg);
+    }
+
+    .book-card:focus-visible {
+      outline: 0;
+    }
+
+    .book-card:focus-visible .open-badge {
+      filter:
+        drop-shadow(0 7px 12px rgba(29, 22, 14, .34))
+        drop-shadow(0 0 8px rgba(224, 190, 137, .28));
+    }
+
+    .detail-panel {
+      position: absolute;
+      z-index: 12;
+      top: 14.5%;
+      right: 4.5%;
+      width: min(47.5%, 650px);
+      opacity: 0;
+      transition: opacity 520ms ease 280ms;
+      pointer-events: none;
+    }
+
+    .detail-title {
+      margin: 0 0 24px;
+      color: var(--pink);
+      font-size: clamp(52px, 5.7vw, 82px);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -.055em;
+      line-height: .96;
+    }
+
+    .detail-description {
+      max-width: 600px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.28vw, 17px);
+      line-height: 1.64;
+    }
+
+    .detail-scroll {
+      max-height: clamp(340px, calc(100svh - 450px), 600px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0 22px 76px 0;
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        #000 0,
+        #000 calc(100% - 76px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        #000 0,
+        #000 calc(100% - 76px),
+        transparent 100%
+      );
+      scrollbar-color: rgba(198, 139, 140, .76) rgba(73, 66, 49, .35);
+      scrollbar-width: thin;
+    }
+
+    .detail-scroll:focus-visible {
+      border-radius: 8px;
+      outline: 1px solid rgba(231, 184, 185, .7);
+      outline-offset: 8px;
+    }
+
+    .detail-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .detail-scroll::-webkit-scrollbar-track {
+      border-radius: 999px;
+      background: rgba(73, 66, 49, .35);
+    }
+
+    .detail-scroll::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(198, 139, 140, .76);
+    }
+
+    .doc-section {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(220, 200, 164, .2);
+    }
+
+    .doc-label {
+      margin: 0 0 16px;
+      color: var(--pink);
+      font-size: 12px;
+      font-style: italic;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .doc-steps {
+      display: grid;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: guide-step;
+    }
+
+    .doc-steps li {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 12px;
+      counter-increment: guide-step;
+    }
+
+    .doc-steps li::before {
+      content: counter(guide-step, decimal-leading-zero);
+      padding-top: 2px;
+      color: rgba(231, 184, 185, .7);
+      font-size: 12px;
+      font-style: italic;
+      letter-spacing: .08em;
+    }
+
+    .doc-step-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .doc-step-copy strong {
+      color: #e8dcc4;
+      font-size: 15px;
+      font-style: italic;
+      font-weight: 650;
+    }
+
+    .doc-step-copy span,
+    .doc-review {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.58;
+    }
+
+    .prompt-block {
+      padding: 17px 18px;
+      border: 1px solid rgba(220, 200, 164, .2);
+      border-radius: 12px;
+      background: rgba(52, 48, 37, .62);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .prompt-block code {
+      color: #e8dcc4;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.58;
+      white-space: pre-wrap;
+    }
+
+    .doc-review {
+      margin: 0;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: max-content 1px max-content 1fr;
+      align-items: center;
+      gap: clamp(16px, 2vw, 27px);
+      margin-top: 22px;
+      color: var(--pink);
+    }
+
+    .stars {
+      display: flex;
+      gap: 8px;
+      font-size: 24px;
+      letter-spacing: .02em;
+      line-height: 1;
+    }
+
+    .stars .dim {
+      color: #665f4d;
+    }
+
+    .meta-divider {
+      width: 1px;
+      height: 26px;
+      background: rgba(220, 200, 164, .28);
+    }
+
+    .review-source,
+    .year {
+      color: #bcae92;
+      font-size: 18px;
+      font-style: italic;
+      font-weight: 650;
+    }
+
+    .year {
+      justify-self: end;
+    }
+
+    .detail-rule {
+      height: 1px;
+      margin: 10px 0 22px;
+      border: 0;
+      background: rgba(220, 200, 164, .24);
+    }
+
+    .bottom-dock {
+      position: fixed;
+      z-index: 24;
+      right: 4.5%;
+      bottom: 28px;
+      width: min(47.5%, 650px);
+    }
+
+    .bottom-dock .meta-row {
+      margin: 0 10px;
+    }
+
+    .bottom-dock .detail-rule {
+      margin: 10px 8px 14px;
+    }
+
+    .action-rail {
+      --action-inset: 8px;
+      display: flex;
+      align-items: center;
+      gap: var(--action-inset);
+      width: 100%;
+      padding: var(--action-inset);
+      border: 1px solid rgba(238, 226, 202, .07);
+      border-radius: 32px;
+      background: rgba(64, 58, 43, .88);
+      box-shadow: 0 16px 32px rgba(26, 20, 12, .2);
+      backdrop-filter: blur(12px);
+    }
+
+    .pill {
+      display: inline-flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      min-height: 58px;
+      padding: 0 18px;
+      border-radius: 24px;
+      background: var(--periwinkle);
+      color: #2e261d;
+      cursor: pointer;
+      font-size: 15px;
+      font-style: italic;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: transform 220ms var(--ease), filter 220ms ease, background 220ms ease;
+    }
+
+    .pill:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .pill.language {
+      gap: 10px;
+      background: var(--paper);
+    }
+
+    .pill.language svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .pill.icon-only {
+      flex: 0 0 58px;
+      width: 58px;
+      min-width: 58px;
+      padding: 0;
+      background: #565d45;
+      color: #f1e6cf;
+    }
+
+    .pill.icon-only svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      transition: fill 220ms ease;
+    }
+
+    .pill.icon-only[aria-pressed="true"] svg {
+      fill: var(--pink);
+      stroke: var(--pink);
+    }
+
+    .close-button {
+      position: absolute;
+      z-index: 52;
+      top: 30px;
+      left: 50%;
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .26);
+      border-radius: 50%;
+      background: rgba(42, 37, 28, .28);
+      color: var(--paper);
+      cursor: pointer;
+      font-size: 27px;
+      font-weight: 200;
+      opacity: 0;
+      transform: translate3d(-50%, -18px, 0) rotate(-45deg);
+      transition: opacity 400ms ease, transform 620ms var(--ease), background 220ms ease;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    .close-button:hover {
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .blossom-field {
+      position: absolute;
+      z-index: 9;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 700ms ease 250ms;
+      pointer-events: none;
+    }
+
+    .blossom {
+      --blossom-size: 26px;
+      position: absolute;
+      top: -12vh;
+      left: var(--blossom-x);
+      width: var(--blossom-size);
+      height: var(--blossom-size);
+      opacity: .92;
+      transform-style: preserve-3d;
+      animation: blossomFall var(--blossom-duration) linear var(--blossom-delay) infinite;
+    }
+
+    .blossom i {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 42%;
+      height: 60%;
+      border-radius: 72% 72% 58% 58%;
+      background:
+        radial-gradient(circle at 50% 82%, rgba(187, 103, 108, .9) 0 10%, transparent 11%),
+        linear-gradient(180deg, #f5d8d3 0%, #e6aaa9 74%, #c78184 100%);
+      box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .42);
+      transform-origin: 50% 100%;
+    }
+
+    .blossom i:nth-child(1) {
+      transform: translate(-50%, -100%) rotate(0deg);
+    }
+
+    .blossom i:nth-child(2) {
+      transform: translate(-50%, -100%) rotate(72deg);
+    }
+
+    .blossom i:nth-child(3) {
+      transform: translate(-50%, -100%) rotate(144deg);
+    }
+
+    .blossom i:nth-child(4) {
+      transform: translate(-50%, -100%) rotate(216deg);
+    }
+
+    .blossom i:nth-child(5) {
+      transform: translate(-50%, -100%) rotate(288deg);
+    }
+
+    .blossom::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18%;
+      height: 18%;
+      border-radius: 50%;
+      background: #d9b46f;
+      box-shadow: 0 0 0 2px rgba(107, 70, 51, .18);
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes blossomFall {
+      0% {
+        transform: translate3d(0, -10vh, 0) rotateX(18deg) rotateZ(var(--blossom-r));
+      }
+      32% {
+        transform: translate3d(36px, 34vh, 0) rotateX(154deg) rotateZ(calc(var(--blossom-r) + 126deg));
+      }
+      68% {
+        transform: translate3d(-30px, 78vh, 0) rotateX(284deg) rotateZ(calc(var(--blossom-r) + 272deg));
+      }
+      100% {
+        transform: translate3d(20px, 122vh, 0) rotateX(430deg) rotateZ(calc(var(--blossom-r) + 430deg));
+      }
+    }
+
+    .menu-layer {
+      position: fixed;
+      z-index: 40;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 47%, rgba(111, 91, 61, .22), transparent 42%),
+        rgba(30, 27, 21, .95);
+      opacity: 0;
+      transition: opacity 460ms ease;
+      pointer-events: none;
+      backdrop-filter: blur(18px);
+    }
+
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .menu-link {
+      display: inline-block;
+      color: var(--pink);
+      font-size: clamp(56px, 7.5vw, 108px);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -.055em;
+      line-height: 1.05;
+      text-decoration: none;
+      transform: translateY(24px);
+      transition: color 200ms ease, transform 500ms var(--ease);
+    }
+
+    .menu-link:hover {
+      color: #fff;
+    }
+
+    [data-menu="open"] .menu-layer {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    [data-menu="open"] .menu-link {
+      transform: translateY(0);
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 80;
+      bottom: 22px;
+      left: 50%;
+      max-width: calc(100vw - 32px);
+      padding: 12px 18px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 999px;
+      background: rgba(36, 32, 25, .88);
+      color: var(--paper);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, .22);
+      font-size: 13px;
+      font-weight: 650;
+      opacity: 0;
+      transform: translate(-50%, 20px);
+      transition: opacity 250ms ease, transform 350ms var(--ease);
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+    }
+
+    .toast[data-show="true"] {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    [data-mode="detail"] .hero-word {
+      opacity: 0;
+      filter: blur(16px);
+      transform: translate3d(-50%, -34px, 0) scale(.9);
+    }
+
+    [data-mode="detail"] .book-card:not(.selected) {
+      opacity: 0;
+      filter: blur(10px);
+      transform: translate3d(-50%, 60vh, -200px) rotate(var(--r)) scale(.8);
+      pointer-events: none;
+    }
+
+    [data-mode="detail"] .book-card.selected {
+      --hover-y: 0px;
+      --local-x: 0px;
+      --local-y: 0px;
+      --detail-yaw: -5deg;
+      --detail-pitch: 0deg;
+      left: 27%;
+      top: 50%;
+      width: min(30vw, 415px);
+      z-index: 14;
+      cursor: default;
+      transform: translate3d(-50%, -50%, 0) rotate(-3deg);
+      pointer-events: none;
+    }
+
+    [data-mode="detail"] .book-card.selected .book {
+      transform: scale(1.02) rotateX(var(--detail-pitch)) rotateY(var(--detail-yaw));
+      transition-duration: 170ms;
+      transition-timing-function: cubic-bezier(.2, .78, .2, 1);
+    }
+
+    [data-mode="detail"] .book-card.selected .front-cover {
+      box-shadow:
+        25px 26px 44px rgba(29, 21, 11, .34),
+        inset -12px 0 18px rgba(0, 0, 0, .13),
+        inset 4px 0 9px rgba(255, 255, 255, .1);
+      transform: translate3d(0, 0, 18px) rotateY(-29deg);
+    }
+
+    [data-mode="detail"] .book-card.selected .page-block {
+      inset: 1.9% 1.5% 1.9% 4.4%;
+      transform: translate3d(6px, 1px, -11px);
+    }
+
+    [data-mode="detail"] .book-card.selected .page-fan i {
+      opacity: 1;
+    }
+
+    [data-mode="detail"] .book-card.selected .page-fan i:nth-child(1) {
+      transform: translate3d(0, 0, 10px) rotateY(-4deg);
+    }
+
+    [data-mode="detail"] .book-card.selected .page-fan i:nth-child(2) {
+      transform: translate3d(0, 0, 11px) rotateY(-8deg);
+    }
+
+    [data-mode="detail"] .book-card.selected .page-fan i:nth-child(3) {
+      transform: translate3d(0, 0, 12px) rotateY(-12deg);
+    }
+
+    [data-mode="detail"] .book-card.selected .page-fan i:nth-child(4) {
+      transform: translate3d(0, 0, 13px) rotateY(-16deg);
+    }
+
+    [data-mode="detail"] .book-card.selected .open-badge {
+      opacity: 0;
+    }
+
+    [data-mode="detail"] .detail-panel {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    [data-mode="gallery"] .detail-panel {
+      transition-duration: 160ms;
+      transition-delay: 0ms;
+    }
+
+    [data-mode="detail"] .close-button {
+      opacity: 1;
+      transform: translate3d(-50%, 0, 0) rotate(0);
+      pointer-events: auto;
+    }
+
+    [data-mode="detail"] .blossom-field {
+      opacity: 1;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .stage {
+        min-height: 100svh;
+        overflow: hidden;
+      }
+
+      .topbar {
+        padding: 20px;
+      }
+
+      .icon-button,
+      .ticket-button {
+        height: 44px;
+      }
+
+      .icon-button {
+        width: 44px;
+      }
+
+      .ticket-button {
+        min-width: auto;
+        padding: 0 18px;
+      }
+
+      .hero-word {
+        top: 17vh;
+        font-size: clamp(128px, 28vw, 230px);
+      }
+
+      .book-card[data-book="codex"] {
+        --x: 14%;
+        --y: 41%;
+        --w: min(49vw, 360px);
+      }
+
+      .book-card[data-book="claude"] {
+        --x: 50%;
+        --y: 35%;
+        --w: min(54vw, 395px);
+      }
+
+      .book-card[data-book="cursor"] {
+        --x: 87%;
+        --y: 42%;
+        --w: min(49vw, 360px);
+      }
+
+      [data-mode="detail"] .stage {
+        min-height: calc(100svh + 760px);
+        overflow-y: auto;
+      }
+
+      [data-mode="detail"] .book-card.selected {
+        left: 50%;
+        top: 50svh;
+        width: min(58vw, 340px);
+      }
+
+      .detail-panel {
+        top: calc(100svh + 48px);
+        right: 7%;
+        left: 7%;
+        width: auto;
+        padding-bottom: 130px;
+      }
+
+      .detail-scroll {
+        max-height: min(500px, calc(100svh - 310px));
+      }
+
+      .detail-title {
+        font-size: clamp(48px, 10vw, 70px);
+      }
+
+      .bottom-dock {
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
+        width: auto;
+      }
+
+      .action-rail {
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .action-rail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .pill {
+        min-width: 132px;
+      }
+
+      .pill.icon-only {
+        min-width: 58px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .brand {
+        font-size: 22px;
+      }
+
+      .ticket-button {
+        display: none;
+      }
+
+      .hero-word {
+        top: 22vh;
+        font-size: 38vw;
+      }
+
+      .book-card[data-book="codex"] {
+        --x: 4%;
+        --y: 45%;
+        --w: 66vw;
+      }
+
+      .book-card[data-book="claude"] {
+        --x: 50%;
+        --y: 40%;
+        --w: 72vw;
+      }
+
+      .book-card[data-book="cursor"] {
+        --x: 96%;
+        --y: 46%;
+        --w: 66vw;
+      }
+
+      [data-mode="detail"] .stage {
+        min-height: calc(100svh + 760px);
+      }
+
+      [data-mode="detail"] .book-card.selected {
+        width: min(67vw, 315px);
+      }
+
+      .detail-panel {
+        right: 20px;
+        left: 20px;
+      }
+
+      .detail-scroll {
+        padding-right: 14px;
+      }
+
+      .pill {
+        min-width: 0;
+        min-height: 54px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .pill.language svg {
+        display: none;
+      }
+
+      .pill.icon-only {
+        flex-basis: 54px;
+        width: 54px;
+        min-width: 54px;
+      }
+
+      .meta-row {
+        grid-template-columns: max-content 1px 1fr;
+      }
+
+      .year {
+        display: none;
+      }
+
+      .close-button {
+        top: 18px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cover-motion {
+        display: none !important;
+      }
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        transition-delay: 0ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-mode="gallery" data-menu="closed">
+  <main class="stage" aria-label="Interactive AI coding field library">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Field Manuals home">Field Manuals</a>
+      <div class="nav-actions">
+        <button class="icon-button" id="menuButton" type="button" aria-label="Open menu" aria-expanded="false">
+          <span class="menu-glyph" aria-hidden="true"></span>
+        </button>
+        <button class="ticket-button" type="button" data-toast="The collection is complete.">The Collection</button>
+      </div>
+    </header>
+
+    <h1 class="hero-word" aria-hidden="true">Agents</h1>
+
+    <section class="gallery" aria-label="AI coding field manuals">
+      <button
+        class="book-card"
+        type="button"
+        data-book="codex"
+        aria-label="Open Codex details"
+        style="
+          --cover-color: #363126;
+          --cover: url('https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/eafc13621b9605d30356b7d4396072b2593a46e0c47c96d17ba60ca03d98f925.jpg');
+        "
+      >
+        <span class="book" aria-hidden="true">
+          <span class="book-shadow"></span>
+          <span class="book-back"></span>
+          <span class="page-block"></span>
+          <span class="page-fan"><i></i><i></i><i></i><i></i></span>
+          <span class="front-cover">
+            <video class="cover-motion" autoplay muted loop playsinline preload="metadata">
+              <source src="https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/6b3318cc6a7da610e3a55369131b20a2419cda826d558da09da284f09582956d.mp4" type="video/mp4">
+            </video>
+            <span class="cover-copy">
+              <span class="cover-kicker">Field Manual · I</span>
+              <span class="cover-title">Codex</span>
+              <span class="cover-subtitle">The Agentic Engineer</span>
+              <span></span>
+              <span class="cover-footer">Systems · Tools · Taste</span>
+            </span>
+          </span>
+          <span class="open-badge">Read</span>
+        </span>
+      </button>
+
+      <button
+        class="book-card"
+        type="button"
+        data-book="claude"
+        aria-label="Open Claude Code details"
+        style="
+          --cover-color: #945a3e;
+          --cover: url('https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/99df6a45ad1f9dd7e47b65c064df0ae58c7c22069fadd9aa896754c3bad27123.jpg');
+        "
+      >
+        <span class="book" aria-hidden="true">
+          <span class="book-shadow"></span>
+          <span class="book-back"></span>
+          <span class="page-block"></span>
+          <span class="page-fan"><i></i><i></i><i></i><i></i></span>
+          <span class="front-cover">
+            <video class="cover-motion" autoplay muted loop playsinline preload="metadata">
+              <source src="https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/76a7b0b20e4992f91bb5febf2fa8edd2d33fd4b7bb0cda5f8ae0fffdff9d5a7e.mp4" type="video/mp4">
+            </video>
+            <span class="cover-copy">
+              <span class="cover-kicker">Field Manual · II</span>
+              <span class="cover-title">Claude<br>Code</span>
+              <span class="cover-subtitle">The Quiet Terminal</span>
+              <span></span>
+              <span class="cover-footer">Context · Craft · Care</span>
+            </span>
+          </span>
+          <span class="open-badge">Read</span>
+        </span>
+      </button>
+
+      <button
+        class="book-card"
+        type="button"
+        data-book="cursor"
+        aria-label="Open Cursor details"
+        style="
+          --cover-color: #566044;
+          --cover: url('https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/5f73c2c9094bbeef04fdc241909a4672235142882112ec15c6d130f89bf5fd16.jpg');
+        "
+      >
+        <span class="book" aria-hidden="true">
+          <span class="book-shadow"></span>
+          <span class="book-back"></span>
+          <span class="page-block"></span>
+          <span class="page-fan"><i></i><i></i><i></i><i></i></span>
+          <span class="front-cover">
+            <video class="cover-motion" autoplay muted loop playsinline preload="metadata">
+              <source src="https://ublctyddhtbgaersvxxb.supabase.co/storage/v1/object/public/threeui-media/scene-images/embedded/aabcdc51e4d9f6c4cbf6656bbd3447d6b50814507395f9e5bd0efecd7c1b22b3.mp4" type="video/mp4">
+            </video>
+            <span class="cover-copy">
+              <span class="cover-kicker">Field Manual · III</span>
+              <span class="cover-title">Cursor</span>
+              <span class="cover-subtitle">The Augmented Editor</span>
+              <span></span>
+              <span class="cover-footer">Select · Predict · Refine</span>
+            </span>
+          </span>
+          <span class="open-badge">Read</span>
+        </span>
+      </button>
+    </section>
+
+    <section class="detail-panel" id="detailPanel" aria-live="polite" aria-hidden="true" inert>
+      <h2 class="detail-title" id="detailTitle">Claude Code</h2>
+      <div class="detail-scroll" id="detailScroll" tabindex="0" aria-label="Getting started guide">
+        <p class="detail-description" id="detailDescription"></p>
+        <section class="doc-section" aria-labelledby="gettingStartedLabel">
+          <p class="doc-label" id="gettingStartedLabel">Getting started</p>
+          <ol class="doc-steps" id="detailSteps"></ol>
+        </section>
+        <section class="doc-section" aria-labelledby="firstPromptLabel">
+          <p class="doc-label" id="firstPromptLabel">Your first prompt</p>
+          <div class="prompt-block"><code id="detailPrompt"></code></div>
+        </section>
+        <section class="doc-section" aria-labelledby="reviewLabel">
+          <p class="doc-label" id="reviewLabel">Before you ship</p>
+          <p class="doc-review" id="detailReview"></p>
+        </section>
+      </div>
+      <div class="bottom-dock">
+        <div class="meta-row" aria-label="Field edition and publication year">
+          <div class="stars" aria-label="Field edition">
+            <span>✦</span><span>✦</span><span>✦</span><span>✦</span><span class="dim">◇</span>
+          </div>
+          <span class="meta-divider" aria-hidden="true"></span>
+          <span class="review-source">Field Notes</span>
+          <span class="year" id="detailYear">2026</span>
+        </div>
+        <hr class="detail-rule">
+        <div class="action-rail" aria-label="Field manual actions">
+          <button class="pill language" type="button" data-toast="Field edition · 2026">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M3 12h18M12 3c2.2 2.4 3.3 5.4 3.3 9S14.2 18.6 12 21c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3Z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            </svg>
+            Field Edition
+          </button>
+          <button class="pill" type="button" data-toast="Notes opened.">Read Notes</button>
+          <button class="pill" type="button" data-toast="Guide opened.">View Guide</button>
+          <button class="pill icon-only" id="saveButton" type="button" aria-label="Save book" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.8 4.2h10.4v15.6L12 16.6l-5.2 3.2V4.2Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <button class="close-button" id="closeButton" type="button" aria-label="Close detail view" tabindex="-1">×</button>
+
+    <div class="blossom-field" aria-hidden="true">
+      <span class="blossom" style="--blossom-x: 4%; --blossom-size: 30px; --blossom-r: 18deg; --blossom-duration: 10s; --blossom-delay: -4s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 16%; --blossom-size: 19px; --blossom-r: 74deg; --blossom-duration: 8.5s; --blossom-delay: -1s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 31%; --blossom-size: 25px; --blossom-r: -20deg; --blossom-duration: 11s; --blossom-delay: -7s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 44%; --blossom-size: 17px; --blossom-r: 48deg; --blossom-duration: 9.5s; --blossom-delay: -5s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 58%; --blossom-size: 28px; --blossom-r: 12deg; --blossom-duration: 12s; --blossom-delay: -8s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 69%; --blossom-size: 20px; --blossom-r: 92deg; --blossom-duration: 9s; --blossom-delay: -3s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 79%; --blossom-size: 32px; --blossom-r: 32deg; --blossom-duration: 11.5s; --blossom-delay: -6s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 89%; --blossom-size: 22px; --blossom-r: -14deg; --blossom-duration: 10.5s; --blossom-delay: -9s;"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="blossom" style="--blossom-x: 96%; --blossom-size: 16px; --blossom-r: 56deg; --blossom-duration: 8s; --blossom-delay: -2s;"><i></i><i></i><i></i><i></i><i></i></span>
+    </div>
+
+    <nav class="menu-layer" id="menuLayer" aria-label="Site menu" inert>
+      <ul class="menu-list">
+        <li><a class="menu-link" href="#" data-menu-close>Volumes</a></li>
+        <li><a class="menu-link" href="#notes" data-menu-close data-toast="Field notes are coming soon.">Notes</a></li>
+        <li><a class="menu-link" href="#index" data-menu-close data-toast="An index of tools for thought.">Index</a></li>
+      </ul>
+    </nav>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const books = {
+        codex: {
+          title: "Codex",
+          year: "2026",
+          description:
+            "Codex is an agentic coding workspace built to move from a clear intent to a verified change. It reads the repository, edits across files, runs the tools, and stays with the work until the result is ready to review.",
+          steps: [
+            {
+              title: "Open a real repository",
+              body: "Begin in the project you want to change, with its local instructions and existing work intact."
+            },
+            {
+              title: "Describe the outcome",
+              body: "State the behavior you want, the constraints that matter, and what a convincing verification looks like."
+            },
+            {
+              title: "Let it inspect first",
+              body: "Give Codex room to trace the relevant files, commands, and tests before it edits."
+            },
+            {
+              title: "Review the proof",
+              body: "Read the diff and compare the reported checks with the change that was actually made."
+            }
+          ],
+          prompt:
+            "Review this repository, identify the smallest safe change that solves [goal], implement it, run the relevant checks, and summarize the evidence.",
+          review:
+            "Confirm that unrelated files were preserved, the diff matches your intent, and every reported check is relevant to the change."
+        },
+        claude: {
+          title: "Claude Code",
+          year: "2026",
+          description:
+            "Claude Code brings deliberate reasoning into the terminal. It follows context across a codebase, works carefully with files and tools, and turns complex implementation work into a calm, inspectable conversation.",
+          steps: [
+            {
+              title: "Start at the project root",
+              body: "Launch the session where the repository instructions, scripts, and source tree can all be discovered."
+            },
+            {
+              title: "Point to the code path",
+              body: "Name the feature, file, error, or user journey that should anchor the investigation."
+            },
+            {
+              title: "Plan broad work",
+              body: "For a larger change, ask for an inspectable plan before authorizing implementation."
+            },
+            {
+              title: "Keep the loop visible",
+              body: "Watch the files, tool output, and assumptions as the conversation moves from diagnosis to verification."
+            }
+          ],
+          prompt:
+            "Map the code path behind [feature], explain the current behavior, then implement the smallest safe change and verify it.",
+          review:
+            "Check the assumptions, tool output, edited files, and whether the final explanation accurately describes the code."
+        },
+        cursor: {
+          title: "Cursor",
+          year: "2026",
+          description:
+            "Cursor places AI inside the editor itself, close to the code and the act of selection. It predicts the next change, reshapes whole files, and keeps the creative loop moving from prompt to production.",
+          steps: [
+            {
+              title: "Open the working file",
+              body: "Keep the implementation and its neighboring types, tests, or styles visible in the editor."
+            },
+            {
+              title: "Select useful context",
+              body: "Highlight the smallest region that expresses the problem without hiding important dependencies."
+            },
+            {
+              title: "State the invariant",
+              body: "Tell Cursor what must not change: behavior, public APIs, performance, accessibility, or visual rhythm."
+            },
+            {
+              title: "Apply in small passes",
+              body: "Review each suggestion before accepting it, then run the checks closest to the edited code."
+            }
+          ],
+          prompt:
+            "Refactor this component for clarity without changing behavior. Preserve its public API and update the relevant tests.",
+          review:
+            "Inspect every suggested edit, run the affected tests, and reject any change that weakens the invariant."
+        }
+      };
+
+      const body = document.body;
+      const stage = document.querySelector(".stage");
+      const cards = [...document.querySelectorAll(".book-card")];
+      const detailPanel = document.querySelector("#detailPanel");
+      const detailTitle = document.querySelector("#detailTitle");
+      const detailScroll = document.querySelector("#detailScroll");
+      const detailDescription = document.querySelector("#detailDescription");
+      const detailSteps = document.querySelector("#detailSteps");
+      const detailPrompt = document.querySelector("#detailPrompt");
+      const detailReview = document.querySelector("#detailReview");
+      const detailYear = document.querySelector("#detailYear");
+      const closeButton = document.querySelector("#closeButton");
+      const menuButton = document.querySelector("#menuButton");
+      const menuLayer = document.querySelector("#menuLayer");
+      const saveButton = document.querySelector("#saveButton");
+      const toast = document.querySelector("#toast");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const coverVideos = [...document.querySelectorAll(".cover-motion")];
+      let selectedCard = null;
+      let toastTimer = 0;
+      let frame = 0;
+      let pointerX = 0;
+      let pointerY = 0;
+      let pointerClientX = -10000;
+      let pointerClientY = -10000;
+
+      function showToast(message) {
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.dataset.show = "true";
+        toastTimer = window.setTimeout(() => {
+          toast.dataset.show = "false";
+        }, 1800);
+      }
+
+      function syncCoverMotion() {
+        coverVideos.forEach((video) => {
+          const card = video.closest(".book-card");
+          const isVisibleBook =
+            body.dataset.mode === "gallery" ||
+            (body.dataset.mode === "detail" && card === selectedCard);
+          const shouldPlay =
+            !reducedMotion.matches &&
+            !document.hidden &&
+            isVisibleBook;
+
+          if (!shouldPlay) {
+            video.pause();
+            return;
+          }
+
+          const playRequest = video.play();
+          if (playRequest) playRequest.catch(() => {});
+        });
+      }
+
+      function updateParallax() {
+        frame = 0;
+        if (reducedMotion.matches) return;
+
+        if (body.dataset.mode === "detail" && selectedCard) {
+          const bounds = selectedCard.getBoundingClientRect();
+          const bookCenterX = bounds.left + bounds.width / 2;
+          const bookCenterY = bounds.top + bounds.height / 2;
+          const isPointerInViewport =
+            pointerClientX >= 0 &&
+            pointerClientX <= window.innerWidth &&
+            pointerClientY >= 0 &&
+            pointerClientY <= window.innerHeight;
+          const horizontalReach = pointerClientX < bookCenterX
+            ? Math.max(bookCenterX, 1)
+            : Math.max(window.innerWidth - bookCenterX, 1);
+          const verticalReach = pointerClientY < bookCenterY
+            ? Math.max(bookCenterY, 1)
+            : Math.max(window.innerHeight - bookCenterY, 1);
+          const viewportX = isPointerInViewport
+            ? Math.max(-1, Math.min(1, (pointerClientX - bookCenterX) / horizontalReach))
+            : -5 / 16;
+          const viewportY = isPointerInViewport
+            ? Math.max(-1, Math.min(1, (pointerClientY - bookCenterY) / verticalReach))
+            : 0;
+          selectedCard.style.setProperty("--detail-yaw", `${viewportX * 16}deg`);
+          selectedCard.style.setProperty("--detail-pitch", `${viewportY * -10}deg`);
+          selectedCard.dataset.orbiting = String(isPointerInViewport);
+          return;
+        }
+
+        if (body.dataset.mode !== "gallery") return;
+
+        document.documentElement.style.setProperty("--mx", `${pointerX * 11}px`);
+        document.documentElement.style.setProperty("--my", `${pointerY * 8}px`);
+
+        cards.forEach((card, index) => {
+          const depth = index === 1 ? 1 : .58;
+          card.style.setProperty("--local-x", `${pointerX * 15 * depth}px`);
+          card.style.setProperty("--local-y", `${pointerY * 9 * depth}px`);
+        });
+      }
+
+      function selectBook(card) {
+        if (body.dataset.mode === "detail") return;
+        const data = books[card.dataset.book];
+        if (!data) return;
+
+        selectedCard = card;
+        selectedCard.style.setProperty("--detail-yaw", "-5deg");
+        selectedCard.style.setProperty("--detail-pitch", "0deg");
+        selectedCard.dataset.orbiting = "false";
+        detailTitle.textContent = data.title;
+        detailDescription.textContent = data.description;
+        detailSteps.replaceChildren(...data.steps.map((step) => {
+          const item = document.createElement("li");
+          const copy = document.createElement("span");
+          const title = document.createElement("strong");
+          const bodyCopy = document.createElement("span");
+          copy.className = "doc-step-copy";
+          title.textContent = step.title;
+          bodyCopy.textContent = step.body;
+          copy.append(title, bodyCopy);
+          item.append(copy);
+          return item;
+        }));
+        detailPrompt.textContent = data.prompt;
+        detailReview.textContent = data.review;
+        detailScroll.scrollTop = 0;
+        detailYear.textContent = data.year;
+        cards.forEach((item) => item.classList.toggle("selected", item === card));
+        cards.forEach((item) => { item.tabIndex = -1; });
+        body.dataset.mode = "detail";
+        syncCoverMotion();
+        detailPanel.setAttribute("aria-hidden", "false");
+        detailPanel.inert = false;
+        closeButton.tabIndex = 0;
+        saveButton.setAttribute("aria-pressed", "false");
+        window.setTimeout(() => {
+          closeButton.focus({ preventScroll: true });
+          if (window.innerWidth > 900) stage.scrollTop = 0;
+        }, reducedMotion.matches ? 0 : 700);
+      }
+
+      function closeDetail() {
+        if (body.dataset.mode !== "detail") return;
+        body.dataset.mode = "gallery";
+        syncCoverMotion();
+        detailPanel.setAttribute("aria-hidden", "true");
+        detailPanel.inert = true;
+        closeButton.tabIndex = -1;
+        const lastCard = selectedCard;
+        lastCard?.style.setProperty("--detail-yaw", "-5deg");
+        lastCard?.style.setProperty("--detail-pitch", "0deg");
+        if (lastCard) lastCard.dataset.orbiting = "false";
+        window.setTimeout(() => {
+          cards.forEach((card) => card.classList.remove("selected"));
+          cards.forEach((card) => { card.tabIndex = 0; });
+          selectedCard = null;
+          lastCard?.focus({ preventScroll: true });
+          if (window.innerWidth > 900) stage.scrollTop = 0;
+        }, reducedMotion.matches ? 0 : 700);
+      }
+
+      function toggleMenu(force) {
+        const willOpen = typeof force === "boolean"
+          ? force
+          : body.dataset.menu !== "open";
+        body.dataset.menu = willOpen ? "open" : "closed";
+        menuLayer.inert = !willOpen;
+        menuButton.setAttribute("aria-expanded", String(willOpen));
+        menuButton.setAttribute("aria-label", willOpen ? "Close menu" : "Open menu");
+      }
+
+      cards.forEach((card) => {
+        card.addEventListener("click", () => selectBook(card));
+        card.addEventListener("pointerenter", () => card.dataset.hovered = "true");
+        card.addEventListener("pointerleave", () => card.dataset.hovered = "false");
+      });
+
+      coverVideos.forEach((video) => {
+        const revealVideo = () => { video.dataset.ready = "true"; };
+        if (video.readyState >= 2) {
+          revealVideo();
+        } else {
+          video.addEventListener("loadeddata", revealVideo, { once: true });
+        }
+      });
+
+      document.addEventListener("visibilitychange", syncCoverMotion);
+      if (reducedMotion.addEventListener) {
+        reducedMotion.addEventListener("change", syncCoverMotion);
+      } else {
+        reducedMotion.addListener(syncCoverMotion);
+      }
+      syncCoverMotion();
+
+      window.addEventListener("pointermove", (event) => {
+        pointerX = event.clientX / window.innerWidth - .5;
+        pointerY = event.clientY / window.innerHeight - .5;
+        pointerClientX = event.clientX;
+        pointerClientY = event.clientY;
+        if (!frame) frame = window.requestAnimationFrame(updateParallax);
+      }, { passive: true });
+
+      window.addEventListener("pointerleave", () => {
+        pointerX = 0;
+        pointerY = 0;
+        pointerClientX = -10000;
+        pointerClientY = -10000;
+        if (!frame) frame = window.requestAnimationFrame(updateParallax);
+      });
+
+      closeButton.addEventListener("click", closeDetail);
+      menuButton.addEventListener("click", () => toggleMenu());
+
+      saveButton.addEventListener("click", () => {
+        const saved = saveButton.getAttribute("aria-pressed") !== "true";
+        saveButton.setAttribute("aria-pressed", String(saved));
+        showToast(saved ? "Saved to your reading list." : "Removed from your reading list.");
+      });
+
+      document.addEventListener("click", (event) => {
+        const toastTarget = event.target.closest("[data-toast]");
+        if (toastTarget) {
+          event.preventDefault();
+          showToast(toastTarget.dataset.toast);
+        }
+
+        if (event.target.closest("[data-menu-close]")) {
+          toggleMenu(false);
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          if (body.dataset.menu === "open") {
+            toggleMenu(false);
+          } else {
+            closeDetail();
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
+```
+
+### `src/shaders/threeui.css`
+
+Role: shared-style · 1775 lines · 40715 bytes · SHA-256 `efe4447139f1358dd8e9be68edf6fa46cbefbd1de423a4d6c439ca61d2c8eccf`
+
+```css
+.threeui-mount,
+.terrain-plume-component,
+.text-path-study,
+.article-headings-component,
+.animated-top-dock-component,
+.typography-vortex-component,
+.mechanical-keyboard,
+.retro-metallic,
+.landscape-scene,
+.japanese-tower-landscape,
+.sakura-branch-scene,
+.isometric-motion-grid,
+.isometric-illustration,
+.tetrahedron-365,
+.liquid-metal-button,
+.iso-mail-lightshafts,
+.spark-badge,
+.hypnotic-loops,
+.at-the-horizon,
+.scalability-bricks,
+.threeui-background {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mechanical-keyboard {
+  isolation: isolate;
+  background: #090a0c;
+}
+
+.mechanical-keyboard__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #090a0c;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  touch-action: none;
+}
+
+.mechanical-keyboard__frame.is-ready {
+  opacity: 1;
+}
+
+.retro-metallic {
+  isolation: isolate;
+  background: #08090a;
+}
+
+.retro-metallic__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #08090a;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  touch-action: none;
+}
+
+.retro-metallic__frame.is-ready {
+  opacity: 1;
+}
+
+.japanese-tower-landscape {
+  isolation: isolate;
+  background: #ecdcbc;
+}
+
+.japanese-tower-landscape__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ecdcbc;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.japanese-tower-landscape__frame.is-ready {
+  opacity: 1;
+}
+
+.landscape-scene {
+  isolation: isolate;
+  background: #ecdcbc;
+}
+
+.landscape-scene__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ecdcbc;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  touch-action: none;
+}
+
+.landscape-scene__frame.is-ready {
+  opacity: 1;
+}
+
+.sakura-branch-scene {
+  isolation: isolate;
+  background: #d4738a;
+}
+
+.sakura-branch-scene__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #d4738a;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.sakura-branch-scene__frame.is-ready {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sakura-branch-scene__frame {
+    transition: none;
+  }
+}
+
+.isometric-motion-grid {
+  isolation: isolate;
+  background: #08090a;
+}
+
+.isometric-motion-grid__stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1200px;
+  height: 675px;
+  transform-origin: 50% 50%;
+}
+
+.isometric-motion-grid__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #08090a;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.isometric-motion-grid__frame.is-ready {
+  opacity: 1;
+}
+
+.isometric-illustration {
+  isolation: isolate;
+  background: #111;
+}
+
+.isometric-illustration__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #111;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.isometric-illustration__frame.is-ready {
+  opacity: 1;
+}
+
+.tetrahedron-365 {
+  isolation: isolate;
+  background: #000;
+}
+
+.tetrahedron-365__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.tetrahedron-365__frame.is-ready {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tetrahedron-365__frame {
+    transition: none;
+  }
+}
+
+.liquid-metal-button {
+  isolation: isolate;
+  background: #070708;
+}
+
+.liquid-metal-button__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #070708;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.liquid-metal-button__frame.is-ready {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-metal-button__frame {
+    transition: none;
+  }
+}
+
+.iso-mail-lightshafts {
+  isolation: isolate;
+  background: #140f0b;
+}
+
+.iso-mail-lightshafts__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #140f0b;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.iso-mail-lightshafts__frame.is-ready {
+  opacity: 1;
+}
+
+.spark-badge {
+  isolation: isolate;
+  background: #000;
+}
+
+.spark-badge__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.spark-badge__frame.is-ready {
+  opacity: 1;
+}
+
+.hypnotic-loops {
+  isolation: isolate;
+  background: #f15a24;
+}
+
+.hypnotic-loops__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #f15a24;
+  opacity: 0;
+}
+
+.hypnotic-loops__frame.is-ready {
+  opacity: 1;
+}
+
+.at-the-horizon {
+  isolation: isolate;
+  background: #000;
+}
+
+.at-the-horizon__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.at-the-horizon__frame.is-ready {
+  opacity: 1;
+}
+
+.scalability-bricks {
+  isolation: isolate;
+  background: #0b0b0c;
+}
+
+.scalability-bricks__frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0b0b0c;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.scalability-bricks__frame.is-ready {
+  opacity: 1;
+}
+
+.text-path-study {
+  isolation: isolate;
+  background: #08090a;
+}
+
+.text-path-study--light {
+  background: #f3f5f8;
+}
+
+.text-path-study-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  transform-origin: 50% 50%;
+}
+
+.threeui-background {
+  position: relative;
+  isolation: isolate;
+  background: #030304;
+}
+
+.threeui-background.condensation {
+  background: transparent;
+}
+
+.threeui-background.predictive-arc--light,
+.threeui-background.data-pixel-arc--light {
+  background: #f3f6f1;
+}
+
+.typography-vortex-component.typography-vortex-component--light {
+  background: #eef1f6;
+}
+
+.typography-vortex-component--light .typography-vortex-component__hint {
+  color: rgba(28, 30, 38, 0.55);
+}
+
+.threeui-background > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cross-beam-canvas,
+.terrain-plume-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.terrain-plume-component {
+  pointer-events: none;
+}
+
+.terrain-plume-component {
+  --fe-bg: #030304;
+  --fe-band: clamp(260px, 52cqw, 820px);
+
+  isolation: isolate;
+  container-type: inline-size;
+  background:
+    linear-gradient(180deg, #050505 0%, #020202 44%, #000 100%);
+}
+
+/* Each scene keeps the same engraved grammar and only moves the ground tone the
+   body fill and the reveal cover are painted with. */
+.terrain-plume-component[data-terrain-scene="river"] {
+  --fe-bg: #03070a;
+
+  background:
+    linear-gradient(180deg, #05090d 0%, #020507 44%, #000 100%);
+}
+
+.terrain-plume-component[data-terrain-scene="desert"] {
+  --fe-bg: #0a0603;
+
+  background:
+    linear-gradient(180deg, #0d0805 0%, #060302 44%, #000 100%);
+}
+
+.terrain-plume-component[data-terrain-scene="bridge-city"] {
+  --fe-bg: #03050b;
+
+  background:
+    linear-gradient(180deg, #050810 0%, #020407 44%, #000 100%);
+}
+
+/* The authored plume sits at the foot of its own canvas, where the terrain band
+   buries it. Every scene keeps that exact gradient and only raises the canvas
+   until the glow clears the range — stopping below the far edge of the hatch so
+   the ground line the eye reads as the horizon is also where the sky starts,
+   and the canvas edge itself stays behind the terrain. */
+.terrain-plume-component[data-terrain-scene="river"] .terrain-plume-canvas,
+.terrain-plume-component[data-terrain-scene="desert"] .terrain-plume-canvas,
+.terrain-plume-component[data-terrain-scene="bridge-city"] .terrain-plume-canvas {
+  top: auto;
+  bottom: calc(var(--fe-band) * 0.33);
+}
+
+/* The footer vignette was tuned to bury the plume behind a range that fills the
+   frame. These scenes leave far more open sky, so the same wash is lightened
+   until the glow survives it. */
+.terrain-plume-component[data-terrain-scene="river"]::after,
+.terrain-plume-component[data-terrain-scene="desert"]::after,
+.terrain-plume-component[data-terrain-scene="bridge-city"]::after {
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.07), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.3) 72%, rgba(0, 0, 0, 0.62));
+}
+
+.terrain-plume-component::before,
+.terrain-plume-component::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.terrain-plume-component::before {
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(255, 255, 255, 0.05) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 11.5vw),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 5.8rem);
+  opacity: 0.74;
+}
+
+.terrain-plume-component::after {
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.09), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.62) 72%, rgba(0, 0, 0, 0.9));
+}
+
+.terrain-plume-canvas {
+  z-index: 0;
+}
+
+.footer-engraved-terrain {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: var(--fe-band);
+  pointer-events: none;
+}
+
+.footer-engraved-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.footer-engraved-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+.sunset-valley-scene,
+.sunset-valley-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sunset-valley-scene {
+  position: relative;
+  overflow: hidden;
+  background: #090d16;
+}
+
+.sunset-valley-canvas {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  touch-action: none;
+}
+
+.sunset-valley-canvas.is-ready {
+  opacity: 1;
+}
+
+img.sunset-valley-fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.temple-night-scene,
+.temple-night-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.temple-night-scene {
+  position: relative;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.temple-night-canvas {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  touch-action: none;
+}
+
+.temple-night-canvas.is-ready {
+  opacity: 1;
+}
+
+.temple-night-unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #a9b2b7;
+  background: #05070a;
+}
+
+.yosemite-sunset-scene,
+.yosemite-sunset-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.yosemite-sunset-scene {
+  position: relative;
+  overflow: hidden;
+  background: #241a26;
+}
+
+.yosemite-sunset-canvas {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  touch-action: none;
+}
+
+.yosemite-sunset-canvas.is-ready {
+  opacity: 1;
+}
+
+.yosemite-sunset-unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #e0c3ab;
+  background: #241a26;
+}
+
+.presidio-sunset-scene,
+.presidio-sunset-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.presidio-sunset-scene {
+  position: relative;
+  overflow: hidden;
+  background: #2a1c22;
+}
+
+.presidio-sunset-canvas {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  touch-action: none;
+}
+
+.presidio-sunset-canvas.is-ready {
+  opacity: 1;
+}
+
+.presidio-sunset-unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #e6c1ad;
+  background: #2a1c22;
+}
+
+.lake-louise-scene,
+.lake-louise-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lake-louise-scene {
+  position: relative;
+  overflow: hidden;
+  background: #171d2c;
+}
+
+.lake-louise-canvas {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  touch-action: none;
+}
+
+.lake-louise-canvas.is-ready {
+  opacity: 1;
+}
+
+.lake-louise-unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #b9c8d6;
+  background: #171d2c;
+}
+
+.bookshelf,
+.bookshelf__canvas,
+.sketchbook,
+.sketchbook__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bookshelf {
+  position: relative;
+  container-type: inline-size;
+  overflow: hidden;
+  background: #171a24;
+  outline: none;
+}
+
+.bookshelf__canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  touch-action: none;
+}
+
+.bookshelf__canvas.is-ready {
+  opacity: 1;
+}
+
+.bookshelf__source-controls {
+  display: none;
+}
+
+.bookshelf__unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 24px;
+  color: #f4eee6;
+  text-align: center;
+}
+
+.sketchbook {
+  position: relative;
+  overflow: hidden;
+  background: #ece7dc;
+}
+
+.sketchbook__frame {
+  border: 0;
+  opacity: 0;
+  background: #ece7dc;
+}
+
+.sketchbook__frame.is-ready {
+  opacity: 1;
+}
+
+@font-face {
+  font-family: "ThreeUI Fragment Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/fragment-mono.woff2") format("woff2");
+}
+
+.article-headings-component,
+.animated-top-dock-component,
+.typography-vortex-component {
+  container-type: inline-size;
+  color: #ecece8;
+  background: #0b0b0b;
+  font-family: "Geist", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.article-headings-component {
+  display: grid;
+  grid-template-rows: auto 1fr 1fr;
+  padding: clamp(20px, 5.4cqw, 74px) clamp(20px, 6.2cqw, 86px);
+  isolation: isolate;
+}
+
+.article-headings-component::after,
+.animated-top-dock-component::after,
+.typography-vortex-component::after {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  content: "";
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.article-headings-component__header {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: clamp(14px, 2.6cqw, 30px);
+  color: #62625e;
+  font: 400 clamp(8px, 0.85cqw, 10px) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.article-headings-component__entry {
+  display: grid;
+  grid-template-columns: clamp(28px, 4cqw, 56px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(10px, 2.2cqw, 30px);
+  border-top: 1px solid #2a2a28;
+}
+
+.article-headings-component__entry h2 {
+  margin: 0;
+  color: #e9e9e5;
+  font-size: clamp(18px, 3.2cqw, 44px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.article-headings-component__index,
+.article-headings-component__meta {
+  color: #60605c;
+  font: 400 clamp(8px, 0.85cqw, 10px) / 1.3 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.06em;
+}
+
+.article-headings-component__meta {
+  text-align: right;
+}
+
+.article-headings-component--light {
+  color: #202128;
+  background: #f3f5f8;
+}
+
+.article-headings-component--light .article-headings-component__header,
+.article-headings-component--light .article-headings-component__index,
+.article-headings-component--light .article-headings-component__meta {
+  color: #71737b;
+}
+
+.article-headings-component--light .article-headings-component__entry {
+  border-color: #d9dce3;
+}
+
+.article-headings-component--light .article-headings-component__entry h2 {
+  color: #1d1f26;
+}
+
+.typography-vortex-component {
+  position: relative;
+  isolation: isolate;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.typography-vortex-component canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.typography-vortex-component__hint,
+.animated-top-dock-component__caption {
+  position: absolute;
+  z-index: 6;
+  color: #62625e;
+  font: 400 9px/1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.1em;
+}
+
+.typography-vortex-component__hint {
+  right: 18px;
+  bottom: 16px;
+}
+
+.animated-top-dock-component {
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.035), transparent 34%),
+    #080808;
+}
+
+.animated-top-dock__nav {
+  position: absolute;
+  top: clamp(24px, 5cqw, 46px);
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  height: 38px;
+  padding: 4px;
+  overflow: visible;
+  border: 1px solid #292929;
+  border-radius: 11px;
+  background: rgba(14, 14, 14, 0.86);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(18px) saturate(75%);
+  transform: translateX(-50%);
+  isolation: isolate;
+}
+
+.animated-top-dock__item {
+  position: relative;
+  z-index: 6;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  outline: none;
+  color: #858580;
+  background: rgba(21, 21, 20, 0.9);
+  font: 400 10px/1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  backdrop-filter: blur(14px) saturate(70%);
+  transform-origin: 50% 0;
+  transition: color 0.15s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  will-change: width, height, transform;
+  cursor: pointer;
+}
+
+.animated-top-dock__item[data-dock-near="true"],
+.animated-top-dock__item:focus-visible {
+  z-index: 7;
+  color: #ecece8;
+  border-color: #41413e;
+  background: rgba(27, 27, 26, 0.94);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.26);
+}
+
+.animated-top-dock__logo {
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  background: #e8e8e3;
+}
+
+.animated-top-dock__logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.animated-top-dock__link {
+  gap: 6px;
+  width: 94px;
+  padding: 0 9px;
+}
+
+.animated-top-dock__link[aria-pressed="true"] {
+  color: #111;
+  border-color: #e8e8e3;
+  background: #e8e8e3;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.28);
+}
+
+.animated-top-dock__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  opacity: 0.62;
+  transition: opacity 0.16s;
+}
+
+.animated-top-dock__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.animated-top-dock__item[data-dock-near="true"] .animated-top-dock__icon,
+.animated-top-dock__item:focus-visible .animated-top-dock__icon {
+  opacity: 1;
+}
+
+.animated-top-dock-component__caption {
+  right: 18px;
+  bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .article-headings-component {
+    padding: 18px;
+  }
+
+  .article-headings-component__entry {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .article-headings-component__entry h2 {
+    font-size: clamp(17px, 5.5vw, 26px);
+  }
+
+  .article-headings-component__meta {
+    display: none;
+  }
+
+  .animated-top-dock__nav {
+    top: 24px;
+    gap: 2px;
+    height: 36px;
+  }
+
+  .animated-top-dock__item {
+    height: 26px !important;
+    transform: none !important;
+  }
+
+  .animated-top-dock__logo {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .animated-top-dock__link {
+    width: auto !important;
+    padding: 0 7px;
+    font-size: 8px;
+    letter-spacing: 0.07em;
+  }
+
+  .animated-top-dock__icon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-top-dock__item {
+    transform: none !important;
+  }
+}
+
+/* ── Top dock variants ────────────────────────────────────────────────────
+   Every dimension below is a container query unit with a clamp, because these
+   bars are shown at anything from a 600 px card to a 1920 px capture frame: a
+   fixed 56 px bar that reads correctly in the catalogue frame becomes a thin
+   strip of small type at full width. One scale block feeds all three. */
+
+.animated-top-dock-component.atd-modern,
+.animated-top-dock-component.atd-retro,
+.animated-top-dock-component.atd-glass {
+  --atd-top: clamp(16px, 2.6cqw, 46px);
+  --atd-bar-width: min(1460px, calc(100% - clamp(24px, 4.2cqw, 96px)));
+  --atd-bar-height: clamp(48px, 3.4cqw, 68px);
+  --atd-bar-pad: clamp(5px, 0.42cqw, 9px);
+  --atd-bar-lead: clamp(14px, 1.15cqw, 25px);
+  --atd-item-height: clamp(30px, 2.2cqw, 44px);
+  --atd-item-pad: clamp(10px, 0.86cqw, 18px);
+  --atd-label: clamp(12px, 0.78cqw, 17px);
+  --atd-icon: clamp(13px, 0.92cqw, 19px);
+  --atd-gap: clamp(5px, 0.44cqw, 9px);
+  --atd-brand: clamp(13px, 0.94cqw, 20px);
+  --atd-mark: clamp(22px, 1.55cqw, 33px);
+  --atd-action-height: clamp(34px, 2.5cqw, 50px);
+  display: block;
+  overflow: hidden;
+}
+
+.atd-modern__bar,
+.atd-retro__bar {
+  position: absolute;
+  top: var(--atd-top);
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: var(--atd-bar-width);
+  height: var(--atd-bar-height);
+  transform: translateX(-50%);
+}
+
+/* Command bar: the bar hugs its own content — brand, dock and actions sit in
+   one flow with a gap between them rather than being pushed to the far edges of
+   a full-bleed strip. That only holds because the dock's track is locked to its
+   rest width (lockTrack in the controller): the spring then grows its items
+   outside that track instead of widening the bar and shoving the brand and the
+   actions around on every pointer move. */
+.atd-modern__bar {
+  /* space-between is inherited rather than centred on purpose: at its natural
+     width the three groups already fill the box, and in a shell too narrow for
+     them the overflow then runs off the right instead of taking the brand off
+     the left as well */
+  width: max-content;
+  max-width: var(--atd-bar-width);
+  padding: var(--atd-bar-pad) var(--atd-bar-pad) var(--atd-bar-pad) var(--atd-bar-lead);
+}
+
+.atd-modern__dock {
+  display: flex;
+  flex: none;
+  gap: clamp(2px, 0.2cqw, 5px);
+  align-items: flex-start;
+  /* the track is one item tall and its rest width wide, and the row is centred
+     inside it, so a growing item overflows evenly on all four sides without
+     moving a single neighbour in the bar */
+  justify-content: center;
+  height: var(--atd-item-height);
+}
+
+.atd-modern__item,
+.atd-retro__item,
+.atd-glass__item {
+  display: inline-flex;
+  flex: none;
+  gap: var(--atd-gap);
+  align-items: center;
+  justify-content: center;
+  height: var(--atd-item-height);
+  padding: 0 var(--atd-item-pad);
+  outline: none;
+  white-space: nowrap;
+  transform-origin: 50% 0;
+  will-change: width, height, transform;
+  cursor: pointer;
+}
+
+.atd-modern__brand,
+.atd-glass__brand,
+.atd-retro__brand {
+  display: inline-flex;
+  flex: none;
+  gap: clamp(7px, 0.6cqw, 13px);
+  align-items: center;
+  text-decoration: none;
+}
+
+.atd-modern__mark,
+.atd-glass__mark {
+  display: block;
+  width: var(--atd-mark);
+  height: var(--atd-mark);
+  overflow: hidden;
+}
+
+.atd-modern__mark svg,
+.atd-glass__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.atd-modern__word,
+.atd-glass__word {
+  font-size: var(--atd-brand);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+}
+
+.atd-modern__actions {
+  display: inline-flex;
+  flex: none;
+  gap: clamp(4px, 0.34cqw, 8px);
+  align-items: center;
+}
+
+.atd-modern__ghost {
+  height: var(--atd-action-height);
+  padding: 0 clamp(12px, 0.95cqw, 20px);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: 500 var(--atd-label) / 1 inherit;
+  transition: color 0.16s, background 0.16s;
+  cursor: pointer;
+}
+
+.atd-modern__cta,
+.atd-glass__cta {
+  height: var(--atd-action-height);
+  border-radius: 999px;
+  font: 600 var(--atd-label) / 1 inherit;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s;
+  cursor: pointer;
+}
+
+/* ── Modern command bar ─────────────────────────────────────────────────── */
+
+.animated-top-dock-component.atd-modern {
+  /* a ceiling rather than a width: the command bar sizes itself to its own
+     cluster, and only falls back to an inset strip in a shell too narrow to
+     hold it */
+  --atd-bar-width: min(1240px, calc(100% - clamp(24px, 5cqw, 120px)));
+  background: #07080c;
+}
+
+.atd-modern__aurora {
+  position: absolute;
+  inset: -24% -12% auto -12%;
+  z-index: 1;
+  height: 82%;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 62% at 22% 36%, rgba(78, 116, 255, 0.4), transparent 68%),
+    radial-gradient(46% 56% at 78% 20%, rgba(186, 96, 255, 0.3), transparent 70%),
+    radial-gradient(40% 48% at 52% 6%, rgba(56, 220, 214, 0.2), transparent 72%),
+    radial-gradient(34% 40% at 50% 14%, rgba(255, 255, 255, 0.07), transparent 76%);
+  filter: blur(8px);
+}
+
+.atd-modern__bar {
+  gap: clamp(14px, 2.4cqw, 40px);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(25, 27, 36, 0.86), rgba(12, 13, 18, 0.82));
+  box-shadow: 0 22px 52px -24px rgba(0, 0, 0, 0.92), inset 0 1px rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+
+.atd-modern__brand {
+  color: #f2f3f7;
+}
+
+.atd-modern__mark {
+  /* a full circle: the shared brand mark is a rounded square, so the disc is cut
+     from it by the mark box's own clip rather than by a second svg */
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
+}
+
+.atd-modern__item {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #9b9fae;
+  background: transparent;
+  font: 500 var(--atd-label) / 1 inherit;
+  letter-spacing: -0.005em;
+  transition: color 0.16s, border-color 0.18s, background 0.18s, box-shadow 0.18s, backdrop-filter 0.18s;
+}
+
+/* :hover is carried alongside the proximity flag so the glass still lands when
+   the spring is off — reduced motion, a coarse pointer, a narrow viewport */
+.atd-modern__item[data-dock-near="true"],
+.atd-modern__item:hover,
+.atd-modern__item:focus-visible {
+  color: #f4f5f9;
+  border-color: rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.9), inset 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+}
+
+.atd-modern__item[aria-pressed="true"] {
+  color: #0a0b10;
+  border-color: transparent;
+  background: linear-gradient(180deg, #ffffff, #dfe3ef);
+  box-shadow: 0 10px 24px -12px rgba(120, 150, 255, 0.75), inset 0 -1px rgba(0, 0, 0, 0.14);
+}
+
+.atd-modern__icon,
+.atd-glass__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--atd-icon);
+  height: var(--atd-icon);
+  opacity: 0.72;
+  transition: opacity 0.16s;
+}
+
+.atd-modern__icon svg,
+.atd-glass__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atd-modern__item[data-dock-near="true"] .atd-modern__icon,
+.atd-modern__item[aria-pressed="true"] .atd-modern__icon,
+.atd-glass__item[data-dock-near="true"] .atd-glass__icon,
+.atd-glass__item[aria-pressed="true"] .atd-glass__icon {
+  opacity: 1;
+}
+
+.atd-modern__ghost {
+  color: #a7abba;
+}
+
+.atd-modern__ghost:hover {
+  color: #f0f1f6;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.atd-modern__cta {
+  display: inline-flex;
+  gap: var(--atd-gap);
+  align-items: center;
+  padding: 0 var(--atd-bar-pad) 0 clamp(14px, 1.1cqw, 24px);
+  border: 0;
+  color: #0a0b10;
+  background: linear-gradient(180deg, #ffffff, #d8ddec);
+  box-shadow: 0 10px 26px -14px rgba(150, 175, 255, 0.95), inset 0 -1px rgba(0, 0, 0, 0.16);
+}
+
+.atd-modern__cta svg {
+  box-sizing: border-box;
+  width: calc(var(--atd-action-height) - clamp(12px, 0.9cqw, 20px));
+  height: calc(var(--atd-action-height) - clamp(12px, 0.9cqw, 20px));
+  padding: clamp(4px, 0.3cqw, 7px);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.1);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atd-modern__cta:hover {
+  box-shadow: 0 16px 32px -14px rgba(150, 175, 255, 1), inset 0 -1px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+.atd-modern__stage {
+  position: absolute;
+  top: 58%;
+  left: 50%;
+  z-index: 4;
+  width: min(88cqw, 1120px);
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.atd-modern__eyebrow {
+  margin: 0 0 clamp(8px, 0.9cqw, 18px);
+  color: #7d84a0;
+  font: 400 clamp(8px, 0.62cqw, 13px) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.atd-modern__headline {
+  /* background-clip: text paints only inside the element box, so at this size a
+     1.0-ish line-height would cut the ascenders and descenders out of the fill.
+     The padding buys the ink its own room back. */
+  margin: 0;
+  padding: 0.08em 0 0.14em;
+  color: transparent;
+  background: linear-gradient(180deg, #ffffff 16%, rgba(255, 255, 255, 0.3));
+  background-clip: text;
+  -webkit-background-clip: text;
+  font-size: clamp(30px, 7.6cqw, 150px);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* ── Retro pixel terminal ───────────────────────────────────────────────────
+   The field canvas is a small drawing buffer stretched by CSS with
+   nearest-neighbour sampling, so its dither pattern arrives as real square
+   pixels. Every chrome edge here is square to sit on that same grid. */
+
+.animated-top-dock-component.atd-retro {
+  --atd-label: clamp(9px, 0.68cqw, 15px);
+  --atd-icon: clamp(10px, 0.78cqw, 17px);
+  --atd-brand: clamp(11px, 0.8cqw, 18px);
+  background: #0b0819;
+}
+
+.atd-retro__field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.atd-retro__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(124% 90% at 50% 34%, transparent 28%, rgba(6, 4, 16, 0.62) 100%),
+    linear-gradient(180deg, rgba(6, 4, 16, 0.6) 0%, transparent 24%, transparent 62%, rgba(6, 4, 16, 0.58) 100%);
+}
+
+/* the raster runs at screen resolution, not at the field's pixel scale, so the
+   line structure stays a raster instead of banding the chunky artwork */
+.atd-retro::before {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  content: "";
+  opacity: calc(var(--atd-retro-scan, 0.32) * 1.5);
+  background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0 1px, transparent 1px 3px);
+}
+
+/* Horizontal fit: the bar is one continuous strip and the menu cells own all of
+   it. There are no gaps and no rounded ends — every cell is separated by a rule
+   and runs the full height, and the controller renormalises the widths so
+   opening one cell takes its room from the neighbours. */
+.atd-retro__bar {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #f4e6c8;
+  background: #1a1030;
+  box-shadow: 6px 6px 0 rgba(6, 4, 16, 0.62);
+}
+
+.atd-retro__brand {
+  height: 100%;
+  padding: 0 clamp(12px, 1.1cqw, 26px);
+  border-right: 2px solid #4b2f7e;
+  color: #f9c74f;
+  background: #150c28;
+  font: 400 var(--atd-brand) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.atd-retro__dock {
+  display: flex;
+  flex: 1 1 0;
+  gap: 0;
+  align-items: stretch;
+  min-width: 0;
+  height: 100%;
+}
+
+.atd-retro__badge {
+  display: inline-flex;
+  width: var(--atd-icon);
+  height: var(--atd-icon);
+}
+
+.atd-retro__badge svg,
+.atd-retro__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  shape-rendering: crispEdges;
+}
+
+.atd-retro__item {
+  height: 100%;
+  min-width: 0;
+  padding: 0 clamp(6px, 0.5cqw, 12px);
+  overflow: hidden;
+  border: 0;
+  border-right: 2px solid #4b2f7e;
+  color: #b9a7e8;
+  background: #241548;
+  font: 400 var(--atd-label) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  transition: color 0.1s steps(2), background 0.1s steps(2);
+}
+
+.atd-retro__item[data-dock-near="true"],
+.atd-retro__item:focus-visible {
+  color: #fff4d6;
+  background: #3a2170;
+}
+
+.atd-retro__item[aria-pressed="true"] {
+  color: #1a1030;
+  background: #f9c74f;
+}
+
+.atd-retro__icon {
+  display: inline-flex;
+  flex: none;
+  width: var(--atd-icon);
+  height: var(--atd-icon);
+}
+
+.atd-retro__cta {
+  display: inline-flex;
+  flex: none;
+  gap: var(--atd-gap);
+  align-items: center;
+  height: 100%;
+  padding: 0 clamp(14px, 1.2cqw, 28px);
+  border: 0;
+  border-left: 2px solid #f4e6c8;
+  color: #1a1030;
+  background: #f47b5c;
+  font: 400 var(--atd-label) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  transition: background 0.1s steps(2), color 0.1s steps(2);
+  cursor: pointer;
+}
+
+.atd-retro__cta:hover {
+  color: #1a1030;
+  background: #f9c74f;
+}
+
+.atd-retro__readout {
+  position: absolute;
+  bottom: clamp(30px, 4.2cqw, 74px);
+  left: 50%;
+  z-index: 8;
+  display: flex;
+  gap: clamp(12px, 2.4cqw, 42px);
+  margin: 0;
+  color: #a08fd4;
+  font: 400 clamp(9px, 0.62cqw, 13px) / 1 "ThreeUI Fragment Mono", ui-monospace, monospace;
+  letter-spacing: 0.2em;
+  transform: translateX(-50%);
+}
+
+/* ── Liquid glass ───────────────────────────────────────────────────────────
+   Vertical fit: the dock leaves the top edge for a rail down the left side. The
+   proximity field runs on the y axis, so an item grows taller and leans out to
+   the right instead of widening and dropping. The rail is a real
+   backdrop-filter panel over the refracting Three.js bead field, so its blur
+   samples the same pixels the glass shader refracts. */
+
+.animated-top-dock-component.atd-glass {
+  --atd-rail-width: clamp(158px, 12.5cqw, 250px);
+  background: #08090d;
+}
+
+.atd-glass__field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* a scrim behind the rail: the bead field is bright enough in places to swallow
+   the wordmark, and the panel's own blur cannot darken what it samples */
+.atd-glass::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 5;
+  width: 42%;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(90deg, rgba(6, 7, 11, 0.66), rgba(6, 7, 11, 0));
+}
+
+.atd-glass__rail {
+  position: absolute;
+  top: 50%;
+  left: clamp(20px, 3.4cqw, 68px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.5cqw, 11px);
+  align-items: stretch;
+  width: var(--atd-rail-width);
+  padding: var(--atd-bar-pad);
+  border-radius: clamp(20px, 1.7cqw, 34px);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    0 30px 64px -26px rgba(0, 0, 0, 0.92),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(26px) saturate(190%);
+  -webkit-backdrop-filter: blur(26px) saturate(190%);
+  transform: translateY(-50%);
+}
+
+.atd-glass__rail::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  border-radius: inherit;
+  background: linear-gradient(168deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.14) 100%);
+}
+
+.atd-glass__brand {
+  position: relative;
+  padding: clamp(6px, 0.5cqw, 12px) clamp(8px, 0.7cqw, 15px);
+  color: #fbfbfe;
+}
+
+.atd-glass__mark {
+  border-radius: clamp(7px, 0.5cqw, 11px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.atd-glass__hairline {
+  height: 1px;
+  margin: clamp(2px, 0.2cqw, 5px) clamp(6px, 0.5cqw, 12px);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.04));
+}
+
+.atd-glass__dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.2cqw, 5px);
+  align-items: stretch;
+}
+
+.atd-glass__item {
+  justify-content: flex-start;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: clamp(12px, 1cqw, 22px);
+  color: rgba(255, 255, 255, 0.66);
+  background: transparent;
+  font: 500 var(--atd-label) / 1 inherit;
+  letter-spacing: -0.005em;
+  /* the rail grows downward from each item's own top edge */
+  transform-origin: 0 50%;
+  transition: color 0.18s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.atd-glass__item[data-dock-near="true"],
+.atd-glass__item:focus-visible {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46), 0 8px 18px -10px rgba(0, 0, 0, 0.8);
+}
+
+.atd-glass__item[aria-pressed="true"] {
+  color: #0d0f16;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, #ffffff, #e6e9f4);
+  box-shadow: 0 10px 24px -12px rgba(255, 255, 255, 0.5), inset 0 -1px rgba(0, 0, 0, 0.14);
+}
+
+.atd-glass__cta {
+  display: inline-flex;
+  gap: var(--atd-gap);
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 clamp(12px, 1cqw, 22px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #0d0f16;
+  background: linear-gradient(180deg, #ffffff, #dfe3f0);
+  box-shadow: 0 12px 30px -14px rgba(255, 255, 255, 0.6), inset 0 -1px rgba(0, 0, 0, 0.16);
+}
+
+.atd-glass__cta svg {
+  width: var(--atd-icon);
+  height: var(--atd-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atd-glass__cta:hover {
+  box-shadow: 0 16px 34px -14px rgba(255, 255, 255, 0.75), inset 0 -1px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+.atd-modern .animated-top-dock-component__caption,
+.atd-glass .animated-top-dock-component__caption {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.atd-retro .animated-top-dock-component__caption {
+  z-index: 12;
+  color: #7b6ab0;
+}
+
+@container (max-width: 900px) {
+  .atd-modern__ghost {
+    display: none;
+  }
+
+  .atd-modern__item span:last-child,
+  .atd-retro__item span:last-child {
+    display: none;
+  }
+
+  /* the bar is sized by its content now, so a shell this narrow has to give the
+     content back: the call to action drops to its glyph rather than pushing the
+     cluster past the bar's own max width */
+  .atd-modern__cta span {
+    display: none;
+  }
+
+  .atd-modern__cta {
+    padding: 0 var(--atd-bar-pad);
+  }
+
+  /* the rail collapses to its icons rather than keeping a 158 px column in a
+     card that is only a few hundred pixels wide */
+  .animated-top-dock-component.atd-glass {
+    --atd-rail-width: auto;
+  }
+
+  .atd-glass__item {
+    justify-content: center;
+  }
+
+  .atd-glass__item span:last-child,
+  .atd-glass__word,
+  .atd-glass__cta span {
+    display: none;
+  }
+
+  .atd-glass__cta {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .atd-modern__word {
+    display: none;
+  }
+
+  .atd-modern__item {
+    height: 28px !important;
+    transform: none !important;
+  }
+
+  .atd-glass__item {
+    height: auto !important;
+    transform: none !important;
+  }
+
+  /* the strip keeps its full-height cells on a phone; only the spring stops */
+  .atd-retro__item {
+    height: 100% !important;
+    transform: none !important;
+  }
+
+  .atd-modern__stage {
+    top: 62%;
+  }
+
+  .atd-retro__readout {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atd-modern__item,
+  .atd-retro__item,
+  .atd-glass__item {
+    transform: none !important;
+  }
+}
+```
+

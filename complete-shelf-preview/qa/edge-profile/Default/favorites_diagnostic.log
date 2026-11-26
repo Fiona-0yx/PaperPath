@@ -1,0 +1,20 @@
+2026-11-20 04:07:18.269: [INFO] CurrentProfilePath: C:\Users\lenovo\Desktop\人工智能挑战赛\complete-shelf-preview\qa\edge-profile\Default
+2026-11-20 04:07:18.269: [INFO] Profiles total count: 1
+2026-11-20 04:07:18.269: [INFO] Profile: name=用户配置 1 path=C:\Users\lenovo\Desktop\人工智能挑战赛\complete-shelf-preview\qa\edge-profile\Default lastActive=null
+2026-11-20 04:07:18.269: [INFO] LastUsedProfileDir: C:\Users\lenovo\Desktop\人工智能挑战赛\complete-shelf-preview\qa\edge-profile\Default
+2026-11-20 04:07:18.269: [INFO] VisibilityChanged: 0
+2026-11-20 04:07:18.283: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:07:18.283: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-20 04:07:18.283: [INFO] OnDoneLoading sync enabled: 0
+2026-11-20 04:07:18.283: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-20 04:07:18.283: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-20 04:07:18.283: [INFO] BookmarksSnapshot Startup total=2 bar=2 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-20 04:07:18.308: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:07:18.787: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-20 04:07:18.789: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:07:18.791: [INFO] Primary account changed.
+2026-11-20 04:07:18.791: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
+2026-11-20 04:07:18.796: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:07:18.815: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-20 04:07:18.851: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
+2026-11-20 04:07:18.852: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 1
