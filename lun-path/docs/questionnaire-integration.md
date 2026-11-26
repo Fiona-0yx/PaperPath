@@ -50,6 +50,7 @@ $reply.report.readingPlan.directions | ForEach-Object { $_.paper }
 | `reportId` / `report.id` | 同一个 64 位小写十六进制编号。对等价生成内容复用文件 |
 | `report.locale` / `report.generatedAt` | 报告语言和首次落盘的 ISO 时间 |
 | `report.readingPlan` | 弹窗数据，包含 `directions[]`、`advice[]` 和可空的 `clarification` |
+| `readingPlan.primaryRecommendation` | 有匹配时为 `{paperId, reason}`，其中 `paperId` 对应排序后第一条的 `paper.id`。多方向时展示首读理由。无匹配时为 `null`，旧报告可能省略此字段 |
 | `readingPlan.directions[]` | `{category,title,paper,guide}`，每方向一篇。 `paper` 包含 `id,title,year,sampleUrl,url`，分别用 `sampleUrl` 打开本地标题页、用 `url` 打开在线原文 |
 | `report.analysis` | 完整的规则分析，包含作答来源、自检记录和规则选文建议 |
 | `report.model` / `modelStatus` | 模型分析与状态。状态为 `available`、`disabled` 或 `unavailable` |
@@ -57,7 +58,7 @@ $reply.report.readingPlan.directions | ForEach-Object { $_.paper }
 | `reportDirectory` | Node 侧可用 `createServer({reportDirectory})` 指定绝对目录。用私有目录存放作答；默认目录由 Git 忽略 |
 | `lunjing-intake-v1` | 浏览器本地存储键。草稿保存在 `answers`、`drafts` 和 `evidence`，最近成功提交的编号在 `submitted.reportId` |
 
-旧报告可能没有 `readingPlan` 或 `paper.sampleUrl`，可让用户更新报告后拿到新字段。本机可用 `npm run report:read -- <reportId>` 阅读默认目录中的报告。跨进程拿取报告时，生成请求直接带 `include=report`。
+`guide` 是本次作答对应的阅读任务。同一篇论文可随阅读目标和困难返回不同导读。客户端应展示报告里的 `guide`。旧报告可能没有 `readingPlan` 或 `paper.sampleUrl`，可让用户更新报告后拿到新字段。本机可用 `npm run report:read -- <reportId>` 阅读默认目录中的报告。跨进程拿取报告时，生成请求直接带 `include=report`。
 
 ## 大模型接口与扩展点
 

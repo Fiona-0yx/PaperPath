@@ -97,6 +97,7 @@ button:focus-visible,a:focus-visible{outline:2px solid #7d956b;outline-offset:5p
 }
 .report-content p { margin: 0; }
 .report-content article p { margin-top: 5px; }
+.report-content .first-reading { border-left: 4px solid #516947; background: #87917625; }
 .report-content a { color: #354f32; text-decoration: underline; text-underline-offset: 3px; }
 .report-content ul { margin: 6px 0 0; padding-inline-start: 1.25em; }
 .report-content li + li { margin-top: 4px; }

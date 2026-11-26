@@ -57,7 +57,9 @@ export function openReportDialog(language) {
         const block = section(L('推荐阅读', 'Recommended reading'));
         for (const {title, paper, guide} of readingPlan.directions) {
           const entry = append(block, 'article');
-          append(entry, 'h3', title);
+          const first = readingPlan.directions.length > 1 && readingPlan.primaryRecommendation?.paperId === paper.id;
+          if (first) entry.className = 'first-reading';
+          append(entry, 'h3', first ? L('建议先读 · ', 'Read first · ') + title : title);
           const citation = append(entry, 'p');
           const original = paperUrl(paper.url);
           const sample = /^\/papers\/[a-z0-9-]+$/.test(paper.sampleUrl) ? paper.sampleUrl : null;
@@ -72,6 +74,7 @@ export function openReportDialog(language) {
               linkTo(citation, original, L('在线原文', 'Original paper'));
             }
           }
+          if (first) append(entry, 'p', readingPlan.primaryRecommendation.reason);
           append(entry, 'p', guide);
         }
       }

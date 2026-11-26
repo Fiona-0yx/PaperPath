@@ -39,6 +39,9 @@ try {
     console.log('\n推荐阅读');
     if (readingPlan.clarification) console.log('  ' + readingPlan.clarification);
     for (const {title, paper, guide} of readingPlan.directions) {
+      if (readingPlan.directions.length > 1 && readingPlan.primaryRecommendation?.paperId === paper.id) {
+        console.log('  建议先读 · ' + readingPlan.primaryRecommendation.reason);
+      }
       console.log(`  ${title} · ${paper.title} (${paper.year})\n    ${paper.url}\n    ${guide}`);
     }
     for (const tip of readingPlan.advice) console.log('  ' + tip);

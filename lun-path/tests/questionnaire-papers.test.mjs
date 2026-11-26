@@ -4,6 +4,7 @@ import { analyzeQuestionnaire } from '../server/questionnaire-report.mjs';
 import { recommendPapers } from '../server/recommend-papers.mjs';
 import { enrichQuestionnaire } from '../server/questionnaire-model.mjs';
 import { paperCatalog } from '../server/paper-catalog.mjs';
+import { paperGuide } from '../server/paper-guide.mjs';
 import { groveCategories } from '../shared/grove-categories.js';
 
 const select = (...values) => ({source:'self', values});
@@ -63,4 +64,40 @@ test('an expressly named method gets its paper locally and a negated method does
   const interest = text => ({direction:{source:'self',text,edited:true}});
   assert.equal(plan(interest('想做机器翻译')).directions[0].paper.id, 'transformer');
   assert.deepEqual(plan(interest('我不想做机器翻译')).directions, []);
+});
+
+test('a translation project puts Transformer first among several interests and explains why', () => {
+  const answers = {direction:select(2, 4), intro:{source:'self',text:'想做机器翻译'}};
+  for (const locale of ['zh', 'en']) {
+    const result = plan(answers, {}, locale);
+    assert.equal(result.directions.length, 2);
+    assert.equal(result.directions[0].paper.id, 'transformer');
+    assert.equal(result.primaryRecommendation.paperId, 'transformer');
+    assert.ok(result.primaryRecommendation.reason.trim());
+    assert.equal(result.directions[1].category, 'deep-learning');
+  }
+  assert.equal(plan({}).primaryRecommendation, null);
+  const project = plan({...answers, intro:{source:'self',text:'这学期的课程作业是做机器翻译，希望能跟同学讲清楚'}});
+  assert.equal(project.primaryRecommendation.paperId, 'transformer');
+});
+
+test('a reader can keep ResNet and change its reading task by editing the goal or difficulty', () => {
+  const answers = {direction:select(3), intro:{source:'self',text:'ResNet'}, python:select(3)};
+  const cases = [{outcome:select(0)}, {outcome:select(1)}, {outcome:select(2)},
+    {outcome:select(0), difficulty:select(1)}];
+  for (const locale of ['zh','en']) {
+    const tasks = cases.map(extra => plan({...answers, ...extra}, {}, locale).directions[0]);
+    assert.ok(tasks.every(item => item.paper.id === 'resnet'));
+    assert.equal(new Set(tasks.map(item => item.guide)).size, cases.length);
+  }
+});
+
+test('all catalog entries have three distinct goal tasks in each supported language', () => {
+  for (const paper of paperCatalog) {
+    for (const locale of ['zh','en']) {
+      const guides = [0,1,2].map(goal => paperGuide(paper, {outcome:{answer:select(goal)}}, locale));
+      assert.ok(guides.every(text => typeof text === 'string' && text.trim().length > 0), paper.id);
+      assert.equal(new Set(guides).size, 3, paper.id);
+    }
+  }
 });
