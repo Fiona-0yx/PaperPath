@@ -39,6 +39,30 @@ function boot(shell) {
   let filter = 'all';
   let toastTimer = null;
 
+  // ——— event reporting (backend statistics for later agent analysis) ———
+  // Fire-and-forget: reading must never be blocked by a logging failure.
+  function reportEvent(kind, info, action) {
+    const payload = {
+      kind,
+      action: action || null,
+      paperId: paper.id,
+      paperTitle: paper.title,
+      categoryId: paper.categoryId,
+      sectionId: info?.sectionId || '',
+      sectionHeading: info?.sectionHeading || '',
+      paragraphIndex: info?.paragraphIndex ?? -1,
+      textLength: info?.text ? info.text.length : 0,
+      text: info?.text ? info.text.slice(0, 200) : '',
+      lang: shell.language,
+      at: Date.now(),
+    };
+    const body = JSON.stringify(payload);
+    try {
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/reader/events', new Blob([body], {type: 'application/json'}));
+      else fetch('/api/reader/events', {method: 'POST', headers: {'Content-Type': 'application/json'}, body, keepalive: true}).catch(() => {});
+    } catch { /* ignore: statistics are best-effort */ }
+  }
+
   document.documentElement.lang = shell.language === 'en' ? 'en' : 'zh-CN';
   document.title = L('论径 · 论文阅读', 'Lun Jing · Reading');
 
@@ -130,6 +154,7 @@ function boot(shell) {
     if (!info) return; // no selection: keep the browser's own menu
     event.preventDefault();
     showMenu(event.clientX, event.clientY, info);
+    reportEvent('menu-opened', info);
   });
 
   menuEl.addEventListener('click', event => {
@@ -166,6 +191,7 @@ function boot(shell) {
     };
     if (action === 'explain') note.status = 'pending';
     const entry = shell.addReadingNote(note);
+    reportEvent('action', info, action);
     renderNotes();
     if (action === 'bookmark') toast(L('已收藏，可在右侧笔记中查看', 'Saved to reading notes'));
     else if (action === 'question') toast(L('已记录疑问，可在右侧整理', 'Doubt recorded in the sidebar'));
