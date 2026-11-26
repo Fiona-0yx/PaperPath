@@ -124,18 +124,6 @@ export async function openJournal() {
       return '<label class="summary-row">'+esc(local(q.label))+'<input data-edit="'+q.id+'" maxlength="1500" placeholder="'+L('未知','Unknown')+'" value="'+esc(a&&a.source!=='unknown'?answerText(q,a,L):'')+'"><small>'+esc(provenance(q,a,L))+'</small></label>'+evidenceDetails(q,state.evidence[q.id],L);
     }).join('');
   }
-  // Reading doubts gathered by the paper reader, shown on the portrait as
-  // "observations to be analysed". No agent result is invented here.
-  function readingObservations(){
-    const notes=(state.readingNotes||[]).filter(n=>n.type!=='bookmark');
-    if(!notes.length)return '';
-    const items=notes.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(n=>{
-      const tag=n.type==='question'?L('有疑问','Question'):L('需要解释','Explain');
-      const stateText=n.type==='explain'&&n.status==='unavailable'?L('分析暂不可用，已记录待处理','analysis unavailable, recorded for later'):L('待 Agent 分析','pending agent analysis');
-      return '<li class="observation"><span>'+esc(n.text)+'</span><small>'+esc(tag)+' · '+esc(stateText)+'</small></li>';
-    }).join('');
-    return '<section class="reading-observations"><h3>'+L('学习观察 · 待分析','Learning observations · pending')+'</h3><p class="obs-hint">'+L('来自论文阅读时记下的疑问；Agent 分析接入后，这里会补充反复出现的薄弱知识点。','Doubts recorded while reading. Weak points will appear here once the agent analysis is connected.')+'</p><ol>'+items+'</ol></section>';
-  }
   function face(side,html){
     const el=document.createElement('section');el.className='journal-face '+side;el.innerHTML=html;return el;
   }
@@ -156,9 +144,8 @@ export async function openJournal() {
     }else if(p.key==='summary'){
       const heading='<h2>'+L('我的初始画像','My starting portrait')+'</h2><p>'+L('点文字即可修改，留白的地方保持未知。','Edit any entry. Blank fields stay unknown.')+'</p>';
       const done=profileOnly?'':'<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L('提交','Submit')+'</button></div>';
-      const observations=readingObservations();
-      if(collapsed)book.append(face('full',heading+summary(questions)+observations+done));
-      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+observations+done));
+      if(collapsed)book.append(face('full',heading+summary(questions)+done));
+      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+done));
     }else if(p.key==='intro'&&!collapsed){
       book.append(face('left intro-art','<img src="/assets/botanical/botany-left.png" alt="">'),face('right',question(p.items[0])));
     }else{
