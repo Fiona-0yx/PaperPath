@@ -56,6 +56,87 @@ async function handleReaderEvent(req, res) {
 function termKey(text) {
   return String(text || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 60);
 }
+// Deterministic observations built only from counts in the local log. Each entry
+// states the rule that produced it, so the UI can label it as a rule rather than
+// an agent verdict. Nothing here is inferred from content semantics.
+function buildObservations(agg) {
+  const out = [];
+  if (agg.acted < 2 || agg.total < 3) return out;
+  const push = (id, title, text, evidence, rule) => { out.push({id, title, text, evidence, rule, method: 'rule'}); };
+
+  const repeated = (agg.weakTerms || []).filter((item) => item.count >= 2).slice(0, 3);
+  if (repeated.length) {
+    push('repeated-terms', '反复出现的疑问词',
+      '同一处词句被反复标记：' + repeated.map((item) => '「' + item.term + '」').join('') + '，这些概念可能还没有吃透。',
+      repeated.map((item) => item.term + ' ×' + item.count).join('，'),
+      '同一词句被记录 ≥ 2 次');
+  }
+
+  if (agg.sectionTotal >= 4 && agg.topSections && agg.topSections.length) {
+    const top = agg.topSections[0];
+    const share = top.count / agg.sectionTotal;
+    if (share >= 0.4) {
+      push('section-focus', '疑问集中的章节',
+        '你的记录有 ' + Math.round(share * 100) + '% 落在「' + top.section + '」，建议回到这一节重读一遍。',
+        top.section + ' ' + top.count + '/' + agg.sectionTotal + ' 条记录',
+        '单章节占比 ≥ 40%');
+    }
+  }
+
+  const marked = ['question', 'explain', 'bookmark'].reduce((sum, key) => sum + (Number(agg.byAction && agg.byAction[key]) || 0), 0);
+  if (marked >= 3) {
+    const labels = {question: '有疑问', explain: '需要进一步解释', bookmark: '收藏'};
+    const favorite = ['question', 'explain', 'bookmark']
+      .map((key) => [key, Number(agg.byAction[key]) || 0])
+      .sort((a, b) => b[1] - a[1])[0];
+    if (favorite[1] / marked >= 0.6) {
+      push('type-preference', '记录习惯',
+        '你更常用「' + labels[favorite[0]] + '」来标记内容，占全部记录的 ' + Math.round(favorite[1] / marked * 100) + '%。',
+        labels[favorite[0]] + ' ' + favorite[1] + '/' + marked,
+        '单一记录类型占比 ≥ 60%');
+    }
+  }
+
+  if (agg.menuOpened >= 4 && agg.dismissed / agg.menuOpened >= 0.4) {
+    push('menu-dismissal', '选中后放弃的比例',
+      '有 ' + agg.dismissed + ' 次选中后没有记录就关掉了菜单（共 ' + agg.menuOpened + ' 次右键），可能还没想好该怎么记。',
+      agg.dismissed + '/' + agg.menuOpened,
+      '放弃占比 ≥ 40% 且右键 ≥ 4 次');
+  }
+
+  const life = agg.lifecycle || {};
+  if (agg.acted >= 3 && (life.resolved || life.reopened || life.deleted)) {
+    push('lifecycle', '疑问的处理进度',
+      '记录了 ' + agg.acted + ' 条，其中已解决 ' + (life.resolved || 0) + ' 条' +
+      (life.reopened ? '、重新打开 ' + life.reopened + ' 条' : '') +
+      (life.deleted ? '、删除 ' + life.deleted + ' 条' : '') + '。',
+      'created ' + agg.acted + ' · resolved ' + (life.resolved || 0) + ' · reopened ' + (life.reopened || 0) + ' · deleted ' + (life.deleted || 0),
+      '有处理动作时汇总');
+  }
+
+  if (life.jumped >= 2) {
+    push('revisit', '回看原文的习惯',
+      '你回看原文核对过 ' + life.jumped + ' 次，会主动确认出处。',
+      'jumped ' + life.jumped,
+      '回看次数 ≥ 2');
+  }
+
+  if (agg.days >= 2) {
+    push('active-days', '学习节奏',
+      '记录分布在 ' + agg.days + ' 个不同日期。',
+      '活跃天数 ' + agg.days,
+      '活跃天数 ≥ 2');
+  }
+
+  if (agg.papers >= 2) {
+    push('coverage', '阅读覆盖',
+      '你的记录分布在 ' + agg.papers + ' 篇论文里。',
+      '论文数 ' + agg.papers,
+      '涉及论文 ≥ 2 篇');
+  }
+
+  return out.slice(0, 5);
+}
 async function handleReaderSummary(req, res) {
   if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); fail(405, 'METHOD_NOT_ALLOWED', 'Unsupported HTTP method'); }
   let lines = [];
@@ -63,7 +144,7 @@ async function handleReaderSummary(req, res) {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const events = [];
   for (const line of lines) { try { events.push(JSON.parse(line)); } catch { /* skip malformed line */ } }
-  const byKind = {}, byAction = {}, byPaper = {}, bySection = {}, byUser = {}, byReason = {};
+  const byKind = {}, byAction = {}, byPaper = {}, bySection = {}, byUser = {}, byReason = {}, sectionLabels = {};
   const terms = new Map();
   let menuOpened = 0, dismissed = 0, acted = 0;
   let resolvedCount = 0, reopenedCount = 0, deletedCount = 0, jumpedCount = 0;
@@ -79,7 +160,10 @@ async function handleReaderSummary(req, res) {
     byKind[event.kind] = (byKind[event.kind] || 0) + 1;
     if (event.action) byAction[event.action] = (byAction[event.action] || 0) + 1;
     if (event.paperId) byPaper[event.paperId] = (byPaper[event.paperId] || 0) + 1;
-    if (event.sectionId) bySection[event.sectionId] = (bySection[event.sectionId] || 0) + 1;
+    if (event.sectionId) {
+      bySection[event.sectionId] = (bySection[event.sectionId] || 0) + 1;
+      if (event.sectionHeading) sectionLabels[event.sectionId] = event.sectionHeading;
+    }
     if (event.userId) byUser[event.userId] = (byUser[event.userId] || 0) + 1;
     if (event.kind === 'menu-opened') menuOpened += 1;
     if (event.kind === 'menu-dismissed') { dismissed += 1; const reason = event.reason || 'unknown'; byReason[reason] = (byReason[reason] || 0) + 1; }
@@ -101,13 +185,20 @@ async function handleReaderSummary(req, res) {
   const topSections = Object.entries(bySection)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
-    .map(([section, count]) => ({section, count}));
+    .map(([id, count]) => ({section: sectionLabels[id] || id, sectionId: id, count}));
+  const sectionTotal = Object.values(bySection).reduce((sum, count) => sum + count, 0);
+  const observations = buildObservations({
+    total: events.length, acted, menuOpened, dismissed, weakTerms, topSections,
+    sectionTotal, byAction, days: days.size, papers: Object.keys(byPaper).length,
+    lifecycle: {resolved: resolvedCount, reopened: reopenedCount, deleted: deletedCount, jumped: jumpedCount},
+  });
   json(res, {
     total: events.length,
     updatedAt: Date.now(),
     byKind, byAction, byPaper, byUser, byReason,
     weakTerms,
     topSections,
+    observations,
     papers: Object.keys(byPaper).length,
     funnel: {menuOpened, dismissed, acted, conversion: menuOpened ? Number((acted / menuOpened).toFixed(3)) : null},
     lifecycle: {created: acted, resolved: resolvedCount, reopened: reopenedCount, deleted: deletedCount, jumped: jumpedCount},

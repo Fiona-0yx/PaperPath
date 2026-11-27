@@ -152,6 +152,7 @@ export async function openJournal() {
       days: Number(data.span?.days) || 0,
       weakTerms: Array.isArray(data.weakTerms) ? data.weakTerms.slice(0, 5) : [],
       topSections: Array.isArray(data.topSections) ? data.topSections.slice(0, 3) : [],
+      observations: Array.isArray(data.observations) ? data.observations.slice(0, 5) : [],
       lifecycle: data.lifecycle || {},
     };
   }
@@ -204,9 +205,17 @@ export async function openJournal() {
     const sectionsBlock = sections
       ? '<p class="stats-label">' + L('疑问集中的章节', 'Sections with most doubts') + '</p><ul class="stat-terms">' + sections + '</ul>'
       : '';
+    const obsItems = (stats.observations || []).map(item =>
+      '<li><b>' + esc(item.title) + '</b>' + esc(item.text) +
+      '<small>' + esc(item.evidence) + ' · ' + esc(L('规则：', 'rule: ') + (item.rule || '')) + '</small></li>').join('');
+    const obsBlock = obsItems
+      ? '<div class="stat-observations"><h4>' + L('学习观察 · 规则推断', 'Observations · rule-based') + '</h4>' +
+        '<p class="stats-hint">' + L('由上面的统计按固定规则生成，不是 Agent 结论；留待后续 Agent 复核后补充进画像。', 'Produced from the counts above by fixed rules — not an agent conclusion. Kept for later review before extending the portrait.') + '</p>' +
+        '<ul class="stat-obs">' + obsItems + '</ul></div>'
+      : '<p class="stats-line">' + L('记录还太少，暂不足以形成学习观察。', 'Not enough records yet to form observations.') + '</p>';
     return '<section class="reading-stats">' + head +
       '<p class="stats-hint">' + L('根据本机记录的右键与笔记操作汇总，供后续 Agent 刻画画像使用。', 'Summarised from local right-click and note activity for later agent profiling.') + '</p>' +
-      grid + dismissed + span + termsBlock + sectionsBlock + '</section>';
+      grid + dismissed + span + termsBlock + sectionsBlock + obsBlock + '</section>';
   }
   function face(side,html){
     const el=document.createElement('section');el.className='journal-face '+side;el.innerHTML=html;return el;
