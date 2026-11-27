@@ -130,12 +130,26 @@ export async function openJournal() {
   function readingObservations(){
     const notes=(state.readingNotes||[]).filter(n=>n.type!=='bookmark');
     if(!notes.length)return '';
+    const masteryText={got:L('理解了','understood'),shaky:L('还有点晕','shaky'),lost:L('没懂','not yet')};
     const items=notes.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(n=>{
-      const tag=n.type==='question'?L('有疑问','Question'):L('需要解释','Explain');
-      const stateText=n.type==='explain'&&n.status==='unavailable'?L('分析暂不可用，已记录待处理','analysis unavailable, recorded for later'):L('待 Agent 分析','pending agent analysis');
+      const tag=n.type==='question'?L('疑惑','Doubt'):n.type==='translate'?L('翻译','Translated'):L('需要解释','Explain');
+      const stateText=n.mastery?(L('自评：','self-rated: ')+(masteryText[n.mastery]||'')):(n.type==='explain'&&n.status==='unavailable'?L('分析暂不可用，已记录待处理','analysis unavailable, recorded for later'):L('待 Agent 分析','pending agent analysis'));
       return '<li class="observation"><span>'+esc(n.text)+'</span><small>'+esc(tag)+' · '+esc(stateText)+'</small></li>';
     }).join('');
-    return '<section class="reading-observations"><h3>'+L('学习观察 · 待分析','Learning observations · pending')+'</h3><p class="obs-hint">'+L('来自论文阅读时记下的疑问；Agent 分析接入后，这里会补充反复出现的薄弱知识点。','Doubts recorded while reading. Weak points will appear here once the agent analysis is connected.')+'</p><ol>'+items+'</ol></section>';
+    return '<section class="reading-observations"><h3>'+L('学习观察 · 待分析','Learning observations · pending')+'</h3><p class="obs-hint">'+L('来自论文阅读时记下的疑惑与翻译；Agent 分析接入后，这里会补充反复出现的薄弱知识点。','Doubts and translations recorded while reading. Weak points will appear here once the agent analysis is connected.')+'</p><ol>'+items+'</ol></section>';
+  }
+  // Self-rated mastery from the reader ("理解了 / 还有点晕 / 没懂"): the only
+  // per-phrase signal that exists offline, so it is shown as-is, never as a verdict.
+  function masterySummary(){
+    const notes=(state.readingNotes||[]).filter(n=>n.mastery);
+    if(!notes.length)return '';
+    const rows=[['got',L('理解了','Understood')],['shaky',L('还有点晕','Shaky')],['lost',L('没懂','Not yet')]].map(([key,label])=>{
+      const list=notes.filter(n=>n.mastery===key);
+      if(!list.length)return '';
+      const items=list.slice(0,5).map(n=>'<li>'+esc(n.text)+'</li>').join('');
+      return '<div class="mastery-group"><p class="mastery-title">'+esc(label)+' <span>'+list.length+'</span></p><ul>'+items+'</ul></div>';
+    }).join('');
+    return '<section class="reading-observations mastery-summary"><h3>'+L('理解掌握 · 自评','Self-rated mastery')+'</h3><p class="obs-hint">'+L('你在阅读时对词句的自评，用于后续 Agent 调整讲解深度。','Your own ratings from the reader, used later to tune explanation depth.')+'</p>'+rows+'</section>';
   }
   // Rule-based statistics from the local interaction log. Counts only: no agent
   // conclusion is inferred here, and a failed fetch simply shows "unavailable".
@@ -238,9 +252,10 @@ export async function openJournal() {
       const heading='<h2>'+L('我的初始画像','My starting portrait')+'</h2><p>'+L('点文字即可修改，留白的地方保持未知。','Edit any entry. Blank fields stay unknown.')+'</p>';
       const done=profileOnly?'':'<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L('提交','Submit')+'</button></div>';
       const observations=readingObservations();
+      const mastery=masterySummary();
       const statistics=readingStats();
-      if(collapsed)book.append(face('full',heading+summary(questions)+observations+statistics+done));
-      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+observations+statistics+done));
+      if(collapsed)book.append(face('full',heading+summary(questions)+observations+mastery+statistics+done));
+      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+observations+mastery+statistics+done));
     }else if(p.key==='intro'&&!collapsed){
       book.append(face('left intro-art','<img src="/assets/botanical/botany-left.png" alt="">'),face('right',question(p.items[0])));
     }else{

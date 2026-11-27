@@ -1,18 +1,73 @@
 import {escape as esc} from './components.js';
-import {papers, findPaper} from '../shared/papers.js';
+import {papers, findPaper, termEntry, paragraphTranslation, abstractTranslation} from '../shared/papers.js';
 
 const $ = id => document.getElementById(id);
+
 const TYPE_META = {
   bookmark: {zh: '收藏', en: 'Saved'},
-  question: {zh: '有疑问', en: 'Question'},
-  explain: {zh: '需要解释', en: 'Explain'},
+  question: {zh: '疑惑', en: 'Doubt'},
+  translate: {zh: '翻译', en: 'Translate'},
+  explain: {zh: '需要解释', en: 'Explain'}, // legacy notes created before 翻译 existed
 };
+const LEVELS = ['starter', 'basic', 'advanced'];
+const LEVEL_META = {
+  starter: {zh: '入门', en: 'Starter'},
+  basic: {zh: '基础', en: 'Basic'},
+  advanced: {zh: '进阶', en: 'Advanced'},
+};
+const MASTERY = [
+  ['got', '理解了', 'Got it'],
+  ['shaky', '还有点晕', 'Shaky'],
+  ['lost', '没懂', 'Not yet'],
+];
 
-const shell = parent?.journalShell || null;
+const outerShell = (() => {
+  try { return (parent && parent !== window && parent.journalShell) || null; }
+  catch { return null; } // cross-origin parent: run standalone
+})();
+const shell = outerShell || standaloneShell();
+
 if (!shell) {
-  $('paper').innerHTML = '<p style="padding:40px;color:#6f675b">请从书架打开论文。<br>This reader opens from the shelf.</p>';
+  $('paper').innerHTML = '<p style="padding:40px;color:#6f675b">阅读页加载失败。<br>The reader could not start.</p>';
 } else {
   boot(shell);
+}
+
+// When the page is opened outside the app shell (直接打开这张 html), reading and
+// note-taking still work: notes live in their own localStorage bucket.
+function standaloneShell() {
+  const KEY = 'lunjing-reader-standalone-v1';
+  const load = () => {
+    try { return JSON.parse(localStorage.getItem(KEY) || 'null') || {readingNotes: []}; }
+    catch { return {readingNotes: []}; }
+  };
+  const intake = load();
+  if (!Array.isArray(intake.readingNotes)) intake.readingNotes = [];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(intake)); } catch { /* ignore */ } };
+  const id = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  return {
+    intake,
+    standalone: true,
+    language: (() => { try { return localStorage.getItem('lunjing-interface-language') || 'zh'; } catch { return 'zh'; } })(),
+    setLanguage(next) { try { localStorage.setItem('lunjing-interface-language', next); } catch { /* ignore */ } location.reload(); },
+    addReadingNote(note) {
+      const entry = {...note, id: note.id || id(), createdAt: note.createdAt || Date.now()};
+      intake.readingNotes.push(entry);
+      save();
+      return entry;
+    },
+    removeReadingNote(noteId) {
+      const index = intake.readingNotes.findIndex(item => item.id === noteId);
+      if (index !== -1) intake.readingNotes.splice(index, 1);
+      save();
+    },
+    updateReadingNote(noteId, patch) {
+      const note = intake.readingNotes.find(item => item.id === noteId);
+      if (note) Object.assign(note, patch);
+      save();
+      return note;
+    },
+  };
 }
 
 function boot(shell) {
@@ -34,14 +89,20 @@ function boot(shell) {
   const langBtnEl = $('langBtn');
   const notesTitleEl = $('notesTitle');
   const notesToggleLabel = $('notesToggleLabel');
+  const notesProfileEl = $('notesProfile');
+  const chipEl = $('selectionChip');
 
   let menuInfo = null;
+  let chipInfo = null;
   let filter = 'all';
   let toastTimer = null;
+  let lastSelection = null;
+
+  // Level inferred from the intake answers already collected by the journal.
+  // Keywords only: nothing here is presented as a model verdict.
+  const profileLevel = abilityLevel(shell.intake || {});
 
   // ——— event reporting (backend statistics for later agent analysis) ———
-  // Fire-and-forget: reading must never be blocked by a logging failure.
-  // The id is anonymous, local to this browser, and never leaves this machine.
   const userId = (() => {
     try {
       let id = localStorage.getItem('lunjing-reader-uid');
@@ -88,13 +149,25 @@ function boot(shell) {
   langBtnEl.onclick = () => shell.setLanguage(shell.language === 'en' ? 'zh' : 'en');
   notesTitleEl.textContent = L('阅读笔记', 'Reading notes');
   notesToggleLabel.textContent = L('笔记', 'Notes');
+  const chipLabels = {question: L('疑惑', 'Doubt'), bookmark: L('收藏', 'Save'), translate: L('翻译', 'Translate')};
+  chipEl.querySelectorAll('[data-action]').forEach(button => {
+    button.textContent = chipLabels[button.dataset.action] || '';
+  });
+  if (notesProfileEl) {
+    notesProfileEl.textContent = L('个人中心', 'Profile');
+    notesProfileEl.href = '/#/profile';
+    notesProfileEl.target = '_parent';
+  }
 
   // ——— paper body ———
   const difficulty = '★'.repeat(paper.difficulty) + '☆'.repeat(Math.max(0, 5 - paper.difficulty));
   paperEl.innerHTML =
     '<h1>' + esc(paper.title) + '</h1>' +
     '<p class="paper-sub">' + esc(paper.zhTitle) + ' · ' + L('难度', 'Difficulty') + ' ' + difficulty + '</p>' +
-    '<p class="abstract">' + esc(paper.abstract) + '</p>' +
+    '<div class="para-wrap" data-section="abstract" data-para="0">' +
+      '<p class="abstract selectable">' + esc(paper.abstract) + '</p>' +
+      '<span class="para-tag">' + L('摘要', 'Abstract') + '</span>' +
+    '</div>' +
     paper.sections.map(section =>
       '<section id="section-' + esc(section.id) + '" data-section="' + esc(section.id) + '">' +
         '<h2>' + esc(section.heading) + '</h2>' +
@@ -108,7 +181,12 @@ function boot(shell) {
     ).join('');
 
   // ——— selection ———
-  function selectionInfo() {
+  function sectionHeading(id) {
+    if (id === 'abstract') return L('摘要', 'Abstract');
+    return paper.sections.find(section => section.id === id)?.heading || '';
+  }
+
+  function infoFromRange() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
     const text = sel.toString().replace(/\s+/g, ' ').trim();
@@ -116,23 +194,63 @@ function boot(shell) {
     const range = sel.getRangeAt(0);
     const node = range.commonAncestorContainer;
     const element = node.nodeType === 1 ? node : node.parentElement;
-    const wrap = element?.closest('.para-wrap');
-    if (!wrap) return null;
-    const section = paper.sections.find(s => s.id === wrap.dataset.section);
+    const wrap = element?.closest?.('.para-wrap');
+    if (!wrap || !paperEl.contains(wrap)) return null;
     return {
       text,
       context: wrap.textContent.replace(/\s+/g, ' ').trim(),
       sectionId: wrap.dataset.section,
-      sectionHeading: section?.heading || '',
+      sectionHeading: sectionHeading(wrap.dataset.section),
       paragraphIndex: Number(wrap.dataset.para) || 0,
     };
   }
+
+  function selectionInfo() {
+    return infoFromRange() || lastSelection;
+  }
+
+  document.addEventListener('selectionchange', () => {
+    const info = infoFromRange();
+    lastSelection = info;
+    if (info) showChip(info);
+    else hideChip();
+  });
+
+  // ——— floating chip (the discoverable path next to the selection) ———
+  function showChip(info) {
+    chipInfo = info;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return hideChip();
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    chipEl.hidden = false;
+    const width = chipEl.offsetWidth || 190;
+    let left = rect.left + rect.width / 2 - width / 2;
+    let top = rect.top - (chipEl.offsetHeight || 36) - 8;
+    if (top < 60) top = rect.bottom + 8;
+    left = Math.max(8, Math.min(left, innerWidth - width - 8));
+    chipEl.style.left = left + 'px';
+    chipEl.style.top = top + 'px';
+  }
+  function hideChip() {
+    chipEl.hidden = true;
+    chipInfo = null;
+  }
+
+  chipEl.addEventListener('mousedown', event => event.preventDefault());
+  chipEl.addEventListener('click', event => {
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+    const info = chipInfo || selectionInfo();
+    if (!info) return;
+    hideChip();
+    handleMenuAction(button.dataset.action, info);
+  });
 
   // ——— context menu ———
   const icons = {
     bookmark: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h10v13l-5-3.2-5 3.2z"/></svg>',
     question: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M7.7 7.4a2.4 2.4 0 1 1 3.1 2.3c-.55.2-.9.7-.9 1.3v.4"/><circle cx="10" cy="14" r=".6" fill="currentColor"/></svg>',
-    explain: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5 12 8l5.5 2-5.5 2-2 5.5L8 12 2.5 10 8 8z"/></svg>',
+    translate: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h7M6.5 5v10M4 15h5"/><path d="M5.5 9.5c1.6 2.4 3.4 3.6 5.5 4.2"/><path d="M13 8h4l-2 8"/></svg>',
   };
 
   function showMenu(x, y, info) {
@@ -140,9 +258,9 @@ function boot(shell) {
     const routeText = info.sectionHeading + ' · ' + L('第', '¶') + (info.paragraphIndex + 1) + L('段', '');
     menuEl.innerHTML =
       '<div class="menu-route" title="' + esc(info.text) + '">' + esc(routeText) + ' · ' + esc(info.text.slice(0, 14)) + (info.text.length > 14 ? '…' : '') + '</div>' +
+      '<button type="button" role="menuitem" data-action="question">' + icons.question + '<span>' + L('疑惑', 'Doubt') + '</span><span class="arrow">↵</span></button>' +
       '<button type="button" role="menuitem" data-action="bookmark">' + icons.bookmark + '<span>' + L('收藏', 'Save') + '</span><span class="arrow">↵</span></button>' +
-      '<button type="button" role="menuitem" data-action="question">' + icons.question + '<span>' + L('有疑问', 'Ask / doubt') + '</span><span class="arrow">↵</span></button>' +
-      '<button type="button" role="menuitem" data-action="explain">' + icons.explain + '<span>' + L('需要进一步解释', 'Explain further') + '</span><span class="arrow">↵</span></button>' +
+      '<button type="button" role="menuitem" data-action="translate">' + icons.translate + '<span>' + L('翻译', 'Translate') + '</span><span class="arrow">↵</span></button>' +
       '<div class="menu-hint">' + L('Esc 关闭 · 点击外部关闭', 'Esc or click outside to close') + '</div>';
     menuEl.hidden = false;
     const rect = menuEl.getBoundingClientRect();
@@ -166,10 +284,17 @@ function boot(shell) {
     if (wasOpen && reason) reportEvent('menu-dismissed', info, {reason});
   }
 
-  paperEl.addEventListener('contextmenu', event => {
+  // Bound on document so the menu also works on headings/abstract and any
+  // wrapper the layout may add later.
+  document.addEventListener('contextmenu', event => {
+    if (!paperEl.contains(event.target)) return;
     const info = selectionInfo();
-    if (!info) return; // no selection: keep the browser's own menu
+    if (!info) {
+      toast(L('先选中一段文字，再右键', 'Select some text first, then right-click'));
+      return; // no selection: keep the browser's own menu
+    }
     event.preventDefault();
+    hideChip();
     showMenu(event.clientX, event.clientY, info);
     reportEvent('menu-opened', info);
   });
@@ -187,8 +312,8 @@ function boot(shell) {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeMenu('escape');
   });
-  window.addEventListener('scroll', () => closeMenu('scroll'), {passive: true});
-  window.addEventListener('resize', () => closeMenu('resize'));
+  window.addEventListener('scroll', () => { closeMenu('scroll'); hideChip(); }, {passive: true});
+  window.addEventListener('resize', () => { closeMenu('resize'); hideChip(); });
 
   // ——— notes write path ———
   function handleMenuAction(action, info) {
@@ -205,56 +330,23 @@ function boot(shell) {
       createdAt: Date.now(),
       resolved: false,
     };
-    if (action === 'explain') note.status = 'pending';
     const entry = shell.addReadingNote(note);
     reportEvent('action', info, {action, noteId: entry.id, noteType: action, source: 'menu'});
     renderNotes();
-    if (action === 'bookmark') toast(L('已收藏，可在右侧笔记中查看', 'Saved to reading notes'));
-    else if (action === 'question') toast(L('已记录疑问，可在右侧整理', 'Doubt recorded in the sidebar'));
-    else {
-      toast(L('已记录，正在请求解释…', 'Recorded; requesting explanation…'));
-      requestAnalysis(entry);
-    }
+    if (action === 'bookmark') toast(L('已收藏 · 右侧可管理', 'Saved · manage it in the sidebar'));
+    else if (action === 'question') toast(L('已记录疑惑 · 右侧查看讲解', 'Doubt recorded · open the sidebar'));
+    else toast(L('已记录 · 右侧查看译文', 'Recorded · translation in the sidebar'));
     window.getSelection()?.removeAllRanges();
-  }
-
-  async function requestAnalysis(note) {
-    // No agent backend is shipped yet: attempt the documented endpoint, and on
-    // any failure mark the note unavailable instead of inventing an answer.
-    try {
-      const response = await fetch('/api/reader/analyze', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          paperId: paper.id,
-          text: note.text,
-          context: note.context,
-          section: note.sectionHeading,
-        }),
-      });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const data = await response.json();
-      const explanation = data?.explanation || data?.summary;
-      if (explanation) {
-        shell.updateReadingNote(note.id, {status: 'done', explanation: String(explanation)});
-        reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'done'});
-      } else {
-        shell.updateReadingNote(note.id, {status: 'unavailable'});
-        reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'unavailable'});
-      }
-    } catch {
-      shell.updateReadingNote(note.id, {status: 'unavailable'});
-      reportEvent('analysis-status', note, {noteId: note.id, noteType: 'explain', status: 'unavailable'});
-    }
-    renderNotes();
+    lastSelection = null;
+    hideChip();
   }
 
   // ——— sidebar ———
   const filters = [
     ['all', () => L('全部', 'All')],
     ['bookmark', () => L('收藏', 'Saved')],
-    ['question', () => L('有疑问', 'Questions')],
-    ['explain', () => L('需要解释', 'Explain')],
+    ['question', () => L('疑惑', 'Doubt')],
+    ['translate', () => L('翻译', 'Translate')],
   ];
   noteFiltersEl.innerHTML = filters.map(([key, label]) =>
     '<button type="button" data-filter="' + key + '">' + label() + '</button>'
@@ -267,38 +359,96 @@ function boot(shell) {
     renderNotes();
   });
 
-  function noteCount(notes) {
-    return notes.length;
+  function typeOf(note) {
+    return note.type === 'explain' ? 'question' : note.type;
   }
 
-  function statusLine(note) {
-    if (note.type !== 'explain') return '';
-    if (note.status === 'done' && note.explanation) {
-      return '<p class="note-status">' + L('解释', 'Explanation') + '：' + esc(note.explanation) + '</p>';
+  function levelOf(note) {
+    return LEVELS.includes(note.level) ? note.level : profileLevel;
+  }
+
+  function explanationBlock(note) {
+    const entry = termEntry(paper.id, note.text);
+    const level = levelOf(note);
+    const levelName = L(LEVEL_META[level].zh, LEVEL_META[level].en);
+    const head = '<div class="note-block"><p class="block-label">' + L('讲解', 'Explanation') +
+      '<span class="level-chip">' + L('按画像', 'level') + '：' + esc(levelName) + '</span>' +
+      '<button type="button" class="mini" data-action="level">' + L('换个层次', 'Switch level') + '</button></p>';
+    if (!entry) {
+      return head +
+        '<p class="note-body">' + L('离线知识库里没有这个词条，暂无讲解。等 AI 讲解服务接入后会补上。', 'No offline entry for this phrase yet. An AI explanation will appear once the service is connected.') + '</p></div>';
     }
-    if (note.status === 'pending') {
-      return '<p class="note-status"><span class="pulse"></span>' + L('待 Agent 分析…', 'Pending agent analysis…') + '</p>';
-    }
-    return '<p class="note-status"><span class="pulse"></span>' + L('分析服务暂不可用 · 已记录待处理', 'Analysis unavailable · recorded for later') + '</p>';
+    const body = level === 'advanced' ? entry.advanced : entry.basic;
+    const probes = (entry.probes || []).slice(0, 2);
+    const probeHtml = probes.length
+      ? '<div class="probe-list"><p class="block-label">' + L('追问 · 帮助细化画像', 'Follow-up questions') + '</p>' +
+        probes.map((question, index) => {
+          const saved = (note.probes || [])[index];
+          return '<div class="probe" data-probe="' + index + '">' +
+            '<p class="probe-q">' + esc(question) + '</p>' +
+            (saved
+              ? '<p class="probe-a">' + L('你的回答：', 'Your answer: ') + esc(saved) + '</p>'
+              : '<div class="probe-input-row"><input type="text" class="probe-input" maxlength="160" placeholder="' + L('用自己的话答一句', 'Answer in your own words') + '"><button type="button" class="mini" data-action="probe">' + L('记录', 'Save') + '</button></div>') +
+            '</div>';
+        }).join('') + '</div>'
+      : '';
+    return head +
+      '<p class="note-body"><b>' + esc(entry.zh) + '</b> · ' + esc(body) + '</p>' +
+      probeHtml + '</div>';
+  }
+
+  function translationBlock(note) {
+    const entry = termEntry(paper.id, note.text);
+    const paragraph = note.sectionId === 'abstract'
+      ? abstractTranslation(paper.id)
+      : paragraphTranslation(paper.id, note.sectionId, note.paragraphIndex);
+    const termPart = entry
+      ? '<p class="note-body"><b>' + esc(note.text) + '</b> · ' + esc(entry.zh) + '</p>'
+      : '';
+    const body = paragraph
+      ? '<p class="note-body note-translation">' + esc(paragraph) + '</p>'
+      : '<p class="note-body">' + L('这一段暂时没有离线译文。', 'No offline translation for this paragraph yet.') + '</p>';
+    return '<div class="note-block"><p class="block-label">' + L('译文', 'Translation') + '</p>' + termPart + body + '</div>';
+  }
+
+  function masteryBlock(note) {
+    const current = note.mastery || '';
+    const buttons = MASTERY.map(([key, zh, en]) =>
+      '<button type="button" class="mastery' + (current === key ? ' on' : '') + '" data-action="mastery" data-mastery="' + key + '">' +
+      L(zh, en) + '</button>').join('');
+    return '<div class="mastery-row" role="group" aria-label="' + L('是否理解掌握', 'Did you understand it') + '">' +
+      '<span class="mastery-label">' + L('是否理解掌握', 'Understood?') + '</span>' + buttons + '</div>';
+  }
+
+  function bookmarkActions(note) {
+    return '<div class="note-remark-row">' +
+      '<input type="text" class="note-remark" maxlength="200" value="' + esc(note.remark || '') + '" placeholder="' + L('给这条收藏加个备注', 'Add a remark') + '">' +
+      '<button type="button" class="mini" data-action="remark">' + L('保存', 'Save') + '</button>' +
+      '</div>';
   }
 
   function noteCard(note) {
-    const meta = TYPE_META[note.type] || TYPE_META.question;
+    const kind = typeOf(note);
+    const meta = TYPE_META[kind] || TYPE_META.question;
     const tag = L(meta.zh, meta.en);
     const locText = esc(note.sectionHeading || '') + '<span class="dot">·</span>' + L('第', '¶') + ((note.paragraphIndex || 0) + 1) + L('段', '');
     const context = note.context ? '…' + esc(note.context) + '…' : '';
     const resolveLabel = note.resolved ? L('标记未解决', 'Mark open') : L('标记已解决', 'Mark resolved');
+    const bodyBlock = kind === 'question' ? explanationBlock(note) : kind === 'translate' ? translationBlock(note) : '';
     return '<li class="note-card ' + (note.resolved ? 'resolved ' : '') + '" data-note-id="' + esc(note.id) + '">' +
       '<div class="note-top">' +
-        '<span class="note-badge ' + note.type + '">' + tag + '</span>' +
+        '<span class="note-badge ' + kind + '">' + tag + '</span>' +
         '<span class="note-time">' + timeText(note.createdAt) + '</span>' +
       '</div>' +
       '<p class="note-text">' + esc(note.text) + '</p>' +
-      (note.type !== 'bookmark' ? '<p class="note-context">' + context + '</p>' : '') +
+      (kind !== 'bookmark' ? '<p class="note-context">' + context + '</p>' : '') +
       '<div class="note-loc">' + esc(note.paperTitle || '') + '<span class="dot">·</span>' + locText + '</div>' +
-      statusLine(note) +
+      bodyBlock +
+      (kind === 'bookmark' ? bookmarkActions(note) : '') +
+      masteryBlock(note) +
       '<div class="note-actions">' +
         '<button type="button" data-action="jump">' + L('查看原文', 'View source') + '</button>' +
+        (kind === 'bookmark' ? '<a class="cta" href="/#/profile" target="_parent">' + L('个人中心', 'Profile') + '</a>' : '') +
         '<button type="button" data-action="resolve">' + resolveLabel + '</button>' +
         '<button type="button" data-action="delete" class="danger">' + L('删除', 'Delete') + '</button>' +
       '</div>' +
@@ -308,10 +458,10 @@ function boot(shell) {
   function renderNotes() {
     const all = shell.intake.readingNotes || [];
     const shown = all
-      .filter(note => filter === 'all' || note.type === filter)
+      .filter(note => filter === 'all' || typeOf(note) === filter)
       .slice()
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    const total = noteCount(all);
+    const total = all.length;
     notesCountEl.textContent = total ? total + L(' 条', ' notes') : L('空', 'empty');
     notesToggleBadge.textContent = total;
     noteFiltersEl.querySelectorAll('[data-filter]').forEach(button => {
@@ -319,10 +469,14 @@ function boot(shell) {
     });
     if (!shown.length) {
       notesListEl.innerHTML = '<li class="notes-empty"><b>' + L('还没有记录', 'Nothing yet') + '</b>' +
-        L('在正文中选中一个词或句子，右键即可收藏或记录疑问。', 'Select some text and right-click to save it or note a doubt.') + '</li>';
+        L('选中正文里的词句，右键或点浮出的按钮即可收藏、记疑惑或翻译。', 'Select a phrase and right-click (or use the floating buttons) to save it, note a doubt, or translate it.') + '</li>';
       return;
     }
     notesListEl.innerHTML = shown.map(noteCard).join('');
+  }
+
+  function currentNote(id) {
+    return (shell.intake.readingNotes || []).find(item => item.id === id) || null;
   }
 
   notesListEl.addEventListener('click', event => {
@@ -331,27 +485,60 @@ function boot(shell) {
     const card = button.closest('[data-note-id]');
     if (!card) return;
     const id = card.dataset.noteId;
-    const notes = shell.intake.readingNotes || [];
-    const note = notes.find(item => item.id === id);
+    const note = currentNote(id);
     if (!note) return;
-    if (button.dataset.action === 'delete') {
+    const action = button.dataset.action;
+    if (action === 'delete') {
       shell.removeReadingNote(id);
-      reportEvent('note-delete', note, {noteId: id, noteType: note.type});
+      reportEvent('note-delete', note, {noteId: id, noteType: typeOf(note)});
       renderNotes();
       toast(L('已删除', 'Deleted'));
-    } else if (button.dataset.action === 'resolve') {
+    } else if (action === 'resolve') {
       const next = !note.resolved;
       shell.updateReadingNote(id, {resolved: next});
-      reportEvent('note-resolve', note, {noteId: id, noteType: note.type, resolved: next});
+      reportEvent('note-resolve', note, {noteId: id, noteType: typeOf(note), resolved: next});
       renderNotes();
-    } else if (button.dataset.action === 'jump') {
+    } else if (action === 'jump') {
       const crossPaper = note.paperId !== paper.id;
-      reportEvent('note-jump', note, {noteId: id, noteType: note.type, crossPaper});
+      reportEvent('note-jump', note, {noteId: id, noteType: typeOf(note), crossPaper});
       if (!crossPaper) {
         jumpTo(note);
       } else {
         parent.location.hash = '#/read/' + note.categoryId + '/' + note.paperId;
       }
+    } else if (action === 'mastery') {
+      const value = button.dataset.mastery;
+      const next = note.mastery === value ? '' : value;
+      shell.updateReadingNote(id, {mastery: next});
+      reportEvent('note-mastery', note, {noteId: id, noteType: typeOf(note), mastery: next || 'cleared'});
+      renderNotes();
+    } else if (action === 'level') {
+      const current = levelOf(note);
+      const next = LEVELS[(LEVELS.indexOf(current) + 1) % LEVELS.length];
+      shell.updateReadingNote(id, {level: next});
+      reportEvent('note-level', note, {noteId: id, noteType: typeOf(note), level: next});
+      renderNotes();
+    } else if (action === 'probe') {
+      const row = button.closest('.probe');
+      const input = row?.querySelector('.probe-input');
+      const answer = (input?.value || '').trim();
+      if (!answer) {
+        toast(L('先用一句话回答，再记录', 'Type a short answer first'));
+        return;
+      }
+      const probes = Array.isArray(note.probes) ? note.probes.slice() : [];
+      probes[Number(row.dataset.probe) || 0] = answer;
+      shell.updateReadingNote(id, {probes});
+      reportEvent('note-probe', note, {noteId: id, noteType: typeOf(note), probes: probes.filter(Boolean).length});
+      renderNotes();
+      toast(L('已记录你的理解', 'Answer saved'));
+    } else if (action === 'remark') {
+      const input = card.querySelector('.note-remark');
+      const remark = (input?.value || '').trim();
+      shell.updateReadingNote(id, {remark});
+      reportEvent('note-remark', note, {noteId: id, noteType: typeOf(note)});
+      renderNotes();
+      toast(L('备注已保存', 'Remark saved'));
     }
   });
 
@@ -388,4 +575,21 @@ function boot(shell) {
 
   renderNotes();
   reportEvent('reader-open', null, {});
+}
+
+// Coarse keyword mapping from the journal answers to an explanation level.
+function abilityLevel(intake) {
+  const parts = [];
+  for (const answer of Object.values(intake.answers || {})) {
+    if (!answer || typeof answer !== 'object') continue;
+    if (answer.text) parts.push(answer.text);
+    if (answer.other) parts.push(answer.other);
+  }
+  for (const note of intake.readingNotes || []) {
+    if (note.mastery === 'lost' && note.text) parts.push(note.text);
+  }
+  const blob = parts.join(' ');
+  if (/入门|零基础|没学过|刚开始|新手|不了解|不清楚/.test(blob)) return 'starter';
+  if (/熟练|系统学|有项目|做过|进阶|熟悉|深入/.test(blob)) return 'advanced';
+  return 'basic';
 }

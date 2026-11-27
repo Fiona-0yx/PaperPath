@@ -26,6 +26,7 @@
       <div class="notes-head">
         <h2 id="notesTitle"></h2>
         <span class="count" id="notesCount"></span>
+        <a class="notes-profile" id="notesProfile" href="/#/profile" target="_parent"></a>
         <button class="close-notes" id="notesClose" type="button" aria-label="关闭侧边栏">×</button>
       </div>
       <div class="note-filters" id="noteFilters" role="group"></div>
@@ -34,6 +35,11 @@
   </div>
 
   <div class="context-menu" id="contextMenu" role="menu" hidden></div>
+  <div class="selection-chip" id="selectionChip" role="toolbar" aria-label="选中文字操作" hidden>
+    <button type="button" data-action="question"></button>
+    <button type="button" data-action="bookmark"></button>
+    <button type="button" data-action="translate"></button>
+  </div>
   <p class="toast" id="toast" role="status" aria-live="polite"></p>
 
   <script type="module" src="/src/reader.js"></script>

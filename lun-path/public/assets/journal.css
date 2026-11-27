@@ -64,6 +64,11 @@ body:not([data-spread=cover]) .loupe,body:not([data-spread=cover]) .zoomwrap,bod
 .reading-observations ol{margin:0;padding-left:1.1em;font-size:.8em;line-height:1.45;color:#5b5044}
 .reading-observations .observation{margin:.3em 0;overflow-wrap:anywhere}
 .reading-observations .observation small{display:block;color:#8a7a64;font-size:.86em;margin-top:1px}
+.mastery-summary .mastery-group{margin:.35em 0}
+.mastery-summary .mastery-title{margin:0 0 .15em;font-size:.78em;color:#4e4234;letter-spacing:.03em}
+.mastery-summary .mastery-title span{color:#8a7a64}
+.mastery-summary ul{margin:0;padding-left:1.1em;font-size:.78em;line-height:1.45;color:#5b5044}
+.mastery-summary li{overflow-wrap:anywhere}
 .reading-stats{margin:.9em 0 1em;border-top:1px solid #cbbca6;padding-top:.7em}
 .reading-stats h3{margin:0 0 .3em;font:500 .95em/1.3 var(--book-type);color:#4e4234}
 .reading-stats .stats-hint{margin:0 0 .6em;font-size:.76em;color:#7a6c5a;line-height:1.5}
