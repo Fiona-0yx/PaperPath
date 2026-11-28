@@ -1,0 +1,258 @@
+import {escape as esc} from './components.js';
+import {makeJournalArt} from './journal-art.js';
+import {loadQuestions, answerText, provenance, evidenceDetails} from './portrait.js';
+import {introInferences} from '../shared/journal-intro-rules.js';
+
+export async function openJournal() {
+  const shell = parent.journalShell;
+  const state = shell.intake;
+  const profileOnly=new URLSearchParams(location.search).get('view')==='portrait' && state.portraitReady;
+  document.body.classList.toggle('profile-only',profileOnly);
+  const en = shell.language === 'en';
+  const L = (zh,eng)=>en?eng:zh;
+  const local = pair=>pair[en?1:0];
+  const [questions,art] = await Promise.all([
+    loadQuestions(),
+    makeJournalArt()
+  ]);
+  const byId = Object.fromEntries(questions.map(q=>[q.id,q]));
+  const mobile = matchMedia('(max-width: 660px)');
+  const pages=[];
+  let index=0, step, repaint, missingId;
+  const text=(id,value)=>document.getElementById(id).textContent=value;
+  const setLabel=(id,value)=>document.getElementById(id).setAttribute('aria-label',value);
+  document.documentElement.lang=en?'en':'zh-CN';
+  document.title=L('论径 · 学习手账','Lun Jing · Field journal');
+  text('home',L('‹ 回到路径','‹ Back to path'));
+  text('language',L('English','中文'));
+  document.getElementById('language').onclick=()=>shell.setLanguage(en?'zh':'en');
+  setLabel('sbLeft',L('上一页','Previous page'));
+  setLabel('sbRight',L('下一页','Next page'));
+  for(const [id,zh,eng] of [['zIn','放大','Zoom in'],['zOut','缩小','Zoom out'],['loupeBtn','放大镜','Magnifier']])setLabel(id,L(zh,eng));
+  text('sbHint',L('拖动书页边缘或使用两侧箭头翻页','Drag a page edge or use the arrows to turn'));
+  const notice=document.createElement('p');
+  notice.className='save-notice';notice.setAttribute('role','status');document.body.append(notice);
+  const prompt=document.createElement('p');
+  prompt.className='completion-notice';prompt.setAttribute('role','status');
+  document.querySelector('.journal-nav').append(prompt);
+  function save(){
+    if(!shell.save())notice.textContent=L('浏览器未能保存进度，请保持本页打开。','Storage unavailable. Keep this page open.');
+  }
+  function rebuild(position){
+    const summaryPage={key:'summary',title:L('我的初始画像','My starting portrait'),url:art.sheet};
+    if(profileOnly){pages.splice(0,pages.length,summaryPage);index=0;return}
+    const intro=questions[0];
+    const active=questions.slice(1,-1).filter(q=>state.reviewAll || state.answers[q.id]?.source!=='intro');
+    const groups=[[intro]];
+    const size=mobile.matches?1:2;
+    for(let i=0;i<active.length;i+=size)groups.push(active.slice(i,i+size));
+    groups.push([byId.outcome]);
+    pages.splice(0,pages.length,{key:'cover',title:L('用户初始画像采集','Your starting portrait'),url:art.cover},
+      ...groups.map(items=>({key:items[0].id,items,url:art.sheet,title:items.map(q=>local(q.label)).join(' · ')})),
+      summaryPage);
+    index=Math.max(0,pages.findIndex(p=>p.key===position||p.items?.some(q=>q.id===position)));
+  }
+  function recordAnswer(q,d){
+    if(q.type==='text'){
+      if(d.text?.trim())state.answers.intro={source:'self',text:d.text};
+      else delete state.answers.intro;
+    }else if(d.values?.some(v=>v!==null)||d.other?.trim()){
+      state.answers[q.id]={...d,source:q.type==='check'?'check':'self'};
+    }else delete state.answers[q.id];
+  }
+  // Drafts from the former save-button flow may be newer than recorded answers.
+  if(!state.autoSave){
+    for(const q of questions){
+      const d=state.drafts[q.id],a=state.answers[q.id];
+      if(d && !a?.edited && !(a?.text!==undefined && q.type!=='text') &&
+        !(q.type==='text' && a?.source==='unknown'))recordAnswer(q,d);
+    }
+    state.autoSave=true;save();
+  }
+  function complete(q){
+    const a=state.answers[q.id];
+    if(!a)return false;
+    if(q.groups && a.source==='self' && !a.text && !a.other)
+      return q.groups.every((_,i)=>Number.isInteger(a.values?.[i]));
+    return true;
+  }
+  function summaryTarget(){
+    missingId=questions.find(q=>!complete(q))?.id;
+    prompt.textContent=missingId?L('请完成作答','Please complete your answer.'): '';
+    return missingId?pages.findIndex(p=>p.items?.some(q=>q.id===missingId)):pages.length-1;
+  }
+  rebuild(state.position);
+  if(!profileOnly && state.position==='summary')index=summaryTarget();
+  const draft=q=>state.drafts[q.id] || state.answers[q.id] || {};
+  function note(q) {
+    const a=state.answers[q.id];
+    if(!a)return '';
+    if(a.source==='unknown')return L('已留白，记为未知。','Left open; recorded as unknown.');
+    if(q.type==='check' && a.source==='check'){
+      if(a.other)return L('已记录你的解释，理解程度待确认。','Explanation recorded; understanding is unconfirmed.');
+      return a.values?.[0]===q.correct?L('这道题答对了：沿负梯度方向迈一小步，损失通常会减小。','Correct on this concept: a small step against the gradient usually reduces loss.'):L('这个概念还可再看看：梯度指向上升最快的方向，下降时通常取反方向。','Revisit this concept: the gradient points uphill, so descent uses the opposite direction.');
+    }
+    return L('已记入画像。','Saved to your portrait.');
+  }
+  function actions(q){
+    return '<div class="actions"><button type="button" data-skip>'+L('跳过 / 不确定','Skip / unsure')+'</button></div><p class="answer-note" role="status">'+esc(note(q))+'</p>';
+  }
+  function question(q){
+    const d=draft(q), opts=q.options;
+    let fields='';
+    if(q.type==='text'){
+      fields='<textarea name="free" maxlength="1500" aria-label="'+esc(local(q.label))+'">'+esc(d.text||'')+'</textarea><div class="examples">'+opts.map((o,i)=>'<button type="button" data-example="'+i+'">'+esc(local(o))+'</button>').join('')+'</div>';
+      return '<form data-q="intro"><h2>'+esc(local(q.title))+'</h2><p>'+esc(local(q.hint))+'</p>'+fields+'<div class="actions"><button type="submit">'+L('从这里开始','Start here')+'</button><button type="button" data-direct>'+L('直接问我几个问题','Ask me a few questions')+'</button></div></form>';
+    }
+    if(q.groups){
+      fields=q.groups.map((g,i)=>'<label class="group">'+esc(local(g.label))+'<select name="group'+i+'"><option value="">'+L('暂未选择','Not selected')+'</option>'+g.options.map((o,j)=>'<option value="'+j+'" '+(d.values?.[i]===j?'selected':'')+'>'+esc(local(o))+'</option>').join('')+'</select></label>').join('');
+    }else{
+      const type=q.type==='multi'?'checkbox':'radio';
+      fields=opts.map((o,i)=>'<label class="choice"><input type="'+type+'" name="choice" value="'+i+'" '+(d.values?.includes(i)?'checked':'')+'>'+esc(local(o))+'</label>').join('');
+    }
+    fields+='<label class="other">'+L('其他','Other')+'<input name="other" maxlength="180" value="'+esc(d.other||'')+'" placeholder="'+L('可自行补充','In your own words')+'"></label>';
+    return '<form data-q="'+q.id+'"><small>'+q.page+' / 10 · '+esc(local(q.label))+'</small><h2>'+esc(local(q.title))+'</h2><p>'+esc(local(q.hint))+'</p>'+fields+actions(q)+'</form>';
+  }
+  function summary(group){
+    return group.map(q=>{const a=state.answers[q.id];
+      return '<label class="summary-row">'+esc(local(q.label))+'<input data-edit="'+q.id+'" maxlength="1500" placeholder="'+L('未知','Unknown')+'" value="'+esc(a&&a.source!=='unknown'?answerText(q,a,L):'')+'"><small>'+esc(provenance(q,a,L))+'</small></label>'+evidenceDetails(q,state.evidence[q.id],L);
+    }).join('');
+  }
+  function face(side,html){
+    const el=document.createElement('section');el.className='journal-face '+side;el.innerHTML=html;return el;
+  }
+  function display(book,i,turning,preview=false){
+    index=i;
+    const p=pages[i];
+    document.body.dataset.spread=p.key;
+    const collapsed=mobile.matches&&p.key!=='cover';
+    document.body.classList.toggle('single-sheet',mobile.matches);
+    if(turning)return;
+    if(!preview && !profileOnly){
+      if(p.key==='summary')state.portraitReady=true;
+      state.position=p.key;state.started=true;save();
+      prompt.hidden=Boolean(missingId && !p.items?.some(q=>q.id===missingId));
+    }
+    if(p.key==='cover'){
+      book.append(face('cover-title',esc(p.title)));
+    }else if(p.key==='summary'){
+      const heading='<h2>'+L('我的初始画像','My starting portrait')+'</h2><p>'+L('点文字即可修改，留白的地方保持未知。','Edit any entry. Blank fields stay unknown.')+'</p>';
+      const done=profileOnly?'':'<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L('提交','Submit')+'</button></div>';
+      if(collapsed)book.append(face('full',heading+summary(questions)+done));
+      else book.append(face('left',heading+summary(questions.slice(0,5))),face('right',summary(questions.slice(5))+done));
+    }else if(p.key==='intro'&&!collapsed){
+      book.append(face('left intro-art','<img src="/assets/botanical/botany-left.png" alt="">'),face('right',question(p.items[0])));
+    }else{
+      p.items.forEach((q,j)=>book.append(face(collapsed?'full':j?'right':'left',question(q))));
+      if(p.key==='outcome'){
+        const exits='<div class="portrait-actions journal-exits"><button type="button" data-view-portrait>'+L('查看学习画像','View learning portrait')+'</button><a class="done" href="/#/trial" target="_parent">'+L('进一步测试完善画像','Refine portrait with another test')+'</a></div>';
+        if(collapsed)book.lastElementChild.insertAdjacentHTML('beforeend',exits);
+        else book.append(face('right exit-page',exits));
+      }
+    }
+    // Only the visible book has live fields; the loupe duplicates the picture.
+    book.querySelectorAll('.sb-zone').forEach((b,j)=>{b.tabIndex=-1;b.setAttribute('aria-label',j?L('下一页','Next page'):L('上一页','Previous page'));});
+  }
+  function readForm(form,q){
+    const data=new FormData(form);
+    if(q.type==='text')return {text:String(data.get('free')||'')};
+    const values=q.groups?q.groups.map((g,i)=>data.get('group'+i)===''?null:Number(data.get('group'+i))):data.getAll('choice').map(Number);
+    return {values,other:String(data.get('other')||'').trim()};
+  }
+  function updateIntro(infer){
+    for(const q of questions)if(state.answers[q.id]?.source==='intro')delete state.answers[q.id];
+    if(infer){
+      const value=draft(byId.intro).text||'';
+      recordAnswer(byId.intro,{text:value});
+      for(const {quote,id,option} of introInferences(value)){
+        if(!state.answers[id]&&!state.drafts[id])state.answers[id]={source:'intro',values:[option],quote};
+      }
+    }else state.answers.intro={source:'unknown'};
+    rebuild('intro');save();
+  }
+  function focusMissing(book){
+    if(!missingId)return;
+    const form=book.querySelector('form[data-q="'+missingId+'"]');
+    if(!form)return;
+    prompt.hidden=false;
+    form.classList.add('needs-answer');
+    const target=form.querySelector('select:has(option:checked[value=""])') || form.querySelector('textarea,input,select');
+    target?.focus({preventScroll:true});
+  }
+  function clearPrompt(q){
+    if(missingId!==q.id || !complete(q))return;
+    missingId=null;prompt.textContent='';
+    document.querySelector('#sbBook .needs-answer')?.classList.remove('needs-answer');
+  }
+  function bind(turn,refresh){
+    step=turn;repaint=refresh;
+    const book=document.getElementById('sbBook');
+    book.addEventListener('input',e=>{
+      const form=e.target.closest('form');
+      if(form){
+        const q=byId[form.dataset.q],d=readForm(form,q);
+        state.drafts[q.id]=d;
+        if(q.type==='text')updateIntro(true);
+        else{
+          recordAnswer(q,d);save();
+          form.querySelector('.answer-note').textContent=note(q);
+        }
+        clearPrompt(q);
+      }else if(e.target.dataset.edit){
+        const field=e.target.dataset.edit, text=e.target.value;
+        state.answers[field]=text.trim()?{source:'self',text,edited:true}:{source:'unknown'};
+        if(field==='intro'){
+          state.drafts.intro={text};
+          for(const [id,answer] of Object.entries(state.answers)){
+            if(answer.source==='intro'&&!introInferences(text).some(({quote})=>quote===answer.quote)){
+              delete state.answers[id];
+              const related=book.querySelector('[data-edit="'+id+'"]');
+              if(related){related.value='';related.nextElementSibling.textContent=provenance(byId[id],null,L)}
+            }
+          }
+        }else state.drafts[field]={other:text};
+        e.target.nextElementSibling.textContent=provenance(byId[field],state.answers[field],L);save();
+      }
+    });
+    book.addEventListener('change',e=>{
+      const id=e.target.closest('form')?.dataset.q;
+      if(state.answers[id]?.source==='check'){shell.recordCheck(id,state.answers[id]);save()}
+    });
+    book.addEventListener('click',async e=>{
+      const b=e.target.closest('button'),form=b?.closest('form');
+      if(b?.hasAttribute('data-view-portrait')){step('next');return}
+      if(b?.hasAttribute('data-submit-portrait')){
+        b.disabled=true;
+        b.textContent=L('提交中…','Submitting…');
+        const result=await shell.submitPortrait();
+        if(!b.isConnected)return;
+        b.disabled=false;
+        b.textContent=L('提交','Submit');
+        if(result==='saved')return;
+        if(result==='changed')notice.textContent=L('作答已修改，请提交当前版本。','Your answers changed. Submit the current version.');
+        else if(result==='report-error')notice.textContent=L('画像已保存在本机，分析服务暂未完成。请重新提交。','Your portrait is saved locally. Please submit again to finish the analysis.');
+        else notice.textContent=L('画像未能保存，请重新提交。','Your portrait could not be saved. Please submit again.');
+        return;
+      }
+      if(!form)return;
+      const q=byId[form.dataset.q];
+      if(b.hasAttribute('data-example')){
+        form.elements.free.value=local(q.options[Number(b.dataset.example)]);
+        form.elements.free.dispatchEvent(new Event('input',{bubbles:true}));form.elements.free.focus();
+      }
+      if(b.hasAttribute('data-direct')){updateIntro(false);clearPrompt(q);step('next')}
+      if(b.hasAttribute('data-skip')){
+        state.answers[q.id]={source:'unknown'};delete state.drafts[q.id];clearPrompt(q);save();repaint();
+      }
+    });
+    book.addEventListener('submit',e=>{
+      e.preventDefault();const form=e.target,q=byId[form.dataset.q],d=readForm(form,q);
+      if(q.type==='text'){
+        if(d.text.trim()){updateIntro(true);step('next')}else form.elements.free.focus();
+      }
+    });
+    mobile.addEventListener('change',()=>{rebuild(state.position);repaint()});
+  }
+  function refreshSummaryIndex(){rebuild('summary');return index}
+  return {pages,get index(){return index},bind,display,summaryTarget,focusMissing,refreshSummaryIndex};
+}

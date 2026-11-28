@@ -1,0 +1,2 @@
+export const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export const leaf=`<svg viewBox="0 0 44 44" fill="none" aria-hidden="true"><path d="M9 35C12 20 23 9 35 7c1 15-5 24-21 24M13 32 29 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="m18 25 0-6m6 2 7 0" stroke="currentColor" stroke-width="1"/></svg>`;

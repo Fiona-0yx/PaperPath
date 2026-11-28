@@ -1,0 +1,11 @@
+官方示例原样预览，未加入论径功能。
+运行：在此目录执行 npm start，然后打开 http://127.0.0.1:5175/
+源码清单：https://threeui.com/source-code/sylva-hero.json
+HTML：https://threeui.com/landing-pages/inner-green-3d.html
+HTML 当前 SHA256：c5de3e42e1a088aeb2fe6a0430dedc03664ed02c59ec0fb9432b5724fb51ed61
+清单 SHA256：69c3694bd63f44ef9f007ebe4dac57a83e4402e0cdf6b54dd10b96dd4f05e197
+二者不同，官网已更新，不能宣称为清单历史版本。
+原 HTML 保持原样；仍有在线媒体引用，需要联网。
+React 宿主等注册源码已保存到 src；此预览直接运行 HTML，无需安装依赖。
+
+本地化补充：原始下载保存在 originals，运行文件仅将清单中图片与字体的外链改为本地路径，保持设计、渲染与交互逻辑。清单中的全部资源已下载并通过 SHA256 校验。

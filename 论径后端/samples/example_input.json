@@ -1,0 +1,39 @@
+{
+  "profile": {
+    "grade": "大一",
+    "major": "AI与计算机",
+    "primary_purpose": "保研准备",
+    "secondary_purposes": [
+      "竞赛",
+      "兴趣"
+    ],
+    "interests": [
+      "深度学习",
+      "神经网络",
+      "自然语言处理"
+    ],
+    "paper_count": "0",
+    "paper_language": "无",
+    "english_comfort": "逐句翻译",
+    "python_level": "能运行",
+    "stuck_points": [
+      "不知道读什么",
+      "公式",
+      "不知道读成什么样子"
+    ],
+    "default_depth": "能讲清楚"
+  },
+  "paper": {
+    "title": "智能体如何完成多步任务（演示论文）",
+    "language": "英文",
+    "section_titles": [
+      "Abstract",
+      "Introduction",
+      "Agent Architecture",
+      "Evaluation",
+      "Limitations"
+    ],
+    "has_formulas": true
+  },
+  "this_reading": {}
+}

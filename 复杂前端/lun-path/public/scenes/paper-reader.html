@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ece7dc">
+  <title>论径 · 论文阅读</title>
+  <link rel="stylesheet" href="/assets/reader.css">
+</head>
+<body>
+  <header class="reader-bar">
+    <a class="back" id="backLink" href="/#/home" target="_parent"></a>
+    <span class="paper-title" id="barTitle"></span>
+    <button id="study-open" type="button">阅读方案与测试</button>
+    <button class="lang" id="langBtn" type="button"></button>
+  </header>
+
+  <div class="reader-layout">
+    <main class="paper" id="paper" tabindex="-1"></main>
+
+    <button class="notes-toggle" id="notesToggle" type="button" aria-controls="notesPanel" aria-expanded="false">
+      <span id="notesToggleLabel"></span><span class="badge" id="notesToggleBadge">0</span>
+    </button>
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+    <aside class="notes-panel" id="notesPanel" aria-label="论文笔记侧边栏">
+      <div class="notes-head">
+        <h2 id="notesTitle"></h2>
+        <span class="count" id="notesCount"></span>
+        <button class="close-notes" id="notesClose" type="button" aria-label="关闭侧边栏">×</button>
+      </div>
+      <div class="note-filters" id="noteFilters" role="group"></div>
+      <ul class="notes-list" id="notesList"></ul>
+    </aside>
+  </div>
+
+  <div class="context-menu" id="contextMenu" role="menu" hidden></div>
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
+
+  <script type="module" src="/src/reader.js"></script>
+</body>
+</html>

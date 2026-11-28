@@ -1,0 +1,1 @@
+{ "name": "sylva-preview", "private": true, "type": "module", "scripts": { "start": "node serve.mjs" } }

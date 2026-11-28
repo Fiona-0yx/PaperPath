@@ -1,0 +1,8 @@
+git add .
+git commit -m " "
+git push
+显示现在在哪个分支 git branch --show-current
+创建新分支git switch -c feature/login
+切换分支git switch main
+看git历史记录git log --oneline
+PR 请求原项目审查修改，随后决定是否合并。

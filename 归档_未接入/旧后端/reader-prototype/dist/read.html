@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>论径 · 论文阅读</title>
+<link rel="stylesheet" href="document.css">
+<header class="banner"><div class="bar"><a class="brand" href="index.html">论径</a><a href="index.html#papers">论文集</a><a class="page-label" href="index.html#journal">我的手记</a></div><div class="headline"></div></header>
+<div class="switcher" aria-label="阅读视图"><button data-pane="paper" aria-pressed="true">正文</button><button data-pane="index" aria-pressed="false">文章导航</button><button data-pane="chat" aria-pressed="false">AI 问答</button></div>
+<main>
+<article class="pane" id="paper" tabindex="0" aria-label="论文正文">
+<div class="paper">
+<div class="meta">机器学习 <span>·</span> 教学示例</div>
+<h1>理解自注意力机制</h1>
+<p class="subtitle" lang="en">Understanding Self-Attention</p>
+<section id="summary"><h2>摘要</h2>
+<p>同一个词，放进不同的句子里，意思可能完全不同。自注意力机制让每个词在形成自己的表示时，参考句子里的其他词。本文用一句短句，拆解这个过程。</p></section>
+<section id="context"><h2>词与上下文</h2>
+<p>读一读这句话：<strong>小猫跳上窗台，因为它看见了飞鸟。</strong>读到“它”时，我们自然会想到前面出现的“小猫”。如果只看“它”这个字，这条联系就消失了。</p>
+<figure><figcaption>“它”可以参考哪些词？</figcaption>
+<div class="tokens"><span class="source">小猫</span><span>跳上</span><span>窗台</span><span>因为</span><span class="target">它</span><span>看见了</span><span>飞鸟</span></div>
+<div class="legend"><span>当前词</span><span>可能相关的词</span></div></figure>
+<p>自注意力提供了一种建立这种联系的方法。模型可以为句子里不同位置分配不同权重，再把这些位置的信息合到一起。</p></section>
+<section id="weights"><h2>注意力权重</h2>
+<p>对每个词，模型都计算三个向量：查询、键和值。可以先把查询理解为“我在找什么”，把键理解为“我有什么特征”。值则是这个位置能够提供的信息。</p>
+<p>计算“它”的新表示时，模型拿这个位置的查询，依次和各个位置的键打分。分数经过缩放，再通过 softmax 转成一组总和为 1 的权重。</p></section>
+<section id="combine"><h2>信息如何汇合</h2>
+<p>假设某次计算只包含两个位置，它们的权重分别是 0.7 和 0.3。把第一个位置的值向量乘以 0.7，第二个乘以 0.3，再逐项相加，就得到一次加权汇总。</p>
+<p>换一个查询位置，权重也可能改变。同一句话中的每个词，都能由此形成自己的上下文表示。</p></section>
+<section id="limits"><h2>讨论</h2>
+<p>回到开头的句子，如果把“小猫”换成“孩子”，读者仍然能理解“它”可能指谁，但句子的措辞会显得奇怪。这提醒我们，语境既涉及词与词的关联，也涉及读者已有的知识。</p>
+<p>上面的颜色只标出供思考的联系。要知道一个具体模型给哪个位置分配了多少权重，还需要查看它在这句话上的实际计算结果。</p></section>
+</div></article>
+<aside id="index" class="pane rail" aria-label="文章导航">
+<div class="box"><h2>推荐文章</h2><a class="recommend" id="recommend"><span class="thumb" aria-hidden="true"></span><span id="related-title"></span></a></div>
+<nav class="box" aria-label="文章目录"><h2>目录</h2><div id="contents"></div></nav>
+</aside>
+<aside class="pane box assistant" id="chat" aria-label="AI 问答">
+<h2>AI 问答</h2><p class="mode" id="mode">本地原文检索</p>
+<div class="conversation" id="messages" role="log" aria-live="polite"><p class="hint">可以问问这篇论文</p><button id="suggest" class="suggest"></button></div>
+<form id="questions"><label for="question" id="anchor">关于当前章节</label>
+<textarea id="question" required maxlength="500" placeholder="写下你想弄清楚的问题…"></textarea>
+<div class="actions"><button class="save" type="submit" value="save">仅记手记</button><button class="send" type="submit" value="ask">提问</button></div><div id="status" role="status"></div></form>
+<details id="saved"><summary>已记问题 <span id="count">0</span></summary><ul id="notes"></ul></details>
+</aside>
+</main>
+<template id="radiation-paper"><div class="meta">农业气象 · 论文导读</div>
+<h1>净辐射模拟与参考作物蒸散量估算</h1>
+<p class="subtitle">肖慧莹等 · 阅读摘记</p>
+<section id="overview"><h2>研究问题</h2><p>估算参考作物蒸散量需要净辐射数据。当辐射观测有限时，用气象变量模拟净辐射，是这项研究考察的一条路径。阅读时可以把问题拆成两层：净辐射本身估得怎样？这项误差又会怎样影响蒸散量估算？</p></section>
+<section id="metrics"><h2>模型评价指标</h2><p>论文从多种角度比较模拟效果。平均绝对误差描述偏差幅度的平均水平，均方根误差对较大的偏差更敏感。比较模型时，可以先看两项指标给出的排序是否一致。</p><figure><figcaption>平均绝对误差</figcaption><p>MAE = (1/n) ∑ |ŷᵢ − yᵢ|</p></figure></section>
+<section id="season"><h2>净辐射的季节变化</h2><p>三个数据时段的月平均净辐射都呈现先升高、再降低的季节变化。训练集在八月达到峰值，验证集与测试集在七月达到峰值。</p><p>比较不同数据集时，除了峰值出现在哪个月，也值得留意同一月份的差异。年内变化趋势相近，仍可能伴随夏季净辐射水平的差别。</p></section>
+<section id="transfer"><h2>从净辐射到蒸散量</h2><p>日尺度误差传递系数把净辐射的变化与参考作物蒸散量估计的变化联系起来。阅读这个系数时，可回到公式，逐项查看温度和风速相关参数的位置。</p></section></template>
+<script src="reader.js"></script>
+</html>

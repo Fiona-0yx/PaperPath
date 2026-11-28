@@ -1,0 +1,30 @@
+{
+  "version": "0.165.0",
+  "source": "https://cdn.jsdelivr.net/npm/three@0.165.0/",
+  "files": [
+    {
+      "file": "examples/jsm/environments/RoomEnvironment.js",
+      "sha256": "e1b92c4dd2d89752293546790bfda9828a630a79700c66f5b736fad7a88cb7e4"
+    },
+    {
+      "file": "examples/jsm/controls/OrbitControls.js",
+      "sha256": "f260591ef315aa04888152e7f121865214e33fb54727145cf4e4445058db1297"
+    },
+    {
+      "file": "examples/jsm/geometries/RoundedBoxGeometry.js",
+      "sha256": "d20aeaf7077c459a8d952d215738d7b44fba028440bb862d84b622a34f0c80bb"
+    },
+    {
+      "file": "LICENSE",
+      "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+    },
+    {
+      "file": "examples/jsm/lights/RectAreaLightUniformsLib.js",
+      "sha256": "08085bc942253cd54948bf936fecb66b54514a135872656e475a1cab09b55214"
+    },
+    {
+      "file": "build/three.module.js",
+      "sha256": "5916c8dfb5f4e3eede312de305345868d4a0a8105383b080c6985565d6e79b46"
+    }
+  ]
+}

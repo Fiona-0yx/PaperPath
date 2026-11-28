@@ -1,0 +1,77 @@
+{
+  "depth": "能讲清楚",
+  "route": [
+    {
+      "step": 1,
+      "section": "摘要 · Abstract",
+      "mode": "略读",
+      "goal": "说出论文的问题和主要贡献。"
+    },
+    {
+      "step": 2,
+      "section": "图表",
+      "mode": "略读",
+      "goal": "选择一张可以辅助讲解的图表。"
+    },
+    {
+      "step": 3,
+      "section": "引言 · Introduction",
+      "mode": "精读",
+      "goal": "讲清为什么值得研究这个问题。"
+    },
+    {
+      "step": 4,
+      "section": "方法（整体框架） · Agent Architecture",
+      "mode": "精读",
+      "goal": "用自己的话串起方法的主要环节。"
+    },
+    {
+      "step": 5,
+      "section": "实验（结论层面） · Evaluation",
+      "mode": "略读",
+      "goal": "用一项实验结果支持主要结论。"
+    },
+    {
+      "step": 6,
+      "section": "局限 · Limitations",
+      "mode": "精读",
+      "goal": "说明结论在什么条件下仍有局限。"
+    }
+  ],
+  "focus": [
+    "问题",
+    "核心贡献",
+    "局限"
+  ],
+  "aids": {
+    "translation": "full",
+    "formula_explain": true,
+    "concept_explain": "ondemand",
+    "code_walkthrough": false
+  },
+  "pre_reading_test": {
+    "enabled": true,
+    "num_questions": 3,
+    "skippable": true
+  },
+  "post_reading_test": {
+    "type": "retell",
+    "num_questions": 3
+  },
+  "warnings": [
+    "首篇建议换更易读的论文或先读综述。"
+  ],
+  "assumptions": [
+    "paper.abstract：未提供，保留未知。",
+    "paper.has_code_link：未提供，保留未知。",
+    "this_reading.purpose：采用保研准备。",
+    "this_reading.depth：采用能讲清楚。",
+    "this_reading.deadline：采用无。"
+  ],
+  "editable_fields": [
+    "depth",
+    "route",
+    "focus",
+    "aids"
+  ]
+}

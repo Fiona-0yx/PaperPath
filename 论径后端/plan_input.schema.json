@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "profile": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "grade": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "major": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "primary_purpose": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "课程作业",
+                    "科研入门",
+                    "竞赛",
+                    "保研准备",
+                    "兴趣"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "secondary_purposes": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "课程作业",
+                      "科研入门",
+                      "竞赛",
+                      "保研准备",
+                      "兴趣",
+                      "unsure"
+                    ]
+                  }
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "interests": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "paper_count": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "0",
+                    0,
+                    "1-3",
+                    "4-10",
+                    "10+"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "paper_language": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "中文",
+                    "英文",
+                    "差不多",
+                    "无"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "english_comfort": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "逐句翻译",
+                    "查词可读",
+                    "基本无障碍"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "python_level": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "不会",
+                    "能看懂",
+                    "能运行",
+                    "能修改"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "stuck_points": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "default_depth": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "看懂大意",
+                    "能讲清楚",
+                    "能复现"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        {
+          "enum": [
+            "unsure",
+            null
+          ]
+        }
+      ]
+    },
+    "paper": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "title": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "abstract": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "language": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "中文",
+                    "英文"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "section_titles": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "has_formulas": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "has_code_link": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        {
+          "enum": [
+            "unsure",
+            null
+          ]
+        }
+      ]
+    },
+    "this_reading": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "purpose": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "课程作业",
+                    "科研入门",
+                    "竞赛",
+                    "保研准备",
+                    "兴趣"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "depth": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "看懂大意",
+                    "能讲清楚",
+                    "能复现"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            },
+            "deadline": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "今天",
+                    "本周",
+                    "无"
+                  ]
+                },
+                {
+                  "enum": [
+                    "unsure",
+                    null
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        {
+          "enum": [
+            "unsure",
+            null
+          ]
+        }
+      ]
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

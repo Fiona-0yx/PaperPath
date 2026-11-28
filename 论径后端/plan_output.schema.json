@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "depth": {
+      "enum": [
+        "看懂大意",
+        "能讲清楚",
+        "能复现"
+      ]
+    },
+    "route": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "section": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "enum": [
+              "精读",
+              "略读",
+              "跳过"
+            ]
+          },
+          "goal": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "step",
+          "section",
+          "mode",
+          "goal"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "focus": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "aids": {
+      "type": "object",
+      "properties": {
+        "translation": {
+          "enum": [
+            "none",
+            "key_terms",
+            "full"
+          ]
+        },
+        "formula_explain": {
+          "type": "boolean"
+        },
+        "concept_explain": {
+          "enum": [
+            "ondemand",
+            "before_reading"
+          ]
+        },
+        "code_walkthrough": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "translation",
+        "formula_explain",
+        "concept_explain",
+        "code_walkthrough"
+      ],
+      "additionalProperties": false
+    },
+    "pre_reading_test": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "num_questions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "skippable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled",
+        "num_questions",
+        "skippable"
+      ],
+      "additionalProperties": false
+    },
+    "post_reading_test": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "gist",
+            "retell",
+            "implement"
+          ]
+        },
+        "num_questions": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "type",
+        "num_questions"
+      ],
+      "additionalProperties": false
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "editable_fields": {
+      "const": [
+        "depth",
+        "route",
+        "focus",
+        "aids"
+      ]
+    }
+  },
+  "required": [
+    "depth",
+    "route",
+    "focus",
+    "aids",
+    "pre_reading_test",
+    "post_reading_test",
+    "warnings",
+    "assumptions",
+    "editable_fields"
+  ],
+  "additionalProperties": false
+}

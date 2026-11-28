@@ -1,0 +1,419 @@
+[
+  {
+    "page": 1,
+    "id": "intro",
+    "type": "text",
+    "label": [
+      "我的原话",
+      "In my words"
+    ],
+    "title": [
+      "最近有什么想弄明白的东西，或者想读的方向？",
+      "What would you like to understand or read about?"
+    ],
+    "hint": [
+      "一句话就行。",
+      "One sentence is enough."
+    ],
+    "options": [
+      [
+        "想入门神经网络",
+        "I want to get into neural networks"
+      ],
+      [
+        "导师让我读论文",
+        "My supervisor asked me to read papers"
+      ],
+      [
+        "不知道从哪篇开始",
+        "I am not sure which paper to start with"
+      ]
+    ]
+  },
+  {
+    "page": 2,
+    "id": "education",
+    "type": "pair",
+    "label": [
+      "年级与专业",
+      "Year and major"
+    ],
+    "title": [
+      "你在读几年级，学什么专业？",
+      "What is your year and major?"
+    ],
+    "hint": [
+      "用来了解你的学习背景。",
+      "This gives context to your studies."
+    ],
+    "options": [],
+    "groups": [
+      {
+        "label": [
+          "年级",
+          "Year"
+        ],
+        "options": [
+          [
+            "大一",
+            "Year 1"
+          ],
+          [
+            "大二",
+            "Year 2"
+          ],
+          [
+            "大三",
+            "Year 3"
+          ],
+          [
+            "大四及以上",
+            "Year 4 or later"
+          ],
+          [
+            "其他",
+            "Other"
+          ]
+        ]
+      },
+      {
+        "label": [
+          "专业",
+          "Major"
+        ],
+        "options": [
+          [
+            "计算机或人工智能",
+            "Computing or AI"
+          ],
+          [
+            "数学或统计",
+            "Mathematics or statistics"
+          ],
+          [
+            "其他工科",
+            "Other engineering"
+          ],
+          [
+            "人文社科",
+            "Humanities or social sciences"
+          ],
+          [
+            "其他",
+            "Other"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "page": 3,
+    "id": "purpose",
+    "type": "single",
+    "label": [
+      "阅读目的",
+      "Purpose"
+    ],
+    "title": [
+      "这次为什么想读论文？",
+      "Why are you reading papers?"
+    ],
+    "hint": [
+      "用来了解你手头的任务。",
+      "This identifies your current task."
+    ],
+    "options": [
+      [
+        "课程作业",
+        "Coursework"
+      ],
+      [
+        "科研入门",
+        "Starting research"
+      ],
+      [
+        "竞赛",
+        "Competition"
+      ],
+      [
+        "保研准备",
+        "Graduate school preparation"
+      ],
+      [
+        "兴趣探索",
+        "Curiosity"
+      ]
+    ]
+  },
+  {
+    "page": 4,
+    "id": "direction",
+    "type": "multi",
+    "label": [
+      "兴趣方向",
+      "Interests"
+    ],
+    "title": [
+      "哪些方向让你感兴趣？",
+      "Which topics interest you?"
+    ],
+    "hint": [
+      "可以选多个，对应藤蔓上的五个方向。",
+      "Choose any of the five topics on the vine."
+    ],
+    "options": [
+      [
+        "机器学习基础",
+        "Machine learning foundations"
+      ],
+      [
+        "神经网络",
+        "Neural networks"
+      ],
+      [
+        "深度学习",
+        "Deep learning"
+      ],
+      [
+        "计算机视觉",
+        "Computer vision"
+      ],
+      [
+        "自然语言处理",
+        "Natural language processing"
+      ]
+    ]
+  },
+  {
+    "page": 5,
+    "id": "reading",
+    "type": "pair",
+    "label": [
+      "阅读经历",
+      "Reading experience"
+    ],
+    "title": [
+      "之前读过多少论文，主要用什么语言？",
+      "How many papers have you read, and in which language?"
+    ],
+    "hint": [
+      "回想读过的论文即可。",
+      "Think of papers you have already read."
+    ],
+    "options": [],
+    "groups": [
+      {
+        "label": [
+          "篇数",
+          "Papers"
+        ],
+        "options": [
+          [
+            "还没读过",
+            "None yet"
+          ],
+          [
+            "1～3 篇",
+            "1–3"
+          ],
+          [
+            "4～10 篇",
+            "4–10"
+          ],
+          [
+            "10 篇以上",
+            "More than 10"
+          ]
+        ]
+      },
+      {
+        "label": [
+          "主要语言",
+          "Main language"
+        ],
+        "options": [
+          [
+            "中文",
+            "Chinese"
+          ],
+          [
+            "英文",
+            "English"
+          ],
+          [
+            "中英文都有",
+            "Both Chinese and English"
+          ],
+          [
+            "其他",
+            "Other"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "page": 6,
+    "id": "english",
+    "type": "single",
+    "label": [
+      "英文阅读",
+      "Reading in English"
+    ],
+    "title": [
+      "读英文原文时，哪种描述更像你？",
+      "How do you feel reading a paper in English?"
+    ],
+    "hint": [
+      "帮助决定需要多少英文阅读辅助。",
+      "This helps determine the reading support you need."
+    ],
+    "options": [
+      [
+        "常需要逐句查词",
+        "I look up words sentence by sentence"
+      ],
+      [
+        "借助翻译能理解大意",
+        "With translation I can follow the main idea"
+      ],
+      [
+        "多数时候能直接读懂",
+        "I usually read without translation"
+      ]
+    ]
+  },
+  {
+    "page": 7,
+    "id": "foundation",
+    "type": "check",
+    "label": [
+      "梯度下降小自检",
+      "Gradient descent check"
+    ],
+    "title": [
+      "为了减小损失，梯度下降通常沿哪个方向更新参数？",
+      "In which direction does gradient descent update parameters to reduce loss?"
+    ],
+    "hint": [
+      "这道小题只看一个概念。",
+      "This checks one concept."
+    ],
+    "options": [
+      [
+        "沿梯度方向",
+        "Along the gradient"
+      ],
+      [
+        "沿梯度的反方向",
+        "Opposite to the gradient"
+      ],
+      [
+        "随机选择方向",
+        "In a random direction"
+      ]
+    ],
+    "correct": 1
+  },
+  {
+    "page": 8,
+    "id": "python",
+    "type": "single",
+    "label": [
+      "Python 实践",
+      "Python practice"
+    ],
+    "title": [
+      "用 Python 时，你能独立完成哪一步？",
+      "What can you do independently in Python?"
+    ],
+    "hint": [
+      "用来判断是否需要代码提示。",
+      "This helps identify useful coding support."
+    ],
+    "options": [
+      [
+        "还没用过",
+        "I have not used it yet"
+      ],
+      [
+        "能读懂简单代码",
+        "Read simple code"
+      ],
+      [
+        "能修改代码并运行模型",
+        "Modify code and run a model"
+      ],
+      [
+        "能独立实现和调试模型",
+        "Implement and debug a model"
+      ]
+    ]
+  },
+  {
+    "page": 9,
+    "id": "difficulty",
+    "type": "multi",
+    "label": [
+      "阅读困难",
+      "Reading difficulties"
+    ],
+    "title": [
+      "读论文时，最容易卡在哪里？",
+      "Where do you tend to get stuck?"
+    ],
+    "hint": [
+      "可多选，记录需要帮助的地方。",
+      "Choose all the areas where support would help."
+    ],
+    "options": [
+      [
+        "生词和术语",
+        "Vocabulary and terminology"
+      ],
+      [
+        "数学公式",
+        "Equations"
+      ],
+      [
+        "文章结构",
+        "Paper structure"
+      ],
+      [
+        "不知道从哪篇开始",
+        "Choosing a first paper"
+      ]
+    ]
+  },
+  {
+    "page": 10,
+    "id": "outcome",
+    "type": "single",
+    "label": [
+      "读完的目标",
+      "Reading outcome"
+    ],
+    "title": [
+      "读完一篇论文，你希望达到什么程度？",
+      "After reading a paper, what would you like to do?"
+    ],
+    "hint": [
+      "用于选择读后测试的深度。",
+      "This sets the depth of a later reading check."
+    ],
+    "options": [
+      [
+        "看懂核心问题和大意",
+        "Understand the question and main idea"
+      ],
+      [
+        "能用自己的话向别人讲清楚",
+        "Explain it to someone in my own words"
+      ],
+      [
+        "能动手复现主要方法",
+        "Reproduce the main method"
+      ]
+    ]
+  }
+]

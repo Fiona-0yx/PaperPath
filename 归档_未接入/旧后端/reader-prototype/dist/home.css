@@ -1,0 +1,117 @@
+:root{color-scheme:light;font:16px/1.6 "Source Sans 3","Microsoft YaHei",sans-serif;color:#28382d;background:#f7f8f1;scroll-behavior:smooth}*{box-sizing:border-box}body{margin:0}a{color:inherit;text-decoration:none}a:focus-visible{outline:2px solid currentColor;outline-offset:5px}
+.hero{position:relative;isolation:isolate;overflow:hidden;background:#424a40;color:#f8faee;min-height:100svh;display:flex;flex-direction:column;padding:0 clamp(22px,6vw,110px)}
+.landscape,.landscape:after{position:absolute;inset:0;z-index:-1;pointer-events:none}.landscape{background:#41483e;overflow:hidden}.landscape:before{content:"";position:absolute;bottom:-9%;left:-2%;width:max(218vw,425svh);aspect-ratio:1701/1087;background:url(grove.png) left bottom/100% 100% no-repeat}.landscape:after{content:"";z-index:auto;background:linear-gradient(90deg,rgba(17,29,21,.62),rgba(16,27,17,.12) 80%),linear-gradient(0deg,rgba(15,27,20,.58),transparent 25%,transparent 75%,rgba(15,25,19,.32))}
+.mast,.hero-foot{display:flex;align-items:center;justify-content:space-between}.mast{min-height:84px;border-bottom:1px solid #ffffff42}.mast div{display:flex;gap:clamp(15px,3vw,45px);font-size:.94rem}.mast a:hover,.hero-foot a:hover{text-decoration:underline;text-underline-offset:5px}.wordmark{font:600 1.65rem/1.1 "Songti SC",SimSun,serif;display:flex;align-items:center;gap:14px}.wordmark span,.kicker,.eyebrow{font:500 .74rem/1.5 Inter,Arial,sans-serif;letter-spacing:.22em}.intro{margin:auto 0;padding:80px 0 72px}.intro h1{font:400 clamp(3.1rem,6.8vw,7.2rem)/1.18 "Songti SC",SimSun,serif;letter-spacing:.05em;margin:14px 0}.lead{font-size:clamp(1rem,1.45vw,1.35rem);margin:18px 0 32px}.start{display:inline-block;background:#f3f5e8;color:#29372b;border-radius:100px;padding:12px 27px;transition:background .2s}.start:hover{background:#dfe9c9}.hero-foot{padding:20px 0;font-size:.8rem;border-top:1px solid #ffffff42;letter-spacing:.08em}
+body {background:#fafbfa}
+main {
+  width:min(88%,1240px);
+  margin:auto;
+  padding:30px 0 90px;
+  min-height:100svh;
+  display:grid;
+  grid-template-columns:minmax(0,3.05fr) minmax(220px,1fr);
+  align-items:start;
+  gap:14px;
+}
+#papers {display:grid;gap:17px}
+#papers,#journal {scroll-margin:27px}
+.entry,.panel {
+  background:white;
+  border-radius:8px;
+  box-shadow:0 2px 10px #182b2314,0 1px 3px #182b2309;
+}
+.entry {
+  display:flex;align-items:stretch;min-height:clamp(214px,18.3vw,252px);
+  overflow:hidden;position:relative;
+  transition:transform 280ms cubic-bezier(.2,.7,.25,1),box-shadow 280ms ease;
+}
+.entry:nth-child(even) {flex-direction:row-reverse}
+.cover {position:relative;flex:0 0 40%;overflow:hidden;isolation:isolate}
+.art {
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  transition:transform 540ms cubic-bezier(.2,.7,.25,1);
+}
+.art i {font:italic clamp(2.5rem,5vw,5rem)/1.1 Georgia,serif}
+.art sub,.art sup {font-size:.48em}
+.art small {font:600 .7rem/1.5 Inter,Arial,sans-serif;letter-spacing:.22em}
+.climate {
+  color:white;
+  background:linear-gradient(120deg,#152b23a6,#25362033),url(grove.png) 14% 82% / 415% auto;
+}
+.attention {
+  color:#32435b;background-color:#e6ebf4;
+  background-image:radial-gradient(circle,#8197b68a .8px,transparent 1px),repeating-radial-gradient(ellipse at 105% 15%,transparent 0 17px,#a4b0c255 18px,transparent 19px);
+  background-size:9px 9px,100% 100%;
+}
+.excerpt {min-width:0;align-self:center;padding:24px clamp(18px,2.2vw,34px)}
+.excerpt h2 {color:#343c38;font-size:clamp(1.2rem,1.75vw,1.55rem);line-height:1.45;margin:0 0 13px}
+.excerpt p,.panel p {margin:0;color:#647068;font-size:1rem;line-height:1.65}
+.excerpt .meta {font-size:.86rem;color:#6a756f;margin-bottom:15px}
+.meta span {color:#436450}
+aside {display:grid;gap:14px}
+.panel {overflow:hidden}
+.profile-cover {
+  height:clamp(117px,11.5vw,158px);
+  background:url(grove.png) 70% 33.2% / 610% auto;
+}
+.profile-body {padding:0 18px 20px}
+.identity {display:flex;align-items:center;gap:11px;margin:-16px 0 9px;position:relative}
+.avatar {display:grid;place-items:center;border:3px solid white;border-radius:50%;width:56px;height:56px;background:#364b3e;color:#f5f2de;font:1.55rem Georgia,SimSun,serif}
+.identity h2 {font-size:.99rem;margin:15px 0 0;font-weight:600}
+.profile p,.notebook p {font-size:.91rem}
+dl {display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin:27px 0 15px}
+dt {font-size:.83rem;color:#657268}
+dd {margin:0;font-size:1.29rem;font-variant-numeric:tabular-nums}
+.profile-action {display:block;border-radius:4px;background:#375441;color:white;text-align:center;padding:6px;font-size:.92rem}
+.notebook {padding:18px}
+.notebook h2 {margin:0 0 8px;font-size:1rem}
+#recent {list-style:none;padding:0;margin:0}
+#recent li {padding:9px 0;border-top:1px solid #e2e7e2;overflow-wrap:anywhere}
+#recent a:hover {text-decoration:underline}
+.back-top {position:fixed;right:1.2vw;bottom:24px;border-radius:50%;padding:11px;background:#42634f;color:white;font-size:.78rem}
+.back-top[hidden] {display:none}
+.start,.profile-action,.back-top,.mast a {transition:transform 260ms ease,background-color 220ms ease}
+@media (hover:hover) and (pointer:fine) {
+  .entry:hover {transform:translateY(-2px) scale(1.006);box-shadow:0 7px 20px #182b2321}
+  .entry:hover .art {transform:scale(1.045)}
+  .entry:hover h2 {color:#406348}
+  .start:hover,.profile-action:hover,.back-top:hover,.mast a:hover {transform:scale(1.035)}
+}
+.entry:focus-visible .art {transform:scale(1.045)}
+@media(max-width:800px){
+  main {width:94%;grid-template-columns:minmax(0,1fr) 210px}
+  .cover {flex-basis:34%}
+}
+@media(max-width:670px){
+  main {display:flex;flex-direction:column;width:92%;gap:18px;padding-top:20px}
+  #papers,aside {width:100%}
+  .entry {min-height:168px}
+  .excerpt {padding:15px}.excerpt p {font-size:.9rem}
+  .excerpt .meta {margin:8px 0}.excerpt h2 {font-size:1.1rem;margin-bottom:6px}
+  .art small {font-size:.57rem;letter-spacing:.09em}
+  .profile-cover {height:120px}.mast {min-height:64px}
+  .wordmark span {display:none}.hero-foot {font-size:.75rem}.landscape:before {left:-48%}
+  .back-top {right:12px;bottom:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  :root {scroll-behavior:auto}
+  .entry,.art,.start,.profile-action,.back-top,.mast a {transition:none;transform:none!important}
+}
+/* The competition grove is a native background canvas. Scrolling belongs to the document. */
+.hero {background:#484c42}
+.hero .landscape {background:radial-gradient(ellipse at 48% 85%,#858979,#494d42 62%);}
+.hero.vine-ready .landscape:before {opacity:0}
+.landscape:before {transition:opacity .65s}
+#vine-scene {position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero .landscape:after {background:linear-gradient(90deg,#1b241e36,transparent 52%);z-index:1}
+.hero .intro {position:relative;z-index:1;align-self:flex-start;margin:clamp(26px,7vh,84px) 0 0;padding:0}
+.hero .intro h1 {font:400 clamp(2.9rem,4vw,5.2rem)/1.35 "Microsoft YaHei",sans-serif;letter-spacing:.02em}
+.hero .intro .lead {font-size:1rem}.hero-foot {margin-top:auto}
+.vine-card {position:absolute;top:18%;left:58%;width:clamp(215px,23vw,344px);padding:13px 13px 22px;display:grid;gap:6px;border-radius:32px;background:#f4f5ee;color:#222b23;box-shadow:0 15px 40px #14211129;transition:transform .4s}
+.vine-card img {width:100%;aspect-ratio:2.35;object-fit:cover;border-radius:22px}
+.vine-card small,.vine-card strong,.vine-card span {margin-inline:12px}
+.vine-card small {margin-top:12px;color:#677463}.vine-card strong {font-size:1.35rem;font-weight:550}.vine-card span {font-size:.85rem;color:#586452}
+@media(max-width:670px){.vine-card{left:auto;right:5vw;top:auto;bottom:12%;width:min(43vw,190px);padding:8px 8px 12px;border-radius:18px}.vine-card img{border-radius:12px}.vine-card strong{font-size:1rem}.vine-card small,.vine-card span{font-size:.72rem}.hero .intro{margin-top:5vh}.hero .intro h1{font-size:2.65rem}.hero .lead{margin:8px 0 16px}}
+@media(max-height:550px){.hero .intro{margin-top:6px}.hero .intro h1{font-size:2rem}.hero .lead{margin:4px 0 8px}.hero .kicker{margin:0}.vine-card{top:20%;bottom:auto}}
+@media(prefers-reduced-motion:reduce){.vine-card,.landscape:before{transition:none}.vine-card:hover{transform:none}}

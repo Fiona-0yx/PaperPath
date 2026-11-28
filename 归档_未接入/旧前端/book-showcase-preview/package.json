@@ -1,0 +1,6 @@
+{
+  "name": "book-showcase-preview",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node serve.mjs" }
+}

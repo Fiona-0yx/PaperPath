@@ -1,0 +1,197 @@
+{
+  "paper": "基于人工神经网络的净辐射模拟与参考作物蒸散量估算",
+  "test_id": "6f368bc2d5ae46248f88c4ef1ba3eb13",
+  "self_report": {
+    "grade": "大一",
+    "major": "AI与计算机",
+    "primary_purpose": "保研准备",
+    "secondary_purposes": [
+      "竞赛",
+      "兴趣"
+    ],
+    "interests": [
+      "深度学习",
+      "神经网络",
+      "自然语言处理"
+    ],
+    "paper_count": "0",
+    "paper_language": "无",
+    "english_comfort": "逐句翻译",
+    "python_level": "能运行",
+    "stuck_points": [
+      "不知道读什么",
+      "公式",
+      "不知道读成什么样子"
+    ],
+    "default_depth": "能讲清楚"
+  },
+  "reading_plan": {
+    "depth": "能讲清楚",
+    "focus": [
+      "问题",
+      "核心贡献",
+      "局限"
+    ],
+    "route": [
+      {
+        "step": 1,
+        "section": "摘要",
+        "mode": "略读",
+        "goal": "说出论文的问题和主要贡献。"
+      },
+      {
+        "step": 2,
+        "section": "图表",
+        "mode": "略读",
+        "goal": "选择一张可以辅助讲解的图表。"
+      },
+      {
+        "step": 3,
+        "section": "引言",
+        "mode": "精读",
+        "goal": "讲清为什么值得研究这个问题。"
+      },
+      {
+        "step": 4,
+        "section": "方法（整体框架）",
+        "mode": "精读",
+        "goal": "用自己的话串起方法的主要环节。"
+      },
+      {
+        "step": 5,
+        "section": "实验（结论层面）",
+        "mode": "略读",
+        "goal": "用一项实验结果支持主要结论。"
+      },
+      {
+        "step": 6,
+        "section": "局限",
+        "mode": "精读",
+        "goal": "说明结论在什么条件下仍有局限。"
+      }
+    ],
+    "aids": {
+      "translation": "none",
+      "formula_explain": true,
+      "concept_explain": "ondemand",
+      "code_walkthrough": false
+    }
+  },
+  "answer_guidance": {
+    "reading_goal": "能讲清楚",
+    "default_explanation": "讲清关键环节和它们的关系，给出读者可以用自己的话复述的解释。",
+    "formula_guidance": "先用日常语言说明公式表达的关系，再逐个解释相关符号。",
+    "untested_concept": "按本篇阅读目标回答，概念基础视为未知。",
+    "explicit_request_first": true
+  },
+  "completion_status": "submitted",
+  "concept_evidence": [
+    {
+      "question_id": "q1",
+      "concept": "净辐射（地表净辐射）",
+      "status": "gap",
+      "user_choice": "A",
+      "steps": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "why_needed": "不懂净辐射的定义和影响因素，读引言时不知道被模拟的对象是什么，也无法判断为什么值得研究。",
+      "selection_evidence": "净辐射模拟",
+      "explanation_guidance": "先给这个概念的直观定义，必要时举一个小例子，再联系当前问题。"
+    },
+    {
+      "question_id": "q2",
+      "concept": "人工神经网络（ANN）基本结构与训练流程",
+      "status": "mastered",
+      "user_choice": "A",
+      "steps": [
+        1,
+        4,
+        5
+      ],
+      "why_needed": "不懂神经网络如何由输入得到输出，读方法整体框架时无法用自己的话串起主要环节，也容易被训练公式卡住。",
+      "selection_evidence": "基于人工神经网络",
+      "explanation_guidance": "可直接使用这个概念解释当前问题。"
+    },
+    {
+      "question_id": "q3",
+      "concept": "参考作物蒸散量（ET₀）",
+      "status": "gap",
+      "user_choice": "A",
+      "steps": [
+        1,
+        3,
+        4,
+        6
+      ],
+      "why_needed": "不懂参考作物蒸散量的含义和用途，读摘要和引言时会抓不住估算目标及其应用意义。",
+      "selection_evidence": "参考作物蒸散量估算",
+      "explanation_guidance": "先给这个概念的直观定义，必要时举一个小例子，再联系当前问题。"
+    },
+    {
+      "question_id": "q4",
+      "concept": "回归模拟/估算任务",
+      "status": "gap",
+      "user_choice": "A",
+      "steps": [
+        4,
+        5
+      ],
+      "why_needed": "不懂连续值回归与分类的区别，读方法时会不清楚网络输出和目标值如何对应。",
+      "selection_evidence": "净辐射模拟与参考作物蒸散量估算",
+      "explanation_guidance": "先给这个概念的直观定义，必要时举一个小例子，再联系当前问题。"
+    },
+    {
+      "question_id": "q5",
+      "concept": "模型性能评价指标（误差、相关系数等）",
+      "status": "mastered",
+      "user_choice": "A",
+      "steps": [
+        5,
+        6
+      ],
+      "why_needed": "不懂常见误差或相关指标，读实验结论时无法用一项结果支持主要结论，也难以判断结论边界。",
+      "selection_evidence": "基于人工神经网络的净辐射模拟与参考作物蒸散量估算",
+      "explanation_guidance": "可直接使用这个概念解释当前问题。"
+    }
+  ],
+  "step_support": [
+    {
+      "step": 1,
+      "section": "摘要",
+      "mode": "略读",
+      "goal": "说出论文的问题和主要贡献。",
+      "actions": [
+        {
+          "question_id": "q1",
+          "concept": "净辐射（地表净辐射）",
+          "action": "pre_explain",
+          "explanation": "净辐射是地表辐射收支的净结果，需要考虑短波和长波辐射的收入与支出。A只看到太阳辐射收入，C只看到一项长波支出，都不能完整表示净辐射。"
+        },
+        {
+          "question_id": "q3",
+          "concept": "参考作物蒸散量（ET₀）",
+          "action": "pre_explain",
+          "explanation": "参考作物蒸散量是一个标准化基准，用来排除具体作物和水分胁迫差异。A把它当成任意实际蒸散量，C把它当成水量收支差，都不符合“参考基准”的含义。"
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "section": "方法（整体框架）",
+      "mode": "精读",
+      "goal": "用自己的话串起方法的主要环节。",
+      "actions": [
+        {
+          "question_id": "q4",
+          "concept": "回归模拟/估算任务",
+          "action": "pre_explain",
+          "explanation": "预测连续数值目标属于回归；分类预测离散类别，聚类通常不提供预先给定的连续目标值。A把连续数值误认为分类标志，C混淆了有监督预测和无监督分组。"
+        }
+      ]
+    }
+  ],
+  "untested_concepts": []
+}

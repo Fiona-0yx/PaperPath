@@ -1,0 +1,15 @@
+{
+  "webglReady": true,
+  "volumes": 7,
+  "navigation": true,
+  "openClose": true,
+  "openBook": true,
+  "pageTurn": true,
+  "responsive": [
+    "820x1180",
+    "390x844"
+  ],
+  "reducedMotion": true,
+  "runtimeErrors": [],
+  "networkFailures": []
+}

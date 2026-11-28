@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#283529"><title>论径 · 论文阅读手记</title><link rel="stylesheet" href="home.css"></head>
+<body>
+<header class="hero" id="home">
+  <div class="landscape" aria-hidden="true"><canvas id="vine-scene"></canvas></div>
+  <nav class="mast"><a class="wordmark" href="#home">论径<span>LUNJING</span></a><div><a href="#papers">论文集</a><a href="#journal">我的手记</a></div></nav>
+  <div class="intro"><p class="kicker">人工智能</p><h1>循径而读，<br>渐入佳境。</h1><p class="lead">读一篇论文，留下自己的问题。</p><a class="start" href="intake/index.html">开始</a></div>
+  <a class="vine-card" href="read.html"><img src="vine/card-ethos.jpg" alt=""><small>01 / Machine Learning</small><strong>机器学习基础</strong><span>理解自注意力机制</span></a>
+  <div class="hero-foot"><span>论径 / 阅读工作台</span><a href="#papers">向下浏览 ﹀</a></div>
+</header>
+<main>
+<section id="papers" aria-label="论文集">
+<a class="entry" href="read.html?paper=radiation">
+  <div class="cover" aria-hidden="true"><div class="art climate"><i>R<sub>n</sub></i><small>NET RADIATION</small></div></div>
+  <div class="excerpt"><h2>净辐射模拟与参考作物蒸散量估算</h2><p class="meta"><span>论文导读</span> · 农业气象 · 肖慧莹等</p><p>从日尺度误差到季节变化，看看净辐射如何影响作物蒸散量的估算。</p></div>
+</a>
+<a class="entry" href="read.html">
+  <div class="cover" aria-hidden="true"><div class="art attention"><i>Q · K<sup>T</sup></i><small>SELF-ATTENTION</small></div></div>
+  <div class="excerpt"><h2>理解自注意力机制</h2><p class="meta"><span>教学示例</span> · 机器学习</p><p>从“小猫跳上窗台”读起，看看一个词怎样借助上下文找到它指向的对象。</p></div>
+</a>
+</section>
+<aside>
+  <section class="profile panel" aria-labelledby="profile-name">
+    <div class="profile-cover" aria-hidden="true"></div>
+    <div class="profile-body"><div class="identity"><span class="avatar" aria-hidden="true">径</span><h2 id="profile-name">论径阅读手记</h2></div>
+    <p>读一篇论文，留下自己的问题。</p>
+    <dl><div><dt>论文</dt><dd>2</dd></div><div><dt>主题</dt><dd>2</dd></div><div><dt>手记</dt><dd id="note-count">0</dd></div></dl>
+    <a class="profile-action" href="#journal">查看我的手记</a></div>
+  </section>
+  <section class="panel notebook" id="journal"><h2>我的手记</h2><p id="empty">阅读时记下的问题会出现在这里。</p><ul id="recent"></ul></section>
+</aside>
+<a class="back-top" href="#home" aria-label="返回顶部">顶部</a>
+</main><script src="home.js"></script><script defer src="vine/three.min.js"></script><script defer src="vine/meadow.js"></script>
+</body></html>
+

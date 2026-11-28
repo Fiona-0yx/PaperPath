@@ -1,0 +1,34 @@
+{
+  "profile": {
+    "grade": "大一",
+    "major": "AI与计算机",
+    "primary_purpose": "保研准备",
+    "secondary_purposes": [
+      "竞赛",
+      "兴趣"
+    ],
+    "interests": [
+      "深度学习",
+      "神经网络",
+      "自然语言处理"
+    ],
+    "paper_count": "0",
+    "paper_language": "无",
+    "english_comfort": "逐句翻译",
+    "python_level": "能运行",
+    "stuck_points": [
+      "不知道读什么",
+      "公式",
+      "不知道读成什么样子"
+    ],
+    "default_depth": "能讲清楚"
+  },
+  "paper": {
+    "title": "基于人工神经网络的净辐射模拟与参考作物蒸散量估算",
+    "language": "中文"
+  },
+  "this_reading": {
+    "purpose": "保研准备",
+    "depth": "能讲清楚"
+  }
+}

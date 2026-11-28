@@ -1,0 +1,55 @@
+# Integrate <BestsellersBookShowcase /> from ThreeUI using its exact source
+
+You are working in an existing application. Implement this component from the exact source linked or included below. Do not recreate it from the preview, screenshot, description, or filename.
+
+Component: `BestsellersBookShowcase`
+Runtime: Full HTML + DOM/CSS + embedded media
+Source revision: `SHA-256 7c1ed1ca4a4c`
+
+Reference brief:
+The complete Field Manuals book showcase, preserved unchanged with its editorial layout, authored motion, interactions, and embedded media.
+
+## Current configured usage
+
+```tsx
+import { BestsellersBookShowcase } from "@designcodeio/threeui";
+import "@designcodeio/threeui/style.css";
+
+export function Scene() {
+  return (
+    <div className="shader-frame">
+      <BestsellersBookShowcase
+        headingFont="iowan-old-style"
+        bodyFont="iowan-old-style"
+        headingWeight="500"
+        bodyWeight="400"
+        primaryColor="#c3a47b"
+        headingSize={325}
+        bodySize={17}
+        headingLetterSpacing={-0.085}
+      />
+    </div>
+  );
+}
+```
+
+## Exact implementation source
+
+Canonical HTML: [bestsellers-book-showcase.html](https://threeui.com/landing-pages/bestsellers-book-showcase.html)
+Complete registered source bundle: [https://threeui.com/source-code/bestsellers-book-showcase.json](https://threeui.com/source-code/bestsellers-book-showcase.json)
+
+Required registered files:
+
+- `src/shaders/landing-pages/LandingPages.tsx` — component · SHA-256 `4d379461ad00eb4de7900df312878035383de7e1ed4e13283b8143a2eea9d30a`
+- `src/shaders/landing-pages/LandingPageFrame.tsx` — frame-component · SHA-256 `61de2cc50888aac4ac5557420b07fa47ed3543bb57c1e0055fafdefa53dbaa78`
+- `public/landing-pages/bestsellers-book-showcase.html` — canonical-source · SHA-256 `7c1ed1ca4a4c58f1c33956c84edd8f7ba450ea0312df718701e634a207568138`
+- `src/shaders/threeui.css` — shared-style · SHA-256 `efe4447139f1358dd8e9be68edf6fa46cbefbd1de423a4d6c439ca61d2c8eccf`
+
+## Implementation requirements
+
+- Preserve the authored structure, styling, shaders, motion, interactions, responsive behavior, dependencies, and asset paths described by the source.
+- Use the configured `<BestsellersBookShowcase />` usage above, including the selected variant and props.
+- Build directly in the destination project. Do not embed the ThreeUI documentation page and do not approximate the result from its rendered appearance.
+- Fetch and read the complete source before editing. If the source cannot be retrieved, stop and report that instead of recreating it.
+- After implementation, verify the rendered result and its interactions in the browser.
+

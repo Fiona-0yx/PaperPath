@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>论径 · 手账</title>
+<link rel="stylesheet" href="/assets/sketchbook.css"><link rel="stylesheet" href="/assets/journal.css"></head>
+<body><div class="wash"></div><header class="journal-nav"><a href="/#/home" target="_parent" id="home"></a><button id="language"></button></header>
+  <section id="sketchbook" class="hero">
+    <img crossorigin="anonymous" class="botany l" src="/assets/botanical/botany-left.png" alt="" aria-hidden="true">
+    <img crossorigin="anonymous" class="botany r" src="/assets/botanical/botany-right.png" alt="" aria-hidden="true">
+
+    
+
+    <div class="sb-wrap" id="sbWrap">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <filter id="sb-mblur-1"><feGaussianBlur stdDeviation="5 0"/></filter>
+        <filter id="sb-mblur-2"><feGaussianBlur stdDeviation="14 0"/></filter>
+      </svg>
+      <div class="sb-stage" id="sbStage">
+        <button class="sb-arrow left" id="sbLeft" aria-label="previous page">
+          <svg viewBox="0 0 14 44" width="14" height="44" fill="none" aria-hidden="true"><polyline points="11,3 3,22 11,41" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="sb-3d" id="sb3d">
+          <div class="sb-tilt" id="sbTilt">
+            <div class="sb-cast ambient" aria-hidden="true"></div>
+            <div class="sb-cast contact" aria-hidden="true"></div>
+            <div class="sb-cast hair" aria-hidden="true"></div>
+            <div class="sb-book" id="sbBook"></div>
+          </div>
+          <div class="zoomwrap" id="zoomWrap" aria-hidden="true"><div class="zoominner" id="zoomInner"></div></div>
+          <div class="loupe" id="loupe"><span class="grip"></span><span class="ring"><span class="lens" id="loupeLens"><span class="mag" id="loupeMag"></span></span></span></div>
+        </div>
+        <button class="sb-arrow right" id="sbRight" aria-label="next page">
+          <svg viewBox="0 0 14 44" width="14" height="44" fill="none" aria-hidden="true"><polyline points="3,3 11,22 3,41" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="sb-captions" id="sbCaptions"></div>
+      <div class="sb-tools" role="group" aria-label="view controls">
+        <button class="tool" id="zOut" aria-label="zoom out"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.6" cy="8.6" r="5.6"/><path d="M12.8 12.8 17.4 17.4M6.2 8.6h4.8"/></svg></button>
+        <span class="zoom-read" id="zRead">100%</span>
+        <button class="tool" id="zIn" aria-label="zoom in"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.6" cy="8.6" r="5.6"/><path d="M12.8 12.8 17.4 17.4M6.2 8.6h4.8M8.6 6.2v4.8"/></svg></button>
+        <span class="tool-sep" aria-hidden="true"></span>
+        <button class="tool" id="loupeBtn" aria-label="magnifier" aria-pressed="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8.8" cy="8.8" r="5.8"/><path d="M13 13l4.4 4.4"/><path d="M6.4 7.2a3.2 3.2 0 0 1 2.4-1.4" opacity=".55"/></svg></button>
+      </div>
+      <p class="sb-hint" id="sbHint">Drag the page to turn · Drag the glass across it</p>
+    </div>
+
+</section><script type="module">
+import('/src/sketchbook.js').catch(error=>{
+  console.error(error);
+  const en=parent.journalShell?.language==='en';
+  const message=document.createElement('p');
+  message.textContent=en?'The journal could not load.':'手账暂时未能载入。';
+  const retry=document.createElement('button');
+  retry.textContent=en?'Try again':'重试';retry.onclick=()=>location.reload();
+  message.append(retry);document.querySelector('.hero').replaceChildren(message);
+  parent.postMessage({type:'journal-error'},location.origin);
+});
+</script></body></html>
