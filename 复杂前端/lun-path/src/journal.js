@@ -35,7 +35,7 @@ export async function openJournal() {
   setLabel('sbLeft',L('上一页','Previous page'));
   setLabel('sbRight',L('下一页','Next page'));
   for(const [id,zh,eng] of [['zIn','放大','Zoom in'],['zOut','缩小','Zoom out'],['loupeBtn','放大镜','Magnifier']])setLabel(id,L(zh,eng));
-  text('sbHint',L('拖动书页边缘或使用两侧箭头翻页','Drag a page edge or use the arrows to turn'));
+  text('sbHint',L('轻点或拖动书页边缘，也可使用两侧箭头翻页','Tap or drag a page edge, or use the arrows to turn'));
   const notice=document.createElement('p');
   notice.className='save-notice';notice.setAttribute('role','status');document.body.append(notice);
   const prompt=document.createElement('p');

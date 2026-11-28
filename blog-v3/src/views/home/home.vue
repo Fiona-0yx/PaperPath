@@ -15,9 +15,21 @@ function journalState() {
   }
 }
 
+function openedPaperCount() {
+  try {
+    const events = JSON.parse(localStorage.getItem("lunjing-journal-v1"))?.events;
+    if (!Array.isArray(events)) return 0;
+    return new Set(events.filter(event => event?.type === "open_paper" && event.paperId)
+      .map(event => event.paperId)).size;
+  } catch {
+    return 0;
+  }
+}
+
 const paperCards = ref(recommendedArticles(savedReport()));
 const selected = ref(sessionStorage.getItem("lun-path-selected") || "");
 const journal = ref(journalState());
+const openedPapers = ref(openedPaperCount());
 const paperArea = ref(null);
 const sceneRoute = ref("home");
 
@@ -25,6 +37,7 @@ function restoreCards() {
   paperCards.value = recommendedArticles(savedReport());
   selected.value = sessionStorage.getItem("lun-path-selected") || "";
   journal.value = journalState();
+  openedPapers.value = openedPaperCount();
   const returning = sessionStorage.getItem("return-to-recommended-paper");
   if (returning) {
     sessionStorage.removeItem("return-to-recommended-paper");
@@ -59,6 +72,7 @@ function receivePaper(event) {
 
 function updateJournal(event) {
   if (event.key === "lunjing-intake-v1") journal.value = journalState();
+  if (event.key === "lunjing-journal-v1") openedPapers.value = openedPaperCount();
 }
 
 function showScene() {
@@ -77,53 +91,161 @@ onActivated(restoreCards);
 </script>
 
 <template>
-  <HomeHeader />
+  <HomeHeader :class="{ 'profile-home': sceneRoute === 'profile' }" />
   <main v-show="sceneRoute !== 'profile'" class="paper-home">
-    <section ref="paperArea" aria-labelledby="paper-recommendation-title">
+    <header class="paper-home-heading">
       <h2 id="paper-recommendation-title">推荐论文</h2>
-      <template v-if="paperCards.length">
-        <HomeArticleList :article-list="paperCards" paper-mode :selected="selected" @select-paper="focusPaper" />
-        <a href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">查看推荐与检索论文</a>
-      </template>
-      <div v-else class="paper-home-empty">
-        <p v-if="journal.submitted">可以查看推荐，也可以先从书架选一篇试读。</p>
-        <p v-else>提交学习画像后，这里会显示适合你的论文。你也可以先从书架选一篇试读。</p>
-        <a v-if="journal.submitted" class="paper-home-start" href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">
-          查看推荐
-        </a>
-        <a v-else class="paper-home-start" href="./lun-path/index.html#/journal" target="blog-home-grove" @click="showScene">
-          {{ journal.started ? "继续手账" : "开始手账" }}
-        </a>
-        <a href="./lun-path/index.html#/overview" target="blog-home-grove" @click="showScene">浏览方向</a>
-        <a v-if="!journal.submitted" href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">检索论文</a>
-      </div>
-    </section>
+    </header>
+    <div class="paper-home-grid">
+      <aside class="paper-home-center" aria-labelledby="paper-home-center-title">
+        <img class="paper-home-center-cover" :src="'./lun-path/assets/botanical/botanic-gardens.png'" alt="" loading="lazy" />
+        <div class="paper-home-center-content">
+          <div class="paper-home-center-identity">
+            <img :src="'./lun-path/favicon.svg'" alt="" width="52" height="52" />
+            <h3 id="paper-home-center-title">个人中心</h3>
+          </div>
+          <p class="paper-home-center-status">
+            {{ journal.submitted ? "初始画像已提交" : journal.started ? "初始手账填写中" : "初始手账待填写" }}
+          </p>
+          <dl class="paper-home-center-stats">
+            <div><dt>打开过的论文</dt><dd>{{ openedPapers }}</dd></div>
+            <div><dt>推荐论文</dt><dd>{{ paperCards.length }}</dd></div>
+          </dl>
+          <nav class="paper-home-tools" aria-label="个人中心入口">
+            <a v-if="journal.submitted" class="paper-home-start" href="./lun-path/index.html#/profile" target="blog-home-grove" @click="showScene">我的画像</a>
+            <a v-else class="paper-home-start" href="./lun-path/index.html#/journal" target="blog-home-grove" @click="showScene">
+              {{ journal.started ? "继续手账" : "开始手账" }}
+            </a>
+            <a href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">
+              {{ journal.submitted ? "推荐与检索" : "检索论文" }}
+            </a>
+            <a href="./lun-path/index.html#/overview" target="blog-home-grove" @click="showScene">浏览方向</a>
+          </nav>
+        </div>
+      </aside>
+      <section ref="paperArea" class="paper-home-list" aria-labelledby="paper-recommendation-title">
+        <HomeArticleList v-if="paperCards.length" :article-list="paperCards" paper-mode :selected="selected" @select-paper="focusPaper" />
+        <div v-else class="paper-home-empty">
+          <h3>{{ journal.submitted ? "生成论文推荐" : "从学习画像开始" }}</h3>
+          <p v-if="journal.submitted">前往推荐与检索，获取与你的学习方向相关的论文。</p>
+          <p v-else>提交学习画像后，这里会显示适合你的论文。也可以先检索论文，或从书架选一篇试读。</p>
+          <a v-if="journal.submitted" href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">查看推荐 <span aria-hidden="true">→</span></a>
+          <a v-else href="./lun-path/index.html#/journal" target="blog-home-grove" @click="showScene">
+            {{ journal.started ? "继续手账" : "开始手账" }} <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </section>
+    </div>
   </main>
 </template>
 
 <style scoped>
+:global(html:has(.profile-home)),
+:global(body:has(.profile-home)) {
+  margin: 0;
+  overflow: hidden;
+}
+.profile-home :deep(.home-waves) { display: none; }
 .paper-home {
+  --recommend-paper: #fffcf4;
+  --recommend-border: #dedbc9;
+  --recommend-ink: #303d31;
+  --recommend-muted: #586354;
+  --recommend-accent: #3c5840;
   box-sizing: border-box;
   min-height: 20rem;
-  padding: clamp(2rem, 5vw, 5rem) max(6vw, calc((100% - 64rem) / 2));
+  padding: clamp(2rem, 5vw, 4rem) max(clamp(1rem, 4vw, 4rem), calc((100% - 76rem) / 2));
   background: #f6f3e8;
-  color: #303d31;
+  color: var(--recommend-ink);
 }
-.paper-home h2 {
+.paper-home-heading {
+  padding-bottom: .85rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--recommend-border);
+}
+.paper-home-heading h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); }
+.paper-home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13.75rem, 17rem);
+  grid-template-areas: "list tools";
+  align-items: start;
+  gap: clamp(.85rem, 2vw, 1.4rem);
+}
+.paper-home-list { grid-area: list; min-width: 0; }
+.paper-home-center, .paper-home-empty {
+  border-radius: .7rem;
+  border: 1px solid var(--recommend-border);
+  background: var(--recommend-paper);
+}
+.paper-home-center {
+  grid-area: tools;
+  position: sticky;
+  top: 1rem;
+  overflow: hidden;
+}
+.paper-home-center-cover {
+  display: block;
+  width: 100%;
+  height: clamp(6.5rem, 11vw, 9.5rem);
+  object-fit: cover;
+  object-position: center 45%;
+}
+.paper-home-center-content, .paper-home-empty { padding: clamp(1rem, 2.5vw, 1.4rem); }
+.paper-home-center-identity {
+  display: flex;
+  align-items: end;
+  gap: .7rem;
+  margin-top: -2.65rem;
+}
+.paper-home-center-identity img {
+  flex: none;
+  border: 3px solid var(--recommend-paper);
+  border-radius: 50%;
+  background: var(--recommend-paper);
+}
+.paper-home-center-identity h3 { margin: 0 0 .15rem; font-size: 1.125rem; }
+.paper-home-center-status { margin: .65rem 0 1rem; color: var(--recommend-muted); font-size: .875rem; }
+.paper-home-center-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0 0 1rem;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  padding: .75rem 0;
+  border-block: 1px solid var(--recommend-border);
+  text-align: center;
 }
-.paper-home-empty p { margin-bottom: 1rem; }
-.paper-home-empty a {
-  display: inline-block;
-  margin: 0 .75rem .5rem 0;
-  padding: .625rem 1em;
-  border: 1px solid #607a5b;
-  border-radius: .5rem;
+.paper-home-center-stats div + div { border-inline-start: 1px solid var(--recommend-border); }
+.paper-home-center-stats dt { color: var(--recommend-muted); font-size: .8rem; }
+.paper-home-center-stats dd { margin: .15rem 0 0; font-size: 1.2rem; font-weight: 650; }
+.paper-home-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+}
+.paper-home-tools a {
+  display: block;
+  padding: .6rem .25rem;
+  border: 1px solid var(--recommend-border);
+  border-radius: .4rem;
+  color: var(--recommend-accent);
+  font-size: .875rem;
+  text-align: center;
   text-decoration: none;
 }
-.paper-home-empty a.paper-home-start {
-  background: #455d44;
+.paper-home-tools a:hover { background: #e9eddf; }
+.paper-home-tools .paper-home-start {
+  grid-column: 1 / -1;
+  background: var(--recommend-accent);
+  border-color: var(--recommend-accent);
   color: #fff;
+}
+.paper-home-tools .paper-home-start:hover { background: #304a34; }
+.paper-home-empty h3 { margin: 0 0 .5rem; font-size: 1.125rem; }
+.paper-home-empty p { margin: 0 0 .8rem; color: var(--recommend-muted); line-height: 1.55; }
+.paper-home-empty a { color: var(--recommend-accent); font-weight: 600; text-underline-offset: .2em; }
+.paper-home a:focus-visible { outline: 2px solid var(--recommend-accent); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .paper-home-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tools" "list"; }
+  .paper-home-center { position: static; }
+  .paper-home-center-cover { height: clamp(5.25rem, 22vw, 7rem); }
 }
 </style>

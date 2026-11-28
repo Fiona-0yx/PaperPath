@@ -36,12 +36,16 @@ const materialLabels = {
   teaching: "站内教学材料",
   "reading-note": "站内阅读摘记",
   excerpt: "站内原文摘录",
+  "open-text": "开放获取 · 站内正文",
   external: "外部原文",
 };
-async function openPaper(item) {
+const paperLocation = item => ({ path: "/article", query: { paper: item.id } });
+async function openPaper(event, item) {
+  if (item.externalOnly || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
   emit('select-paper', item.id);
   await nextTick();
-  const navigate = () => router.push({path:'/article', query:{paper:item.id}});
+  const navigate = () => router.push(paperLocation(item));
   if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.startViewTransition(async () => { await navigate(); await nextTick(); });
   } else navigate();
@@ -91,7 +95,37 @@ watch(
 </script>
 
 <template>
-  <el-row class="root">
+  <ul v-if="paperMode" class="paper-list">
+    <li v-for="item in articleList" :key="item.id">
+      <a
+        class="paper-entry"
+        :class="{ 'paper-selected': item.id === selected, 'has-cover': item.article_cover }"
+        :data-paper="item.id"
+        :href="item.externalOnly ? item.original : router.resolve(paperLocation(item)).href"
+        :target="item.externalOnly ? '_blank' : undefined"
+        :rel="item.externalOnly ? 'noopener noreferrer' : undefined"
+        @click="openPaper($event, item)"
+      >
+        <div v-if="item.article_cover" class="paper-cover">
+          <img :src="item.article_cover" alt="" loading="lazy" decoding="async" />
+        </div>
+        <div class="paper-info">
+          <p v-if="item.categoryName || item.year || item.venue" class="paper-meta">
+            {{ [item.categoryName, item.venue, item.year].filter(Boolean).join(" · ") }}
+          </p>
+          <h3 class="paper-title">{{ item.article_title }}</h3>
+          <p v-if="item.article_description && item.article_description !== item.venue" class="paper-description">
+            {{ item.article_description }}
+          </p>
+          <p class="paper-action">
+            {{ materialLabels[item.materialKind] }}
+            <span aria-hidden="true">{{ item.externalOnly ? '↗' : '→' }}</span>
+          </p>
+        </div>
+      </a>
+    </li>
+  </ul>
+  <el-row v-else class="root">
     <template v-if="param.loading">
       <el-col v-for="item in 5" :key="item">
         <el-card class="card-hover">
@@ -112,14 +146,7 @@ watch(
           v-for="(item, index) in articleList"
           :key="item.id"
         >
-          <el-card class="card-hover"
-            :class="{'paper-card': paperMode, 'paper-card-link': paperMode && !item.externalOnly, 'paper-selected': paperMode && item.id === selected}"
-            :data-paper="paperMode && !item.externalOnly ? item.id : undefined"
-            :tabindex="paperMode && !item.externalOnly ? 0 : undefined"
-            :role="paperMode && !item.externalOnly ? 'link' : undefined"
-            :aria-label="paperMode && !item.externalOnly ? item.article_title : undefined"
-            @click="paperMode && !item.externalOnly && openPaper(item)"
-            @keydown.enter="paperMode && !item.externalOnly && openPaper(item)">
+          <el-card class="card-hover">
             <div
               class="article-box"
               :style="{
@@ -128,7 +155,7 @@ watch(
             >
               <div
                 :class="['article-cover', 'article-cover' + index]"
-                @click="!paperMode && operate('detail', item)"
+                @click="operate('detail', item)"
               >
                 <div
                   v-image="item.article_cover"
@@ -144,21 +171,14 @@ watch(
               </div>
               <!-- 信息 -->
               <div class="article-info flex_c_between">
-                <a v-if="paperMode && item.externalOnly" class="title"
-                  :data-paper="item.id" :href="item.original" target="_blank" rel="noopener noreferrer">
-                  {{ item.article_title }} <span aria-hidden="true">↗</span>
-                </a>
-                <span v-else
+                <span
                   class="title text_overflow"
                   :title="item.article_title"
-                  @click="!paperMode && operate('detail', item)"
+                  @click="operate('detail', item)"
                 >
                   {{ item.article_title }}
                 </span>
-                <p v-if="paperMode" class="meta">
-                  {{ [item.categoryName, item.year, materialLabels[item.materialKind]].filter(Boolean).join(' · ') }}
-                </p>
-                <div v-else class="meta">
+                <div class="meta">
                   <span v-if="item.is_top == 1" class="to_pointer">
                     <i class="iconfont icon-zhiding"></i>
                     <span class="meta-label">置顶</span>
@@ -233,7 +253,6 @@ watch(
       </template>
     </template>
     <Pagination
-      v-if="!paperMode"
       class="!mt-[2rem]"
       :size="param.size"
       :current="param.current"
@@ -245,11 +264,67 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-.paper-card {border:1px solid #bac5b580; transition:border-color .25s,box-shadow .25s; scroll-margin:70px;}
-.paper-card-link {cursor:pointer;}
-.paper-card.paper-selected {border-color:#536f54; box-shadow:0 0 0 1px #536f54,0 8px 22px #344c3820;}
-.paper-selected .title {view-transition-name:recommended-paper-title;}
-.paper-card:focus-visible {outline:2px solid #536f54;outline-offset:3px;}
+.paper-list {
+  display: grid;
+  gap: .95rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.paper-entry {
+  display: grid;
+  grid-template-areas: "text";
+  min-height: 10.75rem;
+  border: 1px solid var(--recommend-border);
+  border-radius: .7rem;
+  overflow: hidden;
+  color: var(--recommend-ink);
+  background: var(--recommend-paper);
+  text-decoration: none;
+  scroll-margin: 2rem;
+}
+.paper-entry.has-cover {
+  grid-template-columns: minmax(0, 32%) minmax(0, 1fr);
+  grid-template-areas: "cover text";
+}
+.paper-list li:nth-child(even) .paper-entry.has-cover {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 32%);
+  grid-template-areas: "text cover";
+}
+.paper-entry:hover, .paper-entry.paper-selected { border-color: var(--recommend-accent); }
+.paper-entry:focus-visible { outline: 2px solid var(--recommend-accent); outline-offset: 3px; }
+.paper-selected .paper-title { view-transition-name: recommended-paper-title; }
+.paper-cover { grid-area: cover; position: relative; background: #e1e5d9; }
+.paper-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.paper-info {
+  grid-area: text;
+  align-self: center;
+  min-width: 0;
+  padding: clamp(.95rem, 2vw, 1.45rem);
+  display: grid;
+  gap: .45rem;
+}
+.paper-info > * { margin: 0; overflow-wrap: anywhere; }
+.paper-title { font-size: clamp(1.05rem, 2vw, 1.375rem); font-weight: 650; line-height: 1.35; }
+.paper-meta { font-size: .8125rem; color: var(--recommend-muted); }
+.paper-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--recommend-muted);
+  line-height: 1.5;
+}
+.paper-action { color: var(--recommend-accent); font-size: .8125rem; font-weight: 600; }
+.paper-action span { margin-inline-start: .25em; }
+@media (max-width: 600px) {
+  .paper-entry { min-height: auto; }
+  .paper-entry.has-cover, .paper-list li:nth-child(even) .paper-entry.has-cover {
+    grid-template-columns: minmax(0, 1fr) minmax(4rem, 24%);
+    grid-template-areas: "text cover";
+  }
+  .paper-description { font-size: .875rem; }
+}
 .article-cover {
   .image {
     width: 100%;

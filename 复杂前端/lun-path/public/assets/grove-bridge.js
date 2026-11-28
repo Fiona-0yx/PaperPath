@@ -23,7 +23,7 @@
     return card;
   });
   document.querySelectorAll('.stat,.guides,.dock-mark,.dock-item--enter').forEach(el=>el.remove());
-  const direction=document.createElement('p');direction.className='direction-label';stage.append(direction);
+  const direction=document.createElement('p');direction.className='direction-label';stage.querySelector('.grove-intro').prepend(direction);
   const overviewTitle=document.createElement('h1');overviewTitle.className='overview-title';stage.append(overviewTitle);
   const cue=document.querySelector('.scroll');
   const nav=[...document.querySelectorAll('.dock-item')];

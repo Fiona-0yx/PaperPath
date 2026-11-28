@@ -89,6 +89,29 @@ test('Crossref recommendations and manual search expose external DOI metadata on
   assert.equal((await call('paper-search', 'POST', {query:'a'.repeat(121)})).status, 400);
 });
 
+test('the collected PLOS paper opens by DOI and supplies reader citations offline', async () => {
+  const doi = '10.1371/journal.pone.0316019';
+  const search = await call('paper-search', 'POST', {query: doi});
+  assert.equal(search.status, 200);
+  assert.equal(search.data.status, 'local');
+  const [result] = search.data.papers;
+  assert.equal(result.doi, doi);
+  assert.equal(result.readerId, 'plos-roc-auc');
+  assert.equal(result.url, 'https://doi.org/' + doi);
+  const material = await call('materials/' + result.readerId);
+  assert.equal(material.status, 200);
+  assert.equal(material.data.licenseUrl, 'https://creativecommons.org/licenses/by/4.0/');
+  assert.ok(material.data.sections.length > 5);
+  const section = material.data.sections[1];
+  const paragraphId = section.id + '-p1';
+  const response = await call('analyze', 'POST', {
+    paperId: result.readerId, contentVersion: material.data.version, question: 'ROC?',
+    text: section.paragraphs[0], range: {start: {paragraphId}},
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.data.citations[0].range.start.paragraphId, paragraphId);
+});
+
 test('Codex unavailability and cancellation leave the reading plan usable', async t => {
   const previousProvider = process.env.LUNJING_MODEL_PROVIDER;
   const previousBin = process.env.QUESTIONNAIRE_CODEX_BIN;

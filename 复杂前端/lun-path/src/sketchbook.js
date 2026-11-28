@@ -232,21 +232,20 @@ function bookRect(){return book.getBoundingClientRect()}
 function hideHint(){hint.classList.add('gone')}
 
 stage.addEventListener('pointerdown',e=>{
-  if(e.button!==0 || e.target.closest('form,.journal-face,.sb-arrow,button:not(.sb-zone)'))return;
+  const zone=e.target.closest('.sb-zone');
+  if(!zone || !e.isPrimary || e.button!==0 || drag)return;
+  const r=bookRect();
+  const dir=zone.classList.contains('sb-next')?'next':'prev';
   e.preventDefault();                     /* no text selection, no image drag */
-  const onBook=e.target.closest('.sb-zone');
+  if(!startTurn(dir,0))return;
   stage.setPointerCapture(e.pointerId);
   hideHint();
-  if(!onBook)return;
-  const r=bookRect();
-  const dir=(e.clientX-r.left)/r.width>0.5?'next':'prev';
-  if(!startTurn(dir,0))return;
-  drag={dir:dir,x0:e.clientX,w:r.width,moved:0,vel:0,tPrev:performance.now()};
+  drag={dir,pointerId:e.pointerId,x0:e.clientX,y0:e.clientY,w:r.width,moved:0,vel:0,tPrev:performance.now()};
 });
 stage.addEventListener('pointermove',e=>{
-  if(!drag)return;
+  if(drag?.pointerId!==e.pointerId)return;
   const dx=e.clientX-drag.x0;
-  drag.moved=Math.max(drag.moved,Math.abs(dx));
+  drag.moved=Math.max(drag.moved,Math.hypot(dx,e.clientY-drag.y0));
   const raw=(drag.dir==='next'? -dx : dx)/(drag.w*0.62);
   const t=Math.max(0,Math.min(1,raw));
   const now=performance.now();
@@ -255,19 +254,19 @@ stage.addEventListener('pointermove',e=>{
   if(turn){turn.t=t;applyTurn(t);}
 });
 function endDrag(e){
-  if(!drag)return;
+  if(drag?.pointerId!==e.pointerId)return;
   const d=drag;drag=null;
   if(!turn)return;
-  if(d.moved<6){                              /* a tap, not a drag */
-    commit();return;
-  }
-  const go = turn.t>0.42 || d.vel>1.1;
+  const released=e.type==='pointerup';
+  const tap=Math.max(d.moved,Math.hypot(e.clientX-d.x0,e.clientY-d.y0))<6;
+  const go = released && (tap || turn.t>0.42 || d.vel>1.1);
   if(go)commit(); else cancel();
 }
 stage.addEventListener('dragstart',e=>e.preventDefault());
 stage.addEventListener('selectstart',e=>{if(!e.target.closest('.journal-face'))e.preventDefault()});
 stage.addEventListener('pointerup',endDrag);
 stage.addEventListener('pointercancel',endDrag);
+stage.addEventListener('lostpointercapture',endDrag);
 
 /* ------------------------------------------------------ turn control */
 function startTurn(dir,t){

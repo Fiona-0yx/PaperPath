@@ -783,29 +783,33 @@
       </button>
     </span>
 
-    <h1 class="headline" style="--pd:18; --pr:1.2">
-      <span><i style="--d:260ms">Step into</i></span>
-      <span><i style="--d:360ms">the living world</i></span>
-    </h1>
+    <div class="grove-intro">
+      <h1 class="headline" style="--pd:18; --pr:1.2">
+        <span><i style="--d:260ms">Step into</i></span>
+        <span><i style="--d:360ms">the living world</i></span>
+      </h1>
 
-    <p class="lede mask" style="--d:480ms; --pd:14; --pr:1">We restore wild places through patient design, native planting, and a deeper kind of stewardship.</p>
+      <div class="grove-intro-action">
+      <p class="lede mask" style="--d:480ms; --pd:14; --pr:1">We restore wild places through patient design, native planting, and a deeper kind of stewardship.</p>
 
-    <div class="pill-clip">
-      <div class="pill mask" style="--d:600ms; --pd:15; --pr:1.4">
-        <div class="liquid-stage liquid-stage--explore" data-liquid-metal="explore">
-          <div class="liquid-plate plate" aria-hidden="true"></div>
-          <canvas class="liquid-fx" aria-hidden="true"></canvas>
-          <button class="liquid-button liquid-button--explore btn" type="button">
-            <svg class="ico" viewBox="0 0 115 115" aria-hidden="true">
-              <g stroke="currentColor" stroke-width="11" stroke-linecap="round">
-                <path d="M14 34.5 H101"/>
-                <path d="M14 57.5 H101"/>
-                <path d="M14 80.5 H68"/>
-              </g>
-            </svg>
-            <span class="lbl">Explore the work</span>
-          </button>
+      <div class="pill-clip">
+        <div class="pill mask" style="--d:600ms; --pd:15; --pr:1.4">
+          <div class="liquid-stage liquid-stage--explore" data-liquid-metal="explore">
+            <div class="liquid-plate plate" aria-hidden="true"></div>
+            <canvas class="liquid-fx" aria-hidden="true"></canvas>
+            <button class="liquid-button liquid-button--explore btn" type="button">
+              <svg class="ico" viewBox="0 0 115 115" aria-hidden="true">
+                <g stroke="currentColor" stroke-width="11" stroke-linecap="round">
+                  <path d="M14 34.5 H101"/>
+                  <path d="M14 57.5 H101"/>
+                  <path d="M14 80.5 H68"/>
+                </g>
+              </svg>
+              <span class="lbl">Explore the work</span>
+            </button>
+          </div>
         </div>
+      </div>
       </div>
     </div>
 
@@ -4342,7 +4346,7 @@ window.__seek   = v => { clock = v; drawn = null; };
         el.style.top=(narrow?H*.43:H*(i%2===0?.19:.44))+'px';
       } else ['width','height','left','top'].forEach(function(k){el.style.removeProperty(k);});
     });
-    travelAnchors=Array.prototype.slice.call(stageEl.querySelectorAll(':scope > .card,:scope > .headline,:scope > .lede,:scope > .pill-clip,:scope > .play-wrap,:scope > .ghost,:scope > .direction-label'));
+    travelAnchors=Array.prototype.slice.call(stageEl.querySelectorAll(':scope > .card,:scope > .grove-intro,:scope > .play-wrap,:scope > .ghost'));
     travelAnchors.forEach(function(el){el.style.translate='none';});
     travelDirty=false;travelLast=null;
   }
@@ -4374,7 +4378,7 @@ window.__seek   = v => { clock = v; drawn = null; };
     if(travelLast!==x) {
       travelAnchors.forEach(function(el) {
         el.style.translate=travelOverview?'none':(-x)+'px 0px';
-        if(!travelOverview && el.matches('.card,.play-wrap,.pill-clip')) {
+        if(!travelOverview && el.matches('.card,.play-wrap,.grove-intro')) {
           var box=el.getBoundingClientRect();el.inert=box.right<0||box.left>W;
         } else el.inert=false;
       });

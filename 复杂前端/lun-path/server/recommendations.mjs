@@ -16,7 +16,7 @@ export async function recommendations(snapshot, locale = 'zh') {
   const localPapers = papers.filter(p => categories.has(p.categoryId) && p.sections?.length).map(p => ({
     id: p.id, categoryId: p.categoryId, title: p.title, abstract: p.abstract,
     contentVersion: p.version || 'v1',
-    materialKind: p.id === 'radiation' ? 'reading-note' : 'teaching',
+    materialKind: p.materialKind || (p.id === 'radiation' ? 'reading-note' : 'teaching'),
     reason: locale === 'en' ? 'This in-site reading material matches your selected field.' : '与你选择的方向相关，可在站内开始阅读。',
   }));
   const paperSearch = await searchPapers(readingPlan.directions[0]?.category,

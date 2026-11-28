@@ -31,8 +31,8 @@ body[data-spread=cover] .sb-captions{visibility:hidden}
 .sb-caption{font-size:15px;letter-spacing:.08em;color:#625546;text-transform:none}
 .sb-tools{margin:4px 0}
 .sb-hint{text-transform:none;letter-spacing:.06em}
-.sb-zone{top:21.8%;bottom:21.8%;width:5%}
-.sb-prev{left:4%}.sb-next{right:4%}
+.sb-zone{top:19%;bottom:19%;width:12%;cursor:pointer}
+.sb-prev{left:0}.sb-next{right:0}
 .journal-face{position:absolute;z-index:61;top:24%;bottom:24%;width:38%;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b8ab9580 transparent;line-height:1.45;font-size:clamp(14px,1.55cqw,27px);padding:1% .7%}
 .hero .journal-face,.hero .journal-face *{user-select:text;-webkit-user-select:text}
 .journal-face.left{left:8%}.journal-face.right{right:7.8%}

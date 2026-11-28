@@ -19,6 +19,7 @@ const materialLabels = {
   teaching: "站内教学材料",
   "reading-note": "站内阅读摘记",
   excerpt: "站内原文摘录",
+  "open-text": "开放获取 · 站内正文",
 };
 
 const props = defineProps({
@@ -74,7 +75,6 @@ const getBgCover = computed(() => {
   let url;
   let myUrl = "http://img.mrzym.top/FvmVKfygxBKoJbFVXJwzjgAASL9S";
   if (route.path == "/article") {
-    if (route.query.paper && !props.article.article_cover) return {};
     url = props.article.article_cover || myUrl;
   } else if (props.bgUrl) {
     url = props.bgUrl || myUrl;
@@ -111,7 +111,7 @@ watch(
 <template>
   <!-- 其实不同的路由通过插槽来做会好一些 之前没考虑到这么多复杂的情况 -->
   <HomeHeader class="!w-[100%] !h-[100vh]" v-if="route.path == '/home'" />
-  <header v-else-if="route.path === '/article' && route.query.paper" class="page-header paper-banner" :style="getBgCover">
+  <header v-else-if="route.path === '/article' && route.query.paper" class="paper-banner">
     <div class="paper-banner-inner">
       <div class="paper-heading">
         <h1>{{ article.article_title || '推荐论文' }}</h1>
@@ -234,39 +234,29 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-.page-header.paper-banner {
-  height: auto;
-  min-height: 280px;
-  background-color: #405046;
-  background-position: center 45%;
-  &::before { background: linear-gradient(180deg, #18261e80, #19261dc9); }
+.paper-banner {
+  border-bottom: 1px solid color-mix(in srgb, var(--font-color) 13%, transparent);
+  background: color-mix(in srgb, var(--card-bg), var(--global-gradient) 20%);
+  color: var(--font-color);
 }
 .paper-banner-inner {
-  position: relative;
-  width: min(calc(100% - 64px), 1160px);
-  display: grid;
-  padding: 22px 0 40px;
-  color: #fff;
+  width: min(calc(100% - 40px), 1280px);
+  margin: 0 auto;
+  padding: 20px 0 16px;
 }
 .paper-heading {
-  width: min(100%, 940px);
-  margin: 22px auto 0;
-  text-align: center;
   h1 {
     view-transition-name: recommended-paper-title;
-    font-size: clamp(24px, 3vw, 40px);
+    margin: 0;
+    font-size: clamp(20px, 2.2vw, 30px);
     font-weight: 650;
-    line-height: 1.18;
+    line-height: 1.25;
     overflow-wrap: anywhere;
-    text-wrap: balance;
   }
-  p { margin-top: 14px; color: #eff3ec; font-size: 14px; }
+  p { margin: 5px 0 0; font-size: 13px; }
 }
 @media (max-width: 768px) {
-  .page-header.paper-banner { min-height: 208px; }
-  .paper-banner-inner { width: calc(100% - 32px); padding: 12px 0 24px; }
-  .paper-heading { margin-top: 15px; }
-  .paper-heading p { margin-top: 10px; }
+  .paper-banner-inner { width: calc(100% - 24px); padding: 14px 0 12px; }
 }
 .page-header {
   position: relative;

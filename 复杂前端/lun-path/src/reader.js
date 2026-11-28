@@ -73,7 +73,13 @@ function boot(shell) {
   const difficulty = '★'.repeat(paper.difficulty) + '☆'.repeat(Math.max(0, 5 - paper.difficulty));
   paperEl.innerHTML =
     '<h1>' + esc(paper.title) + '</h1>' +
-    '<p class="paper-sub">' + esc(paper.zhTitle) + ' · ' + L('难度', 'Difficulty') + ' ' + difficulty + '</p>' +
+    '<p class="paper-sub">' + (paper.materialKind === 'open-text'
+      ? esc([paper.authors.join(', '), paper.venue, paper.year].join(' · ')) +
+        ' · <a href="' + esc(paper.licenseUrl) + '" target="_blank" rel="noopener">CC BY 4.0</a>' +
+        ' · <a href="' + esc(paper.original) + '" target="_blank" rel="noopener">' + L('出版方原版', 'Publication') + '</a>'
+      : esc(paper.zhTitle) + ' · ' + L('难度', 'Difficulty') + ' ' + difficulty) + '</p>' +
+    (paper.materialKind === 'open-text' ? '<p class="paper-sub">' +
+      L('站内为原文文字版。图表、公式和附录材料请查看出版方原版。', 'Text adaptation. See the publication for figures, tables, equations, and supplementary files.') + '</p>' : '') +
     '<p class="abstract">' + esc(paper.abstract) + '</p>' +
     paper.sections.map(section =>
       '<section id="section-' + esc(section.id) + '" data-section="' + esc(section.id) + '">' +

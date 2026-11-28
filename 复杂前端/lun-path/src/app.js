@@ -35,7 +35,8 @@ function shelfContent(categoryId){
     ? list.map((p,i)=>{
       const link=paperRoute(p.id,{categoryId:p.categoryId,source:'shelf'});
       const target=link.startsWith('http')?' target="_top"':'';
-      const label=p.id==='radiation'?L('站内阅读摘记','Reading notes'):L('站内教学材料','Teaching material');
+      const label=p.materialKind==='open-text'?L('开放获取 · 站内正文','Open-access text'):
+        p.id==='radiation'?L('站内阅读摘记','Reading notes'):L('站内教学材料','Teaching material');
       return '<li class="paper-card"><a class="paper-link" href="'+escape(link)+'"'+target+'><span class="paper-no">'+String(i+1).padStart(2,'0')+'</span><div class="paper-meta"><h2>'+escape(p.title)+'</h2><p class="paper-zh">'+escape(p.zhTitle)+'</p><p class="paper-zh">'+label+'</p></div><span class="paper-diff" aria-label="'+L('难度','Difficulty')+' '+p.difficulty+'">'+'★'.repeat(p.difficulty)+'</span></a></li>';
     }).join('')
     : '<li class="shelf-empty"><p>'+L('这个方向暂时没有站内材料。你可以试读下面的方向，或查看推荐。','This field has no material on this site yet. Try one of these fields or browse recommendations.')+'</p><ul class="shelf-alternatives">'+available.map(c=>'<li><a href="#/shelf/'+c.id+'">'+escape(c.title[language])+'</a></li>').join('')+'<li><a href="#/recommendations">'+L('查看推荐','See recommendations')+'</a></li></ul></li>';

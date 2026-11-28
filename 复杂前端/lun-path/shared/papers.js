@@ -2,6 +2,7 @@
 // One paper = one book. This file is the single source of truth for paper
 // text, so both the shelf list and the reader can import it without a fetch.
 import { readingPapers } from './reading-papers.js';
+import { openPaper } from './open-paper.js';
 export const papers = [
   {
     id: 'features-labels-datasets',
@@ -55,6 +56,7 @@ export const papers = [
     ],
   },
   ...readingPapers,
+  openPaper,
 ];
 
 export const findPaper = id => papers.find(p => p.id === id) || null;

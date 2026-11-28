@@ -1,3 +1,5 @@
+import { openPaper } from '../shared/open-paper.js';
+
 const topics = new Map([
   ['machine-learning', 'machine learning'],
   ['neural-networks', 'neural network'],
@@ -14,6 +16,11 @@ const chineseTopics = new Map([
 ]);
 
 const provider = 'Crossref';
+const openResult = {
+  id: 'crossref:' + openPaper.doi, categoryId: openPaper.categoryId,
+  title: openPaper.title, doi: openPaper.doi, url: openPaper.original,
+  year: openPaper.year, venue: openPaper.venue, readerId: openPaper.id,
+};
 const cache = new Map();
 let active;
 let nextRequestAt = 0;
@@ -33,6 +40,7 @@ function paperMetadata(item, categoryId) {
     id: 'crossref:' + doi, categoryId, title, doi, url,
     year: Number.isInteger(year) && year > 0 ? year : null,
     venue: metadataText(item['container-title']?.[0], 180),
+    ...(doi === openPaper.doi && { readerId: openPaper.id, categoryId: openPaper.categoryId }),
   };
 }
 
@@ -109,5 +117,10 @@ export async function searchPapers(categoryId, existingTitles = []) {
 export async function searchByKeyword(query) {
   const categoryId = chineseTopics.get(query);
   const { papers, reason } = await catalogueLookup(topics.get(categoryId) || query, categoryId);
+  const normalized = query.toLowerCase().replace(/^https?:\/\/doi\.org\//, '');
+  if ([openPaper.doi, openPaper.title.toLowerCase()].includes(normalized) &&
+      !papers.some(paper => paper.doi === openPaper.doi)) {
+    return { provider, status: papers.length ? 'online' : 'local', papers: [openResult, ...papers].slice(0, 8) };
+  }
   return { provider, status: reason ? 'unavailable' : papers.length ? 'online' : 'empty', reason, papers };
 }

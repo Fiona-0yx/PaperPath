@@ -1,6 +1,8 @@
 import { api } from './reader-api.js';
 import { intake, persistIntake } from './journal-state.js';
 import { escape as h } from './components.js';
+import { openPaper } from '../shared/open-paper.js';
+import { paperRoute } from './paper-route.js';
 
 let pending;
 let portraitRequest;
@@ -38,13 +40,15 @@ export function mountRecommendations(container, language) {
   const matchingPortrait = () => intake.recommendation?.report?.locale === language && JSON.stringify(intake.recommendation.snapshot) ===
     JSON.stringify({answers:intake.submitted?.answers, evidence:intake.submitted?.evidence || {}});
   const fresh = () => matchingPortrait() && Boolean(intake.recommendation.report.paperSearch);
-  const localLabel = p => p.materialKind === 'reading-note' || p.id === 'radiation'
-    ? L('站内阅读摘记','Reading notes') : L('站内教学材料','Teaching material');
+  const localLabel = p => p.materialKind === 'open-text' ? L('开放获取 · 站内正文','Open-access text') :
+    p.materialKind === 'reading-note' || p.id === 'radiation'
+      ? L('站内阅读摘记','Reading notes') : L('站内教学材料','Teaching material');
   function searchStatus() {
     if (search.pending) return L('正在检索 Crossref…','Searching Crossref…');
     if (search.error) return search.error;
     const result = search.result;
     if (!result) return '';
+    if (result.status === 'local') return L('找到 1 篇已采集的开放获取论文。','Found 1 locally available open-access paper.');
     if (result.status === 'empty') return L('Crossref 未返回匹配的论文。试试完整题目或更具体的关键词。','Crossref found no matching papers. Try the full title or more specific keywords.');
     if (result.status === 'unavailable') {
       if (result.reason === 'busy') return L('检索请求较多，请稍后再试。','Search is busy. Please try again shortly.');
@@ -58,7 +62,7 @@ export function mountRecommendations(container, language) {
     const form = container.querySelector('.paper-search-form');
     form.querySelector('button').disabled = search.pending;
     form.querySelector('[role="status"]').textContent = searchStatus();
-    container.querySelector('.paper-search-results').innerHTML = paperLinks(search.result?.papers);
+    container.querySelector('.paper-search-results').innerHTML = paperLinks(search.result?.papers, L);
   }
   async function submitSearch(event) {
     event.preventDefault();
@@ -86,7 +90,7 @@ export function mountRecommendations(container, language) {
     const report = intake.recommendation?.report;
     if (inBlog && report) sendToBlog('recommended-papers', report);
     container.innerHTML = '<h2>' + L('接下来读什么','What to read next') + '</h2>' +
-      '<p>' + L('提交画像后可查看推荐。站内材料可直接阅读，Crossref 书目会打开 DOI 页面。','Recommendations use your submitted portrait. Read the in-site material here or open Crossref records via DOI.') + '</p>' +
+      '<p>' + L('提交画像后可查看推荐，带「站内正文」的论文可在论径阅读。','Submit your portrait for recommendations. Papers with an in-site text are available in the reader.') + '</p>' +
       '<p role="status">' + h(pending ? L('正在分析画像并整理推荐…','Preparing your recommendations…') : message) + '</p>' +
       (report && !matchingPortrait() ? '<p>' + L('画像已修改，下面保留的是上次结果，请更新推荐。','Your portrait has changed. Update the previous recommendations below.') + '</p>' : '') +
       '<button class="recommend-refresh" ' + (pending || !intake.submitted ? 'disabled' : '') + '>' + L(report ? '更新推荐' : '生成推荐', report ? 'Update recommendations' : 'Get recommendations') + '</button> ' +
@@ -101,19 +105,25 @@ export function mountRecommendations(container, language) {
         (inBlog ? '<p>' + L('可在推荐卡片阅读站内原文摘录。','Open the recommendation card for the source excerpt.') + '</p>' : '') +
         (report.readingPlan.primaryRecommendation?.paperId === d.paper.id ? '<p>' + h(report.readingPlan.primaryRecommendation.reason) + '</p>' : '') + '</li>').join('') + '</ul>' +
       (report.paperSearch?.status === 'online' ? '<h3>' + L('优先方向 · Crossref 联网推荐','Top interest · Crossref results') +
-        '</h3><p>' + L('以下是外部书目，点击题目打开 DOI 页面。','These records link to the DOI landing pages.') + '</p>' +
-        paperLinks(report.paperSearch.papers) : report.paperSearch?.status === 'fallback' ?
+        '</h3>' + paperLinks(report.paperSearch.papers, L) : report.paperSearch?.status === 'fallback' ?
         '<p class="recommend-status">' + L(report.paperSearch.reason === 'empty' ? 'Crossref 暂无更多匹配，已保留内置目录。' : '联网推荐暂不可用，已使用内置目录。', report.paperSearch.reason === 'empty' ? 'Crossref found no additional matches. Showing the curated catalogue.' : 'Online recommendations unavailable. Showing the curated catalogue.') + '</p>' : '') +
       '<ul>' + report.readingPlan.advice.map(a => '<li>' + h(a) + '</li>').join('') + '</ul>' : '') +
       '<h3>' + L('检索论文','Search papers') + '</h3>' +
-      '<p>' + L('使用中文或英文题目和关键词检索 Crossref 书目。','Search Crossref metadata with a Chinese or English title or keyword.') + '</p>' +
+      '<p>' + L('按题目、关键词或 DOI 检索 Crossref 书目。','Search Crossref by title, keyword, or DOI.') + '</p>' +
       '<form class="paper-search-form"><label for="paper-search-query">' + L('论文题目或关键词','Paper title or keyword') +
       '</label><div><input id="paper-search-query" name="query" type="search" maxlength="120" minlength="2" required value="' + h(search.query) +
-      '"><button class="recommend-refresh">' + L('检索','Search') + '</button></div><p role="status"></p></form><div class="paper-search-results"></div>';
+      '"><button class="recommend-refresh">' + L('检索','Search') + '</button></div><p role="status"></p></form>' +
+      '<button class="recommend-refresh" type="button" data-open-paper-example>' + L('试搜开放获取示例','Search the open-access sample') + '</button>' +
+      '<div class="paper-search-results"></div>';
     container.querySelector('button.recommend-refresh').onclick = generate;
     const form = container.querySelector('.paper-search-form');
     form.onsubmit = submitSearch;
     form.elements.query.oninput = event => { search.query = event.target.value; };
+    container.querySelector('[data-open-paper-example]').onclick = () => {
+      if (search.pending) return;
+      form.elements.query.value = openPaper.doi;
+      form.requestSubmit();
+    };
     searchResults();
   }
   async function generate() {
@@ -139,11 +149,16 @@ export function mountRecommendations(container, language) {
   else if (intake.submitted && !fresh()) generate();
   else if (!intake.submitted) restoreSubmittedPortrait();
 }
-function paperLinks(papers) {
+function paperLinks(papers, L) {
   if (!papers?.length) return '';
-  return '<ul>' + papers.map(p => '<li><a data-crossref-paper target="_blank" rel="noopener noreferrer" href="' +
-    safeUrl(p.url) + '">' + h(p.title) + '</a><p>' + h([p.venue, p.year, p.doi].filter(Boolean).join(' · ')) +
-    '</p></li>').join('') + '</ul>';
+  return '<ul>' + papers.map(p => {
+    const reader = p.readerId && paperRoute(p.readerId, { categoryId: p.categoryId, source: 'search' });
+    const readHere = reader ? '<p><a href="' + h(reader) + '"' + (reader.startsWith('http') ? ' target="_top"' : '') +
+      '>' + L('站内阅读正文','Read the in-site text') + '</a></p>' : '';
+    return '<li><a data-crossref-paper target="_blank" rel="noopener noreferrer" href="' +
+      safeUrl(p.url) + '">' + h(p.title) + '</a><p>' + h([p.venue, p.year, p.doi].filter(Boolean).join(' · ')) +
+      '</p>' + readHere + '</li>';
+  }).join('') + '</ul>';
 }
 function safeUrl(value) {
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? h(url.href) : '#'; }

@@ -27,9 +27,9 @@ export function recommendedArticles(report) {
     reader: './lun-path/index.html#/read/' + encodeURIComponent(p.categoryId) + '/' + encodeURIComponent(p.id) + '?source=recommendation'
   }));
   const online = (report.paperSearch?.papers || []).filter(p => /^https:\/\/doi\.org\//i.test(p.url)).map(p => ({
-    id: p.id, category: p.categoryId, categoryName: directions.find(d => d.category === p.categoryId)?.title,
+    id: p.readerId || p.id, category: p.categoryId, categoryName: directions.find(d => d.category === p.categoryId)?.title,
     article_title: p.title, article_description: p.venue, year: p.year, venue: p.venue, doi: p.doi,
-    original: p.url, materialKind: 'external', externalOnly: true,
+    original: p.url, materialKind: p.readerId ? 'open-text' : 'external', externalOnly: !p.readerId,
   }));
   return [...new Map([...external, ...local, ...online].map(p => [p.id, {
     ...p, article_cover: './lun-path/assets/botanical/' + (covers[p.category] || 'botanic-gardens') + '.png'
@@ -42,7 +42,7 @@ export function paperForRoute(id) {
     ...recommendation,
     id, category: local.categoryId, article_title: local.title,
     article_description: recommendation?.article_description || local.abstract,
-    reader: true, materialKind: id === 'radiation' ? 'reading-note' : 'teaching',
+    reader: true, materialKind: local.materialKind || (id === 'radiation' ? 'reading-note' : 'teaching'),
   };
   const entry = paperCatalog.find(paper => paper.id === id);
   if (!entry) return null;

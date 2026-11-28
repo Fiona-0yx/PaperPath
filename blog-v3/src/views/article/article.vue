@@ -31,6 +31,7 @@ const paperId = computed(() => typeof route.query.paper === 'string' ? route.que
 const paper = computed(() => paperId.value ? paperForRoute(paperId.value) : null);
 const paperBack = computed(() => {
   if (route.query.source === 'history') return { href: './lun-path/index.html#/profile', label: '学习记录' };
+  if (route.query.source === 'search') return { href: './lun-path/index.html#/recommendations', label: '论文检索' };
   if (paper.value && route.query.category === paper.value.category && route.query.source === 'shelf')
     return { href: './lun-path/index.html#/shelf/' + encodeURIComponent(paper.value.category), label: '论文书架' };
   return { href: '#/home', label: '学习路径' };
@@ -409,16 +410,16 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .article-center.paper-detail {
-  width: min(calc(100% - 40px), 1380px);
+  width: min(calc(100% - 40px), 1280px);
   min-height: 50vh;
-  padding: 32px 0 64px;
+  padding: 12px 0 64px;
   --paper-accent: #46604b;
   --paper-text: var(--font-color, #26342d);
   --paper-muted: #5c6960;
   --paper-line: var(--el-border-color-light, #e4e8e2);
   --paper-card: var(--card-bg, #fff);
 }
-.paper-back { margin-bottom: 14px; font-size: 14px; }
+.paper-back { margin-bottom: 10px; font-size: 13px; }
 .paper-back a { color: var(--paper-accent); text-underline-offset: 4px; }
 .paper-back a:hover { text-decoration: underline; }
 :global(html.dark .article-center.paper-detail) {
@@ -426,7 +427,7 @@ onBeforeUnmount(() => {
   --paper-muted: #acb9af;
 }
 @media (max-width: 768px) {
-  .article-center.paper-detail { width: calc(100% - 24px); padding: 16px 0 84px; }
+  .article-center.paper-detail { width: calc(100% - 24px); padding: 10px 0 84px; }
 }
 .article {
   &-info {

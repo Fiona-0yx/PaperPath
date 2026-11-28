@@ -215,20 +215,24 @@ onBeforeUnmount(()=>{
   </nav>
   <el-card class="md-preview text-side" shadow="never">
     <header class="reading-heading">
-      <div>
-        <h2>{{p.excerpt?'原文摘录':(p.id==='radiation'?'论文阅读摘记':'教学材料')}}</h2>
-        <p class="reader-muted">选中文字，或点击段落旁的「标注」。</p>
-      </div>
+      <template v-if="p.materialKind==='open-text'">
+        <p class="reader-muted">
+          {{p.authors.join('、')}} · {{p.venue}} · {{p.year}} ·
+          <a :href="p.licenseUrl" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
+        </p>
+        <p class="reader-muted">站内为原文文字版。图表、公式和附录材料请查看出版方原版。</p>
+      </template>
+      <p class="reader-muted">选中文字，或点击段落旁的「标注」。</p>
     </header>
     <section v-for="s in p.sections" :key="s.id" :data-read-section="s.id">
-      <h3 v-if="!p.excerpt || p.sections.length > 1">{{s.heading}}</h3>
+      <h2 v-if="!p.excerpt || p.sections.length > 1">{{s.heading}}</h2>
       <div v-for="(text,i) in s.paragraphs" :key="i" class="paragraph">
         <p :id="s.id+'-p'+(i+1)" :data-pid="s.id+'-p'+(i+1)" :data-section="s.id" tabindex="0" @pointerup="pick" @keyup="pick"><span v-for="(part,k) in pieces(s.id+'-p'+(i+1),text)" :key="k" :class="part.color">{{part.text}}</span></p>
         <button class="paragraph-action" :aria-label="s.heading+' 第 '+(i+1)+' 段标注'" @click="selectParagraph(s.id,i,text,$event)">标注</button>
       </div>
     </section>
     <form class="paper-review" @submit.prevent="saveReview">
-      <h3>读后回顾</h3>
+      <h2>读后回顾</h2>
       <p class="reader-muted">你的自述会保存到学习记录中。</p>
       <label for="paper-review-text">{{reviewPrompt}}</label>
       <textarea id="paper-review-text" v-model="reviewDraft" rows="4" maxlength="800" />
@@ -323,23 +327,28 @@ onBeforeUnmount(()=>{
 </template>
 <style scoped>
 .reading-grid {
+  --reader-sticky-offset: 54px;
+  --reader-pane: color-mix(in srgb, var(--paper-card), var(--paper-accent) 4%);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(275px, 28%);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 25%);
+  gap: 10px;
   align-items: start;
   color: var(--paper-text);
 }
 .paper-tools {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px 16px;
-  padding: 7px 10px;
+  padding: 5px 9px;
   border: 1px solid var(--paper-line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--paper-card), var(--paper-accent) 7%);
+  border-radius: 6px;
+  background: var(--reader-pane);
 }
 .paper-tool-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .paper-tool-actions button, .paper-tools a {
@@ -357,35 +366,39 @@ onBeforeUnmount(()=>{
 .paper-tool-actions button:disabled { opacity: .52; }
 .paper-tool-actions button:not(:disabled):hover, .paper-tools a:hover { background: var(--paper-card); }
 .paper-tools a:hover { text-decoration: underline; }
-.text-side, .reader-sidebar :deep(.el-card) {
+.text-side, .reader-sidebar {
   min-width: 0;
-  border-radius: 10px;
-  border-color: var(--paper-line);
-  background: var(--paper-card);
-  box-shadow: 0 3px 14px #18251d0a;
+  border: 1px solid var(--paper-line);
+  border-radius: 6px;
 }
-.text-side :deep(.el-card__body) { padding: clamp(18px, 3vw, 38px); }
+.text-side {
+  background: var(--paper-card);
+  box-shadow: 0 2px 8px #18251d0a;
+}
+.text-side :deep(.el-card__body) { padding: clamp(16px, 2.5vw, 36px); }
 .reading-heading {
-  padding-bottom: 16px;
-  margin-bottom: 18px;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
   border-bottom: 1px solid var(--paper-line);
 }
-.reading-heading h2 { font-size: 21px; font-weight: 650; }
-.reading-heading p { margin-top: 5px; }
-.note-actions > button:first-child { color: var(--paper-accent); }
+.reading-heading p { margin: 0; }
+.reading-heading p + p { margin-top: 4px; }
+.reading-heading a, .note-actions > button:first-child { color: var(--paper-accent); }
+.reading-heading a { text-decoration: underline; text-underline-offset: 3px; }
 .paper-contents {
   position: sticky;
-  top: 18px;
+  top: var(--reader-sticky-offset);
   display: grid;
-  gap: 4px;
-  max-height: calc(100dvh - 36px);
+  gap: 2px;
+  min-width: 0;
+  max-height: calc(100dvh - var(--reader-sticky-offset) - 10px);
   overflow: auto;
-  padding: 13px 9px;
+  padding: 10px 7px;
   border: 1px solid var(--paper-line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--paper-card), var(--paper-accent) 4%);
+  border-radius: 6px;
+  background: var(--reader-pane);
 }
-.paper-contents h2 { margin: 0 8px 4px; font-size: 14px; font-weight: 650; }
+.paper-contents h2 { margin: 0 8px 5px; font-size: 13px; font-weight: 650; }
 .paper-contents button {
   padding: 7px 8px;
   border: 0;
@@ -406,12 +419,12 @@ onBeforeUnmount(()=>{
 }
 .paper-contents button:hover, .paragraph-action:hover { background: color-mix(in srgb, var(--paper-card), var(--paper-accent) 9%); }
 .text-side section + section { margin-top: 32px; }
-.text-side h3 { margin: 0 0 14px; font-size: 19px; font-weight: 650; }
+.text-side h2 { margin: 0 0 12px; font-size: 19px; font-weight: 650; }
 .paragraph { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; }
 .paragraph-action { padding-inline: 8px; margin-top: 3px; white-space: nowrap; }
 .paragraph p {
   margin: 0 0 14px;
-  scroll-margin-top: 24px;
+  scroll-margin-top: calc(var(--reader-sticky-offset) + 10px);
   font-family: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
   font-size: clamp(16px, 1.4vw, 19px);
   line-height: 1.85;
@@ -426,13 +439,29 @@ onBeforeUnmount(()=>{
   padding-top: 24px;
   border-top: 1px solid var(--paper-line);
 }
-.paper-review h3 { margin-bottom: 0; }
+.paper-review h2 { margin-bottom: 0; }
 .paper-review textarea { width: 100%; min-height: 90px; resize: vertical; }
-.reader-sidebar { position: sticky; top: 18px; max-height: calc(100dvh - 36px); overflow: auto; }
+.reader-sidebar {
+  position: sticky;
+  top: var(--reader-sticky-offset);
+  max-height: calc(100dvh - var(--reader-sticky-offset) - 10px);
+  overflow: auto;
+  background: var(--reader-pane);
+}
 .reader-sidebar h4 { margin: 16px 0 4px; font-weight: 650; }
-.reader-sidebar :deep(.el-card__body) { padding: 14px; }
+.reader-sidebar :deep(.el-card) { border: 0; background: transparent; overflow: visible; }
+.reader-sidebar :deep(.el-card__body) { padding: 0 14px 14px; }
 .reader-sidebar p, .reader-sidebar blockquote { overflow-wrap: anywhere; }
-.sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sidebar-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  background: var(--reader-pane);
+}
 .sidebar-header nav { display: flex; gap: 16px; border-bottom: 1px solid var(--paper-line); width: 100%; }
 .sidebar-header nav button {
   flex: 1;
@@ -534,7 +563,7 @@ onBeforeUnmount(()=>{
 .reader-toolbar, .panel-backdrop, .sidebar-header .mobile-close { display: none; }
 @media (min-width: 981px) {
   .reading-grid.has-contents {
-    grid-template-columns: minmax(132px, 16%) minmax(0, 1fr) minmax(275px, 28%);
+    grid-template-columns: minmax(142px, 16%) minmax(0, 1fr) minmax(250px, 25%);
   }
 }
 @media (max-width: 980px) {
@@ -543,15 +572,19 @@ onBeforeUnmount(()=>{
     position: static;
     grid-column: 1 / -1;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     max-height: none;
-    padding: 5px 8px;
+    padding: 4px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
-  .paper-contents h2 { margin: 0 8px; }
+  .paper-contents h2 { margin: 0 5px; white-space: nowrap; }
+  .paper-contents button { flex: 0 0 auto; white-space: nowrap; }
 }
 @media (max-width: 768px) {
   .reading-grid { grid-template-columns: minmax(0, 1fr); }
+  .paper-tools { position: static; }
+  .paragraph p { scroll-margin-top: 16px; }
   .paragraph { column-gap: 8px; }
   .paragraph-action { min-height: 36px; padding-inline: 6px; }
   .reader-sidebar { display: none; }
@@ -564,7 +597,7 @@ onBeforeUnmount(()=>{
     border-radius: 14px 14px 0 0;
     overscroll-behavior: contain;
   }
-  .reader-sidebar :deep(.el-card__body) { padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); }
+  .reader-sidebar :deep(.el-card__body) { padding: 0 16px calc(20px + env(safe-area-inset-bottom)); }
   .sidebar-header { gap: 10px; }
   .sidebar-header .mobile-close { display: block; min-width: 38px; min-height: 38px; }
   .panel-backdrop { display: block; position: fixed; inset: 0; z-index: 105; background: #14231b50; }
