@@ -227,7 +227,7 @@ export async function openJournal() {
       book.append(face('cover-title',esc(p.title)));
     }else if(p.key==='summary'){
       const heading='<h2>'+L('我的初始画像','My starting portrait')+'</h2><p>'+L('点文字即可修改，留白的地方保持未知。','Edit any entry. Blank fields stay unknown.')+'</p>';
-      const done='<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L(profileOnly?'保存并更新推荐':'提交',profileOnly?'Save and update recommendations':'Submit')+'</button></div>';
+      const done='<div class="actions portrait-actions"><button type="button" data-submit-portrait>'+L(profileOnly?'保存画像':'提交',profileOnly?'Save portrait':'Submit')+'</button></div>';
       const observations=readingObservations();
       const statistics=readingStats();
       if(collapsed)book.append(face('full',heading+summary(questions)+observations+statistics+done));
@@ -237,7 +237,7 @@ export async function openJournal() {
     }else{
       p.items.forEach((q,j)=>book.append(face(collapsed?'full':j?'right':'left',question(q))));
       if(p.key==='outcome'){
-        const exits='<div class="portrait-actions journal-exits"><button type="button" data-view-portrait>'+L('查看学习画像','View learning portrait')+'</button><a class="done" href="/#/shelf/neural-networks" target="_parent">'+L('选论文做读前测试','Choose a paper for a pretest')+'</a></div>';
+        const exits='<div class="portrait-actions journal-exits"><button type="button" data-view-portrait>'+L('查看学习画像','View learning portrait')+'</button><p>'+L('提交画像后，可以查看推荐论文。','Submit your portrait to see recommended papers.')+'</p></div>';
         if(collapsed)book.lastElementChild.insertAdjacentHTML('beforeend',exits);
         else book.append(face('right exit-page',exits));
       }
@@ -317,8 +317,7 @@ export async function openJournal() {
       if(b?.hasAttribute('data-view-portrait')){step('next');return}
       if(b?.hasAttribute('data-submit-portrait')){
         if(shell.submitPortrait()){
-          if(profileOnly)parent.dispatchEvent(new Event('portrait-submitted'));
-          else parent.location.hash='#/profile';
+          parent.location.hash=profileOnly?'#/profile':'#/recommendations';
         }
         else notice.textContent=L('画像未能保存，请重新提交。','Your portrait could not be saved. Please submit again.');
         return;

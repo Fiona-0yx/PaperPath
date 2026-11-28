@@ -369,6 +369,8 @@ function boot(shell) {
   renderNotes();
   const paragraphs=[...paperEl.querySelectorAll('.selectable')];
   for(const p of paragraphs){const w=p.closest('.para-wrap');p.id=w.dataset.section+'-p'+(Number(w.dataset.para)+1);}
+  const returnParagraph=paragraphs.find(p=>p.id===params.get('paragraph'));
+  if(returnParagraph)requestAnimationFrame(()=>returnParagraph.scrollIntoView({block:'center'}));
   tracking=activity(paper,paperEl,paragraphs);
   setupStudy(paper,$('study-open'));
 }

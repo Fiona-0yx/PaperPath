@@ -41,6 +41,15 @@ export function writeLocal(key, value) {
     return false;
   }
 }
+export function recordLearningEvent(type, detail) {
+  const key = "lunjing-journal-v1";
+  const journal = readLocal(key, {});
+  const events = Array.isArray(journal.events) ? journal.events : [];
+  if (type === "finish_test" && events.some(event => event.type === type && event.testId === detail.testId))
+    return null;
+  const event = { id: crypto.randomUUID(), time: new Date().toISOString(), type, ...detail };
+  return writeLocal(key, { ...journal, events: [...events, event] }) ? event : null;
+}
 const storagePrefix = "lunjing.pending.";
 const memory = new Map();
 let running;

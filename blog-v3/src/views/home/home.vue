@@ -1,358 +1,129 @@
 <script setup>
-import { ref, reactive, onMounted, nextTick, onBeforeUnmount, onActivated } from "vue";
+import { nextTick, onActivated, onBeforeUnmount, onMounted, ref } from "vue";
 import { recommendedArticles, savedReport } from "@/utils/recommended-papers";
-import { user } from "@/store/index.js";
-
-import { homeGetArticleList } from "@/api/article";
-import { homeGetConfig } from "@/api/config";
-import { getAllTag } from "@/api/tag";
-import { homeGetStatistic } from "@/api/home";
-import { randomFontColor, numberFormate } from "@/utils/tool";
-
-import PageHeader from "@/components/PageHeader/index.vue";
+import HomeHeader from "@/components/PageHeader/home-header.vue";
 import HomeArticleList from "@/components/HomeArticle/home-article-list.vue";
-import RightSide from "@/components/RightSide/right-side.vue";
-import MobileTopSkeleton from "@/components/RightSide/components/skeleton/mobile-top-skeleton.vue";
-import RightSideItem from "@/components/RightSide/components/item/right-side-item.vue";
-import RightSideTop from "@/components/RightSide/components/item/right-side-top.vue";
-import RightSideSkeletonItem from "@/components/RightSide/components/skeleton/right-side-skeleton-item.vue";
-import { gsapTransY } from "@/utils/transform";
 
-defineOptions({
-  name: "Home",
-});
+defineOptions({ name: "Home" });
 
-const userStore = user();
+function journalState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("lunjing-intake-v1"));
+    return { started: Boolean(saved?.started), submitted: Boolean(saved?.submitted) };
+  } catch {
+    return { started: false, submitted: false };
+  }
+}
 
-/** 文章 */
-const param = reactive({
-  current: 1, // 当前页
-  size: 5, // 每页条目数
-  loading: true, // 加载
-});
-const articleList = ref([]);
 const paperCards = ref(recommendedArticles(savedReport()));
-const selected = ref(sessionStorage.getItem('lun-path-selected') || '');
+const selected = ref(sessionStorage.getItem("lun-path-selected") || "");
+const journal = ref(journalState());
 const paperArea = ref(null);
+const sceneRoute = ref("home");
+
 function restoreCards() {
   paperCards.value = recommendedArticles(savedReport());
-  selected.value = sessionStorage.getItem('lun-path-selected') || '';
-  const returning = sessionStorage.getItem('return-to-recommended-paper');
+  selected.value = sessionStorage.getItem("lun-path-selected") || "";
+  journal.value = journalState();
+  const returning = sessionStorage.getItem("return-to-recommended-paper");
   if (returning) {
-    sessionStorage.removeItem('return-to-recommended-paper');
+    sessionStorage.removeItem("return-to-recommended-paper");
     focusPaper(returning);
   }
 }
+
 async function focusPaper(id) {
-  if (!paperCards.value.some(p => p.id === id)) return;
+  if (!paperCards.value.some(paper => paper.id === id)) return;
   selected.value = id;
-  sessionStorage.setItem('lun-path-selected', id);
+  sessionStorage.setItem("lun-path-selected", id);
   await nextTick();
   const card = paperArea.value?.querySelector('[data-paper="' + CSS.escape(id) + '"]');
-  card?.focus({preventScroll:true});
-  card?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',block:'center'});
-}
-function receivePaper(event) {
-  if (event.origin !== location.origin || event.source !== document.querySelector('iframe[name="blog-home-grove"]')?.contentWindow) return;
-  if (!['recommended-papers','focus-paper'].includes(event.data?.type)) return;
-  paperCards.value = recommendedArticles(event.data.report);
-  if (event.data.type === 'focus-paper') focusPaper(event.data.id);
-}
-onMounted(() => window.addEventListener('message', receivePaper));
-onBeforeUnmount(() => window.removeEventListener('message', receivePaper));
-onActivated(restoreCards);
-const articleTotal = ref();
-
-const getHomeArticleList = async () => {
-  try {
-    let res = await homeGetArticleList(param.current, param.size);
-    if (res.code == 0) {
-      const { list, total } = res.result;
-      articleList.value = list;
-      articleTotal.value = total;
-    }
-  } finally {
-    param.loading = false;
-  }
-};
-
-const pagination = (page) => {
-  param.current = page.current;
-  getHomeArticleList();
-};
-
-/** 网站右侧 */
-const rightSizeLoading = ref(false);
-const runtime = ref(0);
-let configDetail = ref({});
-let tags = ref([]);
-
-// 获取网站详细信息
-const getConfigDetail = async () => {
-  try {
-    let res = await homeGetConfig();
-    if (res.code == 0 && typeof res.result != "string") {
-      configDetail.value = res.result;
-      userStore.setBlogAvatar(res.result.blog_avatar);
-      calcRuntimeDays(configDetail.value.createdAt);
-    }
-  } finally {
-    rightSizeLoading.value = false;
-  }
-};
-// 获取文章数、分类数、标签数
-const getStatistic = async () => {
-  let res = await homeGetStatistic();
-  if (res.code == 0) {
-    Object.assign(configDetail.value, res.result);
-  }
-};
-
-// 获取所有的标签
-const getAllTags = async () => {
-  let res = await getAllTag();
-  if (res.code == 0) {
-    tags.value = res.result.map((r) => {
-      r.color = randomFontColor();
-      return r;
-    });
-  }
-};
-// 计算出网站运行天数
-const calcRuntimeDays = (time) => {
-  if (time) {
-    // eslint-disable-next-line
-    time = time.replace(/\-/g, "/"); // 解决ios系统上格式化时间出现NAN的bug
-    const now = new Date().getTime();
-    const created = new Date(time).getTime();
-    const days = Math.floor((now - created) / 8.64e7);
-    runtime.value = days;
-  }
-};
-
-const init = async () => {
-  param.loading = true;
-  rightSizeLoading.value = true;
-  await getHomeArticleList("init");
-  await getConfigDetail();
-  await getStatistic();
-  await getAllTags();
-};
-
-const observeMobileBox = () => {
-  nextTick(() => {
-    gsapTransY([".mobile-top-card", ".mobile-bottom-card"], -30, 0.3, "bounce.in");
-    gsapTransY([".mobile-bottom-card"], 30, 0.3, "none");
+  card?.focus({ preventScroll: true });
+  card?.scrollIntoView({
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+    block: "center",
   });
-};
-onMounted(async () => {
-  await init();
-  await observeMobileBox();
+}
+
+function receivePaper(event) {
+  const scene = document.querySelector('iframe[name="blog-home-grove"]');
+  if (event.origin !== location.origin || event.source !== scene?.contentWindow) return;
+  if (event.data?.type === "scene-route") {
+    sceneRoute.value = event.data.name;
+    return;
+  }
+  if (!["recommended-papers", "focus-paper"].includes(event.data?.type)) return;
+  paperCards.value = recommendedArticles(event.data.report);
+  if (event.data.type === "focus-paper") focusPaper(event.data.id);
+}
+
+function updateJournal(event) {
+  if (event.key === "lunjing-intake-v1") journal.value = journalState();
+}
+
+function showScene() {
+  window.scrollTo({ top: 0 });
+}
+
+onMounted(() => {
+  window.addEventListener("message", receivePaper);
+  window.addEventListener("storage", updateJournal);
 });
+onBeforeUnmount(() => {
+  window.removeEventListener("message", receivePaper);
+  window.removeEventListener("storage", updateJournal);
+});
+onActivated(restoreCards);
 </script>
 
 <template>
-  <PageHeader />
-  <div class="home_center_box">
-    <el-row>
-      <el-col :xs="24" :sm="18">
-        <el-card
-          class="mobile-top-card mobile-card info-card animate__animated animate__fadeIn"
-          shadow="hover"
-        >
-          <el-skeleton :loading="rightSizeLoading" animated>
-            <template #template>
-              <MobileTopSkeleton />
-            </template>
-            <template #default>
-              <RightSideTop :configDetail="configDetail" />
-            </template>
-          </el-skeleton>
-        </el-card>
-        <!-- 博客文章 -->
-        <section ref="paperArea" aria-label="推荐论文与文章">
-        <HomeArticleList
-          :articleList="paperCards.length ? paperCards : articleList"
-          :paperMode="Boolean(paperCards.length)"
-          :selected="selected"
-          @select-paper="focusPaper"
-          :param="paperCards.length ? {loading:false} : param"
-          :articleTotal="articleTotal"
-          @pageChange="pagination"
-        ></HomeArticleList>
-        </section>
-        <el-card
-          class="mobile-bottom-card card-hover mobile-card info-card animate__animated animate__fadeIn"
-          shadow="hover"
-        >
-          <el-skeleton :loading="rightSizeLoading" animated>
-            <template #template>
-              <RightSideSkeletonItem />
-            </template>
-            <template #default>
-              <RightSideItem icon="icon-zixun" size="1.4rem" title="网站资讯">
-                <div class="site-info">
-                  <div class="flex_r_between">
-                    <span>文章数目：</span>
-                    <span class="value">{{ configDetail.articleCount }}</span>
-                  </div>
-                  <div class="flex_r_between">
-                    <span>运行时间：</span>
-                    <span class="value">{{ runtime }} 天</span>
-                  </div>
-                  <div class="flex_r_between">
-                    <span>博客访问次数：</span>
-                    <span class="value">{{ numberFormate(configDetail.view_time) }}</span>
-                  </div>
-                  <div class="group">
-                    交流群
-                    <div class="flex justify-end items-start flex-nowrap">
-                      <div v-image="configDetail.qq_group">
-                        <el-image
-                          class="img !ml-[10px]"
-                          :src="configDetail.qq_group"
-                          fit="cover"
-                          :preview-src-list="[configDetail.qq_group]"
-                          preview-teleported
-                          lazy
-                        >
-                          <template #error>
-                            <div class="w-[100%] h-[100%] grid place-items-center">
-                              <svg-icon name="image404" :width="4" :height="4"></svg-icon>
-                            </div>
-                          </template>
-                        </el-image>
-                      </div>
-                      <div v-image="configDetail.we_chat_group">
-                        <el-image
-                          class="img"
-                          :src="configDetail.we_chat_group"
-                          fit="cover"
-                          :preview-src-list="[configDetail.we_chat_group]"
-                          preview-teleported
-                          lazy
-                        >
-                          <template #error>
-                            <div class="w-[100%] h-[100%] grid place-items-center">
-                              <svg-icon name="image404" :width="4" :height="4"></svg-icon>
-                            </div>
-                          </template>
-                        </el-image>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- <div class="group">
-                    支持作者
-                    <div class="flex justify-end items-start flex-nowrap">
-                      <div v-image="configDetail.ali_pay">
-                        <el-image
-                          class="img"
-                          :src="configDetail.ali_pay"
-                          fit="cover"
-                          :preview-src-list="[configDetail.ali_pay]"
-                          preview-teleported
-                          lazy
-                        >
-                          <template #error>
-                            <div class="w-[100%] h-[100%] grid place-items-center">
-                              <svg-icon name="image404" :width="4" :height="4"></svg-icon>
-                            </div>
-                          </template>
-                        </el-image>
-                      </div>
-                      <div v-image="configDetail.we_chat_pay">
-                        <el-image
-                          class="img !ml-[10px]"
-                          :src="configDetail.we_chat_pay"
-                          fit="cover"
-                          :preview-src-list="[configDetail.we_chat_pay]"
-                          preview-teleported
-                          lazy
-                        >
-                          <template #error>
-                            <div class="w-[100%] h-[100%] grid place-items-center">
-                              <svg-icon name="image404" :width="4" :height="4"></svg-icon>
-                            </div>
-                          </template>
-                        </el-image>
-                      </div>
-                    </div>
-                  </div> -->
-                </div>
-              </RightSideItem>
-            </template>
-          </el-skeleton>
-        </el-card>
-      </el-col>
-      <el-col :xs="0" :sm="6">
-        <!-- 博客我的信息 -->
-        <RightSide
-          :configDetail="configDetail"
-          :tags="tags"
-          :runtime="runtime"
-          :loading="rightSizeLoading"
-        />
-      </el-col>
-    </el-row>
-  </div>
+  <HomeHeader />
+  <main v-show="sceneRoute !== 'profile'" class="paper-home">
+    <section ref="paperArea" aria-labelledby="paper-recommendation-title">
+      <h2 id="paper-recommendation-title">推荐论文</h2>
+      <template v-if="paperCards.length">
+        <HomeArticleList :article-list="paperCards" paper-mode :selected="selected" @select-paper="focusPaper" />
+        <a href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">查看推荐与检索论文</a>
+      </template>
+      <div v-else class="paper-home-empty">
+        <p v-if="journal.submitted">可以查看推荐，也可以先从书架选一篇试读。</p>
+        <p v-else>提交学习画像后，这里会显示适合你的论文。你也可以先从书架选一篇试读。</p>
+        <a v-if="journal.submitted" class="paper-home-start" href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">
+          查看推荐
+        </a>
+        <a v-else class="paper-home-start" href="./lun-path/index.html#/journal" target="blog-home-grove" @click="showScene">
+          {{ journal.started ? "继续手账" : "开始手账" }}
+        </a>
+        <a href="./lun-path/index.html#/overview" target="blog-home-grove" @click="showScene">浏览方向</a>
+        <a v-if="!journal.submitted" href="./lun-path/index.html#/recommendations" target="blog-home-grove" @click="showScene">检索论文</a>
+      </div>
+    </section>
+  </main>
 </template>
 
-<style lang="scss" scoped>
-.mobile-top-card {
-  height: 31rem;
-  margin: 4px;
-  :deep(.info-avatar) {
-    padding: 0 2rem;
-  }
-  :deep(.personal-say) {
-    padding-left: 1rem;
-  }
-  :deep(.info-background) {
-    height: 12rem;
-    width: 100%;
-  }
-  :deep(.common-menu) {
-    padding: 1rem 5.5rem;
-  }
-  :deep(.git-ee) {
-    padding: 0 4rem;
-  }
-  :deep(.personal-link) {
-    padding: 1rem 6rem;
-  }
+<style scoped>
+.paper-home {
+  box-sizing: border-box;
+  min-height: 20rem;
+  padding: clamp(2rem, 5vw, 5rem) max(6vw, calc((100% - 64rem) / 2));
+  background: #f6f3e8;
+  color: #303d31;
 }
-.mobile-bottom-card {
-  margin: 4px;
-  padding: 1rem;
-  .icon-localoffer {
-    font-weight: 900;
-  }
-  span {
-    margin-left: 0.3rem;
-  }
-  .site-info {
-    padding: 0.3rem 1rem;
-    line-height: 2;
-    font-size: 1rem;
-
-    .value {
-      font-weight: 600;
-    }
-  }
+.paper-home h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
 }
-
-.group {
-  margin-left: 0.3rem;
-  width: 100%;
-  height: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  .img {
-    width: 80px;
-    height: 80px;
-    border-radius: 8px;
-    margin-right: 10px;
-  }
+.paper-home-empty p { margin-bottom: 1rem; }
+.paper-home-empty a {
+  display: inline-block;
+  margin: 0 .75rem .5rem 0;
+  padding: .625rem 1em;
+  border: 1px solid #607a5b;
+  border-radius: .5rem;
+  text-decoration: none;
+}
+.paper-home-empty a.paper-home-start {
+  background: #455d44;
+  color: #fff;
 }
 </style>

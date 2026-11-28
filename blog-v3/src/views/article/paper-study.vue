@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { api, readLocal, writeLocal } from '../../../../复杂前端/lun-path/src/reader-api.js';
+import { api, readLocal, recordLearningEvent, writeLocal } from '../../../../复杂前端/lun-path/src/reader-api.js';
 import { profileInput } from '../../../../复杂前端/lun-path/src/profile-input.js';
 import PaperReading from './paper-reading.vue';
-const props = defineProps({ paper:Object });
+const props = defineProps({ paper:Object, paragraph:String });
 const material=ref(null), plan=ref(null), test=ref(null), profile=ref(null);
 const busy=ref(''), error=ref(''), reading=ref(false);
 const generating=ref(false);
@@ -36,9 +36,14 @@ async function prepare(){
     state.planId=plan.value.planId; save();
   }
   if(state.testId){
-    test.value=await api('pretests/'+state.testId);
-    try { profile.value=await api('pretests/'+state.testId+'/paper-profile'); reading.value=Boolean(state.reading); }
-    catch(e){if(e.status!==409) throw e;}
+    try {
+      test.value=await api('pretests/'+state.testId);
+      profile.value=await api('pretests/'+state.testId+'/paper-profile');
+      reading.value=Boolean(state.reading);
+    } catch(e) {
+      if(e.status===404){delete state.testId;delete state.reading;choices.value={};test.value=null;save();}
+      else if(e.status!==409) throw e;
+    }
   }
 }
 async function generate(mode) {
@@ -78,22 +83,18 @@ function grade(skip){
   });
 }
 function record(type, detail={}) {
-  const journal=readLocal('lunjing-journal-v1',{}) || {};
-  const events=journal.events ||= [];
-  if(type==='finish_test' && events.some(e=>e.type===type && e.testId===state.testId))return;
-  const event={id:crypto.randomUUID(),time:new Date().toISOString(),type,paperId:props.paper.id,title:props.paper.article_title,...detail};
-  events.push(event);
-  writeLocal('lunjing-journal-v1',journal);
-  return event;
+  return recordLearningEvent(type,{paperId:props.paper.id,categoryId:props.paper.category,
+    version:material.value?.version||'v1',title:props.paper.article_title,...detail});
 }
 function enter(){reading.value=true;state.reading=true;save();}
 onMounted(()=>run('正在准备本篇读前方案…',prepare));
 </script>
 <template>
-  <paper-reading v-if="reading && profile" :material="material" :profile="profile" :record="record" />
+  <paper-reading v-if="reading && profile" :material="material" :profile="profile"
+    :paragraph="paragraph" :review-type="plan.plan.post_reading_test?.type" :record="record" />
   <el-card v-else class="md-preview intake-test" shadow="never">
     <h2>{{profile?'本篇初始画像':'读前测试'}}</h2>
-    <p role="status">{{busy || (generating ? '正在在线出题，最多等 20 秒。你也可以选择其他方式继续。' : error)}}</p>
+    <p role="status">{{busy || (generating ? '正在生成读前题，你也可以选择其他方式继续。' : error)}}</p>
     <template v-if="profile">
       <p>本篇目标 · {{profile.reading_plan.depth}}</p>
       <p v-if="!profile.concept_evidence.length">本次没有答题证据，相关概念保留为待确认。</p>

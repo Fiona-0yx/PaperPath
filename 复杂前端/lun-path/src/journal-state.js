@@ -1,3 +1,5 @@
+import { recordLearningEvent } from './reader-api.js';
+
 const key = 'lunjing-intake-v1';
 function load() {
   try {
@@ -49,7 +51,11 @@ for (const [id, answer] of Object.entries(intake.answers)) {
 export function submitPortrait() {
   const previous = intake.submitted;
   intake.submitted = structuredClone({answers:intake.answers, evidence:intake.evidence});
-  if (persistIntake()) return true;
+  if (persistIntake()) {
+    if (JSON.stringify(previous) !== JSON.stringify(intake.submitted))
+      recordLearningEvent('portrait_saved', { source: 'self-report' });
+    return true;
+  }
   intake.submitted = previous;
   return false;
 }

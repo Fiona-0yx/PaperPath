@@ -2,19 +2,23 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 import { randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 process.env.LUNJING_DATA_DIR = ":memory:";
 const { handleRequest } = await import("../server/index.mjs");
 const cookie = "lj_reader=" + randomUUID();
 process.env.QUESTIONNAIRE_MODEL_PROVIDER = 'none';
-async function call(path, method = "GET", body, owner = cookie) {
+process.env.LUNJING_PAPER_SEARCH = 'off';
+async function call(path, method = "GET", body, owner = cookie, setupResponse) {
   const req = Readable.from(body ? [Buffer.from(JSON.stringify(body))] : []);
   Object.assign(req, {
     method,
     url: "/api/reader/" + path,
     headers: { host: "localhost", cookie: owner },
   });
-  const res = {
+  const res = Object.assign(new EventEmitter(), {
     setHeader() {},
     writeHead(status) {
       this.status = status;
@@ -22,7 +26,8 @@ async function call(path, method = "GET", body, owner = cookie) {
     end(text) {
       this.data = text ? JSON.parse(text) : null;
     },
-  };
+  });
+  setupResponse?.(res);
   await handleRequest(req, res);
   return res;
 }
@@ -34,6 +39,7 @@ test('portrait recommendations persist per browser and link only to available lo
   const saved = await call('recommendations', 'POST', snapshot);
   assert.equal(saved.status, 201);
   assert.equal(saved.data.report.modelStatus, 'disabled');
+  assert.equal(saved.data.report.paperSearch.status, 'fallback');
   assert.ok(saved.data.report.readingPlan.directions.length);
   assert.ok(saved.data.report.localPapers.some(p => p.id === 'attention'));
   assert.ok(saved.data.report.localPapers.every(p => p.categoryId === 'machine-learning'));
@@ -47,6 +53,74 @@ test('portrait recommendations persist per browser and link only to available lo
   assert.equal(external.data.report.localPapers.length, 0);
   assert.equal(external.data.report.readingPlan.directions[0].category, 'computer-vision');
   assert.equal((await call('recommendations', 'DELETE')).status, 405);
+});
+
+test('Crossref recommendations and manual search expose external DOI metadata only', async t => {
+  process.env.LUNJING_PAPER_SEARCH = 'on';
+  t.after(() => { process.env.LUNJING_PAPER_SEARCH = 'off'; });
+  const queries = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    assert.equal(url.origin, 'https://api.crossref.org');
+    assert.equal(url.searchParams.get('rows'), '8');
+    const query = url.searchParams.get('query.bibliographic');
+    queries.push(query);
+    const items = query === 'machine learning'
+      ? [
+        { DOI: '10.9999/ml', title: ['Machine Learning Methods'], URL: 'https://example.com', abstract: 'Untrusted' },
+        { DOI: '10.9999/other', title: ['Marine Biology'] },
+      ]
+      : [{ DOI: '10.9999/cn', title: ['特定论文题目'], published: {'date-parts': [[2024]]} }];
+    return Response.json({message: {items}});
+  });
+  const snapshot = {answers:{direction:{source:'self',values:[0]},intro:{source:'self',text:'PRIVATE'}},evidence:{}};
+  const recommendation = await call('recommendations', 'POST', snapshot);
+  assert.equal(recommendation.status, 201);
+  const search = recommendation.data.report.paperSearch;
+  assert.equal(search.status, 'online');
+  assert.deepEqual(search.papers.map(p => p.url), ['https://doi.org/10.9999/ml']);
+  assert.equal(search.papers[0].abstract, undefined);
+  assert.equal((await call('materials/' + encodeURIComponent(search.papers[0].id))).status, 404);
+  assert.equal((await call('paper-search', 'POST', {query:'机器学习'})).data.status, 'online');
+  assert.deepEqual(queries, ['machine learning']);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const manual = await call('paper-search', 'POST', {query:'特定论文题目'});
+  assert.equal(manual.data.papers[0].title, '特定论文题目');
+  assert.deepEqual(queries, ['machine learning', '特定论文题目']);
+  assert.equal((await call('paper-search', 'POST', {query:'a'.repeat(121)})).status, 400);
+});
+
+test('Codex unavailability and cancellation leave the reading plan usable', async t => {
+  const previousProvider = process.env.LUNJING_MODEL_PROVIDER;
+  const previousBin = process.env.QUESTIONNAIRE_CODEX_BIN;
+  process.env.LUNJING_MODEL_PROVIDER = 'codex';
+  process.env.QUESTIONNAIRE_CODEX_BIN = join(tmpdir(), randomUUID(), 'codex.exe');
+  t.after(() => {
+    if (previousProvider === undefined) delete process.env.LUNJING_MODEL_PROVIDER;
+    else process.env.LUNJING_MODEL_PROVIDER = previousProvider;
+    if (previousBin === undefined) delete process.env.QUESTIONNAIRE_CODEX_BIN;
+    else process.env.QUESTIONNAIRE_CODEX_BIN = previousBin;
+  });
+  assert.equal((await call('session')).data.pretestTimeoutSeconds, 60);
+  const plan = await call('plans', 'POST', {
+    paperId: 'scikit-learn',
+    input: {profile: {default_depth: '能讲清楚'}},
+  });
+  assert.equal(plan.status, 201);
+  const testInput = {planId:plan.data.planId, revision:1, count:1, mode:'quick'};
+  const failed = await call('pretests', 'POST', testInput);
+  assert.equal(failed.status, 503);
+  assert.match(failed.data.error.message, /Codex 模型暂时不可用/);
+  const cancelled = await call('pretests', 'POST', testInput, cookie, res => {
+    res.once('newListener', event => {
+      if (event === 'close') setImmediate(() => {
+        res.destroyed = true;
+        res.emit('close');
+      });
+    });
+  });
+  assert.equal(cancelled.destroyed, true);
+  assert.equal(cancelled.status, undefined);
+  assert.equal((await call('pretests', 'POST', {...testInput, mode:'skip'})).status, 201);
 });
 
 test('excerpt allows an explicit skip and stores an evidence-free initial portrait', async () => {

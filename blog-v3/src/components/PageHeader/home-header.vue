@@ -59,9 +59,9 @@ onBeforeUnmount(() => motion?.revert());
 
   iframe {
     position: absolute;
-    top: 52px;
+    top: 0;
     width: 100%;
-    height: calc(100% - 52px);
+    height: 100%;
     border: 0;
   }
 

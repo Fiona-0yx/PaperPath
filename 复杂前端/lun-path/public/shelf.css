@@ -115,6 +115,17 @@
   border-radius: 7px;
   list-style: none;
 }
+.shelf-alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding-left: 0;
+  list-style: none;
+}
+.shelf-alternatives a {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
 @media (max-width: 560px) {
   .paper-link { grid-template-columns: auto minmax(0, 1fr); }
   .paper-diff { grid-column: 2; justify-self: start; margin-top: 2px; }

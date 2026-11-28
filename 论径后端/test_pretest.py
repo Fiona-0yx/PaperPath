@@ -5,11 +5,13 @@ import unittest
 from contextlib import redirect_stdout
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 from plan_generate import plan_generate
 from paper_profile import build_paper_profile, guidance_for_concepts
 from pretest import CONCEPT_PROMPT, generate_pretest, grade_pretest, select_concepts, student_view
 from pretest_cli import main
+from reader_worker import run as run_worker, source_quote
 
 
 class PretestTests(unittest.TestCase):
@@ -18,6 +20,12 @@ class PretestTests(unittest.TestCase):
         self.data = json.loads(self.input_path.read_text(encoding="utf-8"))
         self.plan = plan_generate(self.data)
         self.calls = []
+
+    def test_source_quote_is_always_verbatim(self):
+        task = {"passage": "净辐射用于估算蒸散量。", "selectedText": "净辐射"}
+        self.assertEqual(source_quote(task), "净辐射")
+        task["selectedText"] = "模型改写的句子"
+        self.assertEqual(source_quote(task), task["passage"])
 
     def mock_model(self, prompt, task):
         self.calls.append((prompt, task))
@@ -76,6 +84,30 @@ class PretestTests(unittest.TestCase):
         self.assertNotIn("answer", student_view(session)["questions"][0])
         with self.assertRaisesRegex(ValueError, "校验未通过"):
             generate_pretest(self.data, self.plan, combined, count=5, quick=True)
+
+    def test_codex_bridge_preserves_pretest_validation_and_student_view(self):
+        concept = self.mock_model(CONCEPT_PROMPT, {"focus": self.plan["focus"]})["concepts"][0]
+        question = self.mock_model("", {"concepts": [{"id": "q1", **concept}]})["questions"][0]
+        reply = {"result": {"items": [{"concept": concept, "question": question}]}}
+        task = {"op": "test", "input": self.data, "plan": self.plan, "mode": "quick", "count": 1}
+        wire = io.StringIO()
+        with patch("sys.stdin", io.StringIO(json.dumps(reply) + "\n")), redirect_stdout(wire):
+            result = run_worker(task, use_codex=True)
+        model_request = json.loads(wire.getvalue())["completion"]
+        self.assertEqual(model_request["schema"]["required"], ["items"])
+        self.assertEqual(result["session"]["questions"][0]["answer"], "B")
+        self.assertNotIn("answer", result["student"]["questions"][0])
+
+    def test_codex_bridge_answers_from_the_passage(self):
+        wire = io.StringIO()
+        task = {"op": "answer", "question": "什么是目标？", "passage": "这是与目标相关的原文。"}
+        reply = {"result": {"explanation": "这段提到了目标。"}}
+        with patch("sys.stdin", io.StringIO(json.dumps(reply) + "\n")), redirect_stdout(wire):
+            result = run_worker(task, use_codex=True)
+        model_request = json.loads(wire.getvalue())["completion"]
+        self.assertEqual(model_request["schema"]["required"], ["explanation"])
+        self.assertIn("这是与目标相关的原文。", model_request["prompt"])
+        self.assertEqual(result, "这段提到了目标。")
 
     def test_refill_and_targeted_repair(self):
         def flaky(prompt, task):

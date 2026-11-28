@@ -3,10 +3,13 @@ import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
+import { runCodexJson } from "../../../论径后端/recommendation/questionnaire-codex.mjs";
 import { summarizeEvents } from "../shared/reader-summary.js";
 import { selectedPaper } from "./selected-papers.mjs";
 import { recommendations } from './recommendations.mjs';
+import { searchByKeyword } from './paper-search.mjs';
 
 const worker = fileURLToPath(
   new URL("../../../论径后端/reader_worker.py", import.meta.url),
@@ -35,27 +38,34 @@ const fail = (status, code, message) => {
 const object = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const identifier = (v) =>
   typeof v === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(v);
+const codexEnabled = () => process.env.LUNJING_MODEL_PROVIDER?.trim() === "codex";
+const pretestTimeoutSeconds = () => codexEnabled() ? 60 : 20;
 function callWorker(task, response) {
   return new Promise((resolve, reject) => {
     const quickTest = task.op === "test" && task.mode === "quick";
+    const codex = codexEnabled() && (task.op === "answer" ||
+      (task.op === "test" && !["sample", "skip"].includes(task.mode)));
+    const controller = new AbortController();
     const child = execFile(
       process.env.LUNJING_PYTHON || "python",
-      ["-B", worker],
-      { windowsHide: true, timeout: quickTest ? 20000 : 210000, maxBuffer: 2 * 1024 * 1024 },
+      ["-B", worker, ...(codex ? ["--codex-bridge"] : [])],
+      { windowsHide: true, timeout: quickTest ? pretestTimeoutSeconds() * 1000 : codex ? 120000 : 210000,
+        maxBuffer: 2 * 1024 * 1024 },
       (error, out) => {
-        response?.off("close", stopWorker);
+        controller.abort();
+        response?.off?.("close", stopWorker);
         try {
           if (response?.destroyed)
             fail(503, "REQUEST_CLOSED", "已停止出题");
           if (quickTest && error?.killed)
-            fail(504, "MODEL_TIMEOUT", "在线出题超过 20 秒，请重试或选择其他方式继续。");
+            fail(504, "MODEL_TIMEOUT", `在线出题超过 ${pretestTimeoutSeconds()} 秒，请重试或选择其他方式继续。`);
           if (error)
             fail(
               503,
               "WORKER_UNAVAILABLE",
               "Python 服务不可用，请检查 Python 和 jsonschema。",
             );
-          const reply = JSON.parse(out);
+          const reply = JSON.parse(codex ? out.trimEnd().split("\n").at(-1) : out);
           if (reply.status) fail(reply.status, "READER_WORKER", reply.message);
           resolve(reply.result);
         } catch (e) {
@@ -63,10 +73,30 @@ function callWorker(task, response) {
         }
       },
     );
-    const stopWorker = () => { if (!response.writableEnded) child.kill(); };
-    if (quickTest) response?.once("close", stopWorker);
+    const stopWorker = () => {
+      if (!response.writableEnded) {
+        controller.abort();
+        child.kill();
+      }
+    };
+    response?.once?.("close", stopWorker);
     child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(task));
+    if (codex) {
+      const lines = createInterface({input: child.stdout, crlfDelay: Infinity});
+      lines.on("line", async line => {
+        try {
+          const request = JSON.parse(line).completion;
+          if (!request) return;
+          const result = await runCodexJson({...request, signal:controller.signal});
+          if (!controller.signal.aborted) child.stdin.write(JSON.stringify({result}) + "\n");
+        } catch {
+          if (!controller.signal.aborted) child.stdin.write("{}\n");
+        }
+      });
+      child.stdin.write(JSON.stringify(task) + "\n");
+    } else {
+      child.stdin.end(JSON.stringify(task));
+    }
   });
 }
 function own(table, id, owner) {
@@ -283,11 +313,21 @@ export async function readerRoute(req, res, url, read, json) {
   };
   if (resource === "session" && parts.length === 1) {
     requireMethod(req, "GET");
-    return json(res, { ok: true });
+    return json(res, { ok: true, pretestTimeoutSeconds: pretestTimeoutSeconds() });
   }
   if (resource === 'materials' && parts.length === 2) {
     requireMethod(req, 'GET');
     return json(res, paperFor(id));
+  }
+  if (resource === 'paper-search' && parts.length === 1) {
+    requireMethod(req, 'POST');
+    const { query } = await payload();
+    if (typeof query !== 'string' || query.length > 120 || /[\u0000-\u001f\u007f]/u.test(query))
+      fail(400, 'INVALID_QUERY', '请输入 2 至 120 个字符的论文题目或关键词');
+    const keyword = query.trim().replace(/\s+/gu, ' ');
+    if (keyword.length < 2 || !/[\p{L}\p{N}]/u.test(keyword))
+      fail(400, 'INVALID_QUERY', '请输入 2 至 120 个字符的论文题目或关键词');
+    return json(res, await searchByKeyword(keyword));
   }
   if (resource === 'recommendations' && parts.length === 1) {
     requireMethod(req, 'GET', 'POST');
@@ -381,7 +421,7 @@ export async function readerRoute(req, res, url, read, json) {
       plan: JSON.parse(row.plan),
       count: b.count,
       mode: b.mode,
-    }, b.mode === "quick" ? res : undefined);
+    }, b.mode === "quick" || codexEnabled() ? res : undefined);
     if (own("plans", b.planId, owner).revision !== row.revision)
       fail(409, "STALE_PLAN", "出题期间方案已更新");
     database()
@@ -503,7 +543,7 @@ export async function readerRoute(req, res, url, read, json) {
             ...(detailed && {detailed:true, selectedText:String(b.text||'').slice(0,3000),
               section:section.heading, context:section.paragraphs.slice(Math.max(0,section.paragraphs.indexOf(best.text)-1),section.paragraphs.indexOf(best.text)+2),
               abstract:paper.abstract, history:b.history.slice(-3), readingBehavior}),
-          })
+          }, codexEnabled() ? res : undefined)
         : "原文摘录 · " + best.text;
     return json(res, {
       ...(detailed ? answer : {explanation:answer}),

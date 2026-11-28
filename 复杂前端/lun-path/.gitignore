@@ -5,3 +5,4 @@ node_modules/
 qa/edge-profile/
 *.log
 data/
+.runtime/

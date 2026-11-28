@@ -15,6 +15,11 @@ import Waves from "@/components/WelcomeComps/waves.vue";
 const staticStore = staticData();
 const { codeTheme, previewTheme, getPageHeaderList } = storeToRefs(staticStore);
 const route = useRoute();
+const materialLabels = {
+  teaching: "站内教学材料",
+  "reading-note": "站内阅读摘记",
+  excerpt: "站内原文摘录",
+};
 
 const props = defineProps({
   loading: {
@@ -69,6 +74,7 @@ const getBgCover = computed(() => {
   let url;
   let myUrl = "http://img.mrzym.top/FvmVKfygxBKoJbFVXJwzjgAASL9S";
   if (route.path == "/article") {
+    if (route.query.paper && !props.article.article_cover) return {};
     url = props.article.article_cover || myUrl;
   } else if (props.bgUrl) {
     url = props.bgUrl || myUrl;
@@ -83,6 +89,11 @@ const getBgCover = computed(() => {
 const getTitle = computed(() => {
   return route.query.pageTitle ? route.meta.name + " - " + route.query.pageTitle : route.meta.name;
 });
+const paperMeta = computed(() => [
+  props.article.categoryName,
+  props.article.year,
+  materialLabels[props.article.materialKind] || (props.article.excerpt && materialLabels.excerpt),
+].filter(Boolean).join(" · "));
 
 watch(
   () => route.path,
@@ -102,10 +113,9 @@ watch(
   <HomeHeader class="!w-[100%] !h-[100vh]" v-if="route.path == '/home'" />
   <header v-else-if="route.path === '/article' && route.query.paper" class="page-header paper-banner" :style="getBgCover">
     <div class="paper-banner-inner">
-      <router-link class="back-to-papers" to="/home"><span aria-hidden="true">←</span> 返回推荐</router-link>
       <div class="paper-heading">
         <h1>{{ article.article_title || '推荐论文' }}</h1>
-        <p v-if="article.categoryName || article.year">{{ [article.categoryName, article.year].filter(Boolean).join(' · ') }}</p>
+        <p v-if="paperMeta">{{ paperMeta }}</p>
       </div>
     </div>
   </header>
@@ -237,17 +247,6 @@ watch(
   display: grid;
   padding: 22px 0 40px;
   color: #fff;
-  .back-to-papers {
-    justify-self: start;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 5px;
-    background: #14231ba8;
-    font-size: 14px;
-    &:hover { background: #14231be8; }
-  }
 }
 .paper-heading {
   width: min(100%, 940px);

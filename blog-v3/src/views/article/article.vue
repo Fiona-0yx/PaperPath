@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch, reactive, h, nextTick, onBeforeUnmount } from "vue";
+import { computed, ref, watch, reactive, h, nextTick, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { recommendedArticles, savedReport } from "@/utils/recommended-papers";
+import { paperForRoute } from "@/utils/recommended-papers";
 import { ElNotification } from "element-plus";
 import { staticData, user } from "@/store/index.js";
 import { storeToRefs } from "pinia";
@@ -27,10 +27,17 @@ const commentIsOpen = ref(false);
 
 const router = useRouter();
 const route = useRoute();
-const paperId = route.query.paper;
-const paper = paperId && recommendedArticles(savedReport()).find(p => p.id === paperId);
-function sessionReturn() { sessionStorage.setItem('return-to-recommended-paper', String(paperId)); }
-if (paperId) sessionReturn();
+const paperId = computed(() => typeof route.query.paper === 'string' ? route.query.paper : '');
+const paper = computed(() => paperId.value ? paperForRoute(paperId.value) : null);
+const paperBack = computed(() => {
+  if (route.query.source === 'history') return { href: './lun-path/index.html#/profile', label: '学习记录' };
+  if (paper.value && route.query.category === paper.value.category && route.query.source === 'shelf')
+    return { href: './lun-path/index.html#/shelf/' + encodeURIComponent(paper.value.category), label: '论文书架' };
+  return { href: '#/home', label: '学习路径' };
+});
+watch(paperId, id => {
+  if (id) sessionStorage.setItem('return-to-recommended-paper', id);
+}, { immediate: true });
 // 初始化pinia
 const staticStore = staticData();
 const userStore = user();
@@ -195,7 +202,7 @@ watch(
 );
 // 用户离开页面时增加阅读时长
 onBeforeUnmount(() => {
-  if (setUpTimes && lastArticleId && !paperId) {
+  if (setUpTimes && lastArticleId && !paperId.value) {
     addReadingDuration(lastArticleId); // 添加阅读时长
   }
 });
@@ -204,8 +211,9 @@ onBeforeUnmount(() => {
 <template>
   <PageHeader :article="paper || articleInfo" :loading="loading" />
   <main v-if="paperId" class="article article-center paper-detail">
-    <paper-study v-if="paper" :paper="paper" />
-    <el-card v-else>本次推荐中已没有这篇论文，请返回查看最新结果。</el-card>
+    <nav class="paper-back" aria-label="返回学习路径"><a :href="paperBack.href">← {{ paperBack.label }}</a></nav>
+    <paper-study v-if="paper" :key="paper.id" :paper="paper" :paragraph="route.query.paragraph" />
+    <el-card v-else>这篇论文暂时无法打开。可以返回学习路径重新选择。</el-card>
   </main>
   <div v-else class="article article-center">
     <el-row class="article_box">
@@ -401,7 +409,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .article-center.paper-detail {
-  width: min(calc(100% - 64px), 1160px);
+  width: min(calc(100% - 40px), 1380px);
   min-height: 50vh;
   padding: 32px 0 64px;
   --paper-accent: #46604b;
@@ -410,6 +418,9 @@ onBeforeUnmount(() => {
   --paper-line: var(--el-border-color-light, #e4e8e2);
   --paper-card: var(--card-bg, #fff);
 }
+.paper-back { margin-bottom: 14px; font-size: 14px; }
+.paper-back a { color: var(--paper-accent); text-underline-offset: 4px; }
+.paper-back a:hover { text-decoration: underline; }
 :global(html.dark .article-center.paper-detail) {
   --paper-accent: #b2ceb2;
   --paper-muted: #acb9af;

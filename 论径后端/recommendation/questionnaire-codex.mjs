@@ -31,7 +31,7 @@ async function configuredModel(env) {
 function runProcess(bin, args, { directory, env, prompt, signal }) {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
-      reject(new Error('Codex questionnaire cancelled or timed out'));
+      reject(new Error('Codex request cancelled or timed out'));
       return;
     }
 
@@ -45,12 +45,12 @@ function runProcess(bin, args, { directory, env, prompt, signal }) {
     const stop = () => child.kill('SIGKILL');
     signal.addEventListener('abort', stop, { once: true });
 
-    child.on('error', () => { failedToStart = true; });
+    child.on('error', error => { failedToStart = error; });
     child.stdin.on('error', () => { /* Early CLI exit is handled on close. */ });
     child.once('close', code => {
       signal.removeEventListener('abort', stop);
-      if (signal.aborted) reject(new Error('Codex questionnaire cancelled or timed out'));
-      else if (failedToStart) reject(new Error('Could not start Codex CLI'));
+      if (signal.aborted) reject(new Error('Codex request cancelled or timed out'));
+      else if (failedToStart) reject(Object.assign(new Error('Could not start Codex CLI'), {code:failedToStart.code}));
       else if (code !== 0) reject(new Error(`Codex CLI exited with code ${code ?? 'unknown'}`));
       else resolve();
     });
@@ -58,19 +58,49 @@ function runProcess(bin, args, { directory, env, prompt, signal }) {
   });
 }
 
-export async function runQuestionnaireCodex({ prompt, schema, env = process.env, signal }) {
+async function codexExecutable(env) {
+  const configured = env.QUESTIONNAIRE_CODEX_BIN?.trim() || 'codex';
+  if (process.platform !== 'win32')
+    return /[\\/]/.test(configured) ? path.resolve(configured) : configured;
+  const searchPath = env.Path || env.PATH || '';
+  const dirs = /[\\/]/.test(configured)
+    ? [path.dirname(path.resolve(configured))]
+    : searchPath.split(path.delimiter).filter(Boolean).map(dir => dir.replace(/^"|"$/g, '')).filter(path.isAbsolute);
+  const filename = path.basename(configured, path.extname(configured));
+  const extension = path.extname(configured).toLowerCase();
+  const target = process.arch === 'arm64' ? 'aarch64-pc-windows-msvc' : 'x86_64-pc-windows-msvc';
+  for (const dir of dirs) {
+    const native = extension === '.exe' ? path.basename(configured) : filename + '.exe';
+    const candidates = [path.join(dir, native)];
+    // npm shims locate the packaged native binary without invoking a shell.
+    if (filename.toLowerCase() === 'codex' && extension !== '.exe') {
+      for (const modules of [path.join(dir, 'node_modules'), path.dirname(dir)]) {
+        for (const pkg of ['codex-win32-' + process.arch, 'codex']) {
+          for (const subpath of ['bin', 'codex']) {
+            candidates.push(path.join(modules, '@openai', pkg, 'vendor', target, subpath, 'codex.exe'));
+          }
+        }
+      }
+    }
+    for (const candidate of candidates) {
+      if ((await stat(candidate).catch(() => null))?.isFile()) return candidate;
+    }
+  }
+  if (['.cmd', '.ps1', '.bat'].includes(extension))
+    throw Object.assign(new Error('Could not resolve the Codex shim to a native binary'), {code:'ENOENT'});
+  return configured;
+}
+
+export async function runCodexJson({ prompt, schema, env = process.env, signal }) {
   const runSignal = signal ?? AbortSignal.timeout(MAX_RUN_MS);
   runSignal.throwIfAborted();
-  const directory = await mkdtemp(path.join(tmpdir(), 'lun-path-questionnaire-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'lun-path-codex-'));
   try {
     const output = path.join(directory, 'output.json');
     const schemaFile = path.join(directory, 'schema.json');
     await writeFile(schemaFile, JSON.stringify(schema), { mode: 0o600 });
 
-    const configuredBin = env.QUESTIONNAIRE_CODEX_BIN?.trim();
-    const bin = configuredBin && /[\\/]/.test(configuredBin)
-      ? path.resolve(configuredBin)
-      : configuredBin || 'codex';
+    const bin = await codexExecutable(env);
     const model = await configuredModel(env);
     const args = [
       '--ask-for-approval', 'never', 'exec',
@@ -79,11 +109,15 @@ export async function runQuestionnaireCodex({ prompt, schema, env = process.env,
       '--config', 'web_search="disabled"',
       '--config', 'mcp_servers={}',
       '--config', 'project_doc_max_bytes=0',
+      '--config', 'model_reasoning_effort="low"',
       ...DISABLED_FEATURES.flatMap(feature => ['--disable', feature]),
       '--output-schema', schemaFile, '--output-last-message', output,
       ...(model ? ['--model', model] : []), '-'
     ];
-    await runProcess(bin, args, { directory, env, prompt, signal: runSignal });
+    const childEnv = { ...env };
+    delete childEnv.PLAN_LLM_API_KEY;
+    delete childEnv.QUESTIONNAIRE_MODEL_API_KEY;
+    await runProcess(bin, args, { directory, env: childEnv, prompt, signal: runSignal });
 
     try {
       const { size } = await stat(output);
@@ -92,9 +126,11 @@ export async function runQuestionnaireCodex({ prompt, schema, env = process.env,
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid output type');
       return parsed;
     } catch {
-      throw new Error('Codex CLI did not return a structured questionnaire result');
+      throw new Error('Codex CLI did not return a structured result');
     }
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 2 });
   }
 }
+
+export const runQuestionnaireCodex = runCodexJson;

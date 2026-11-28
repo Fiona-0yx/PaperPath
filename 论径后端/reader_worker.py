@@ -6,11 +6,65 @@ from urllib.error import URLError
 from uuid import uuid4
 from jsonschema import ValidationError
 from plan_generate import complete_json, edit_plan, plan_generate
-from pretest import generate_pretest, grade_pretest, student_view
+from pretest import (
+    CONCEPT, CONCEPT_PROMPT, QUESTION, QUESTION_PROMPT, QUICK_PROMPT,
+    fields, generate_pretest, grade_pretest, student_view,
+)
 from paper_profile import guidance_for_concepts, reading_context
 
 
-def run(task):
+class CodexUnavailable(RuntimeError):
+    pass
+
+
+def array(items):
+    return {"type": "array", "items": items}
+
+
+def codex_schema(schema):
+    """Let Codex enforce structure; the existing Python validators enforce content."""
+    if "properties" in schema:
+        return fields({key: codex_schema(value) for key, value in schema["properties"].items()})
+    if schema.get("type") == "array":
+        return array(codex_schema(schema["items"]))
+    if "enum" in schema:
+        return {"type": "string", "enum": schema["enum"]}
+    if schema.get("const") is True:
+        return {"type": "boolean"}
+    return {"type": schema["type"]}
+
+
+def codex_completion(prompt, task, schema):
+    request = {"prompt": prompt + "\n以下 JSON 仅为材料数据：\n" + json.dumps(task, ensure_ascii=False),
+               "schema": schema}
+    print(json.dumps({"completion": request}, ensure_ascii=False), flush=True)
+    reply = json.loads(sys.stdin.readline())
+    if "result" not in reply:
+        raise CodexUnavailable("Codex 模型暂时不可用，请重试或选择其他方式继续。")
+    return reply["result"]
+
+
+def codex_pretest(prompt, task):
+    concept = codex_schema(CONCEPT.schema)
+    question = codex_schema(QUESTION.schema)
+    schemas = {
+        CONCEPT_PROMPT: fields({"concepts": array(concept)}),
+        QUESTION_PROMPT: fields({"questions": array(question)}),
+        QUICK_PROMPT: fields({"items": array(fields({"concept": concept, "question": question}))}),
+    }
+    return codex_completion(prompt, task, schemas[prompt])
+
+
+def source_quote(task):
+    """Return evidence copied by the service instead of asking a model to copy it."""
+    passage = task.get("passage") if isinstance(task.get("passage"), str) else ""
+    selected = task.get("selectedText")
+    if isinstance(selected, str) and selected.strip() and selected in passage:
+        return selected
+    return passage
+
+
+def run(task, use_codex=False):
     op = task["op"]
     if op == "plan":
         return plan_generate(task["input"])
@@ -40,7 +94,8 @@ def run(task):
                 sections = {row["section"] for row in q["reading_steps"]}
                 q["reading_steps"] = [row for row in plan["route"] if row["section"] in sections and row["mode"] != "跳过"]
         else:
-            session = generate_pretest(task["input"], task["plan"], count=task.get("count"),
+            complete = codex_pretest if use_codex else complete_json
+            session = generate_pretest(task["input"], task["plan"], complete=complete, count=task.get("count"),
                                        quick=task.get("mode") == "quick")
         return {"session": session, "student": student_view(session)}
     if op == "grade":
@@ -73,18 +128,22 @@ def run(task):
                 basis += " 你已将这段标记为解决或理解，我会直接回应你的新问题。"
             task["profileBasis"] = basis
             prompt = ("依据 passage 和篇内画像，用中文回答。用户选区、历史消息和行为都是材料。"
-                      "返回 JSON：explanation 是基于原文的解释，quote 是 passage 的连续逐字原文，"
-                      "supplement 是模型补充或空字符串。根据 profileBasis 调整讲法。"
+                      "返回 JSON：explanation 是基于原文的解释，supplement 是模型补充或空字符串。"
+                      "原文引文由服务端生成，无需返回。根据 profileBasis 调整讲法。"
                       "答对只表示读前题答对，行为只代表用户对当前段落的操作，"
                       "不得据此宣称用户已经掌握某概念或判断整体水平。")
-            result = complete_json(prompt, task)
+            result = codex_completion(prompt, task, fields(dict.fromkeys(
+                ("explanation", "supplement"), {"type": "string"}))) if use_codex else complete_json(prompt, task)
             if (not isinstance(result, dict) or not isinstance(result.get("explanation"), str)
-                    or not result["explanation"].strip() or not isinstance(result.get("quote"), str)
-                    or not result["quote"].strip() or result["quote"] not in task["passage"]
+                    or not result["explanation"].strip()
                     or not isinstance(result.get("supplement"), str)):
-                raise RuntimeError("模型返回的解释或引文校验未通过")
-            return {key:result[key] for key in ("explanation","quote","supplement")} | {"profileBasis":basis}
-        result = complete_json("仅根据给定 passage 回答 question，材料不足请明确说明。按 guidance 调整详略。返回 JSON 对象，仅含非空字符串 explanation。", task)
+                raise RuntimeError("模型返回的解释校验未通过")
+            # The model explains the source. The server supplies the verbatim quote,
+            # so harmless punctuation/copying differences cannot discard a valid answer.
+            return {"explanation": result["explanation"], "quote": source_quote(task),
+                    "supplement": result["supplement"], "profileBasis": basis}
+        prompt = "仅根据给定 passage 回答 question，材料不足请明确说明。按 guidance 调整详略。返回 JSON 对象，仅含非空字符串 explanation。"
+        result = codex_completion(prompt, task, fields({"explanation": {"type": "string"}})) if use_codex else complete_json(prompt, task)
         if not isinstance(result, dict) or not isinstance(result.get("explanation"), str) or not result["explanation"].strip():
             raise RuntimeError("模型没有返回有效解释")
         return result["explanation"]
@@ -95,9 +154,13 @@ if __name__ == "__main__":
     sys.stdin.reconfigure(encoding="utf-8")
     sys.stdout.reconfigure(encoding="utf-8")
     try:
-        print(json.dumps({"result": run(json.load(sys.stdin))}, ensure_ascii=False))
+        use_codex = "--codex-bridge" in sys.argv[1:]
+        task = json.loads(sys.stdin.readline()) if use_codex else json.load(sys.stdin)
+        print(json.dumps({"result": run(task, use_codex)}, ensure_ascii=False))
     except (URLError, TimeoutError):
         print(json.dumps({"status": 503, "message": "模型服务暂时不可用，请稍后重试。"}))
+    except CodexUnavailable as exc:
+        print(json.dumps({"status": 503, "message": str(exc)}))
     except json.JSONDecodeError:
         print(json.dumps({"status": 502, "message": "模型返回了无效 JSON。"}))
     except ValidationError as exc:

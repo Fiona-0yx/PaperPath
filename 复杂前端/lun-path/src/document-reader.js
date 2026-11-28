@@ -3,7 +3,8 @@ import { activity, api, flush, readLocal, writeLocal } from "./reader-api.js";
 import { setupStudy } from "./study-panel.js";
 
 const $ = (id) => document.getElementById(id);
-const paper = findPaper(new URLSearchParams(location.search).get("paper"));
+const params = new URLSearchParams(location.search);
+const paper = findPaper(params.get("paper"));
 if (!paper) throw Error("论文不存在");
 const article = $("paper");
 const radiation = paper.id === "radiation";
@@ -35,6 +36,8 @@ const paragraphs = sections.flatMap((section) =>
   }),
 );
 const recorder = activity(paper, article, paragraphs);
+const returnParagraph = paragraphs.find(p => p.id === params.get("paragraph"));
+if (returnParagraph) requestAnimationFrame(() => returnParagraph.scrollIntoView({block:"center"}));
 const study = setupStudy(paper, $("study-open"));
 const noteKey = "lunjing." + paper.id + ".demo.v1";
 const records = readLocal(noteKey, []);

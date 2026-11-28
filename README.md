@@ -12,6 +12,12 @@
 
 在 `blog-v3` 中运行 `pnpm serve` 可启动开发预览，或运行 `pnpm build` 后用 `node server.js` 启动。Python 依赖和接口位置见[前后端接口约定](论径后端/前后端接口约定.md)。
 
+### 用本机 Codex CLI 测试模型
+
+在已登录 Codex CLI 的电脑上，先从 `blog-v3` 运行 `node scripts/setup-python.mjs` 安装本地测试依赖，再运行 `node scripts/serve-codex.mjs`。打开 [本机模型测试页](http://127.0.0.1:8080/index.html#/article?paper=radiation)，点击「生成个性化读前测试」。进入阅读后，选中原文并点击「发送给 AI」即可测试问答。在画像页生成推荐可以测试问卷分析。模型调用使用本机 CLI 的登录额度。可用 `PORT` 改测试端口。
+
+如果服务进程找不到 CLI，可用 `QUESTIONNAIRE_CODEX_BIN` 指定可执行文件路径。Python 解释器可以用 `LUNJING_PYTHON` 指定。
+
 ## 原博客项目说明
 
 ### 小张的个人博客

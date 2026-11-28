@@ -19,7 +19,7 @@ const props = defineProps({
   selected: String,
   articleList: {
     type: Array,
-    default: () => {},
+    default: () => [],
   },
   articleTotal: {
     type: Number,
@@ -27,11 +27,17 @@ const props = defineProps({
   },
   param: {
     type: Object,
-    default: () => {},
+    default: () => ({}),
   },
 });
 
 const router = useRouter();
+const materialLabels = {
+  teaching: "站内教学材料",
+  "reading-note": "站内阅读摘记",
+  excerpt: "站内原文摘录",
+  external: "外部原文",
+};
 async function openPaper(item) {
   emit('select-paper', item.id);
   await nextTick();
@@ -106,10 +112,14 @@ watch(
           v-for="(item, index) in articleList"
           :key="item.id"
         >
-          <el-card class="card-hover" :class="{'paper-card': paperMode, 'paper-selected': paperMode && item.id === selected}"
-            :data-paper="paperMode ? item.id : undefined" :tabindex="paperMode ? 0 : undefined"
-            :role="paperMode ? 'link' : undefined" :aria-label="paperMode ? item.article_title : undefined"
-            @click="paperMode && openPaper(item)" @keydown.enter="paperMode && openPaper(item)">
+          <el-card class="card-hover"
+            :class="{'paper-card': paperMode, 'paper-card-link': paperMode && !item.externalOnly, 'paper-selected': paperMode && item.id === selected}"
+            :data-paper="paperMode && !item.externalOnly ? item.id : undefined"
+            :tabindex="paperMode && !item.externalOnly ? 0 : undefined"
+            :role="paperMode && !item.externalOnly ? 'link' : undefined"
+            :aria-label="paperMode && !item.externalOnly ? item.article_title : undefined"
+            @click="paperMode && !item.externalOnly && openPaper(item)"
+            @keydown.enter="paperMode && !item.externalOnly && openPaper(item)">
             <div
               class="article-box"
               :style="{
@@ -134,14 +144,20 @@ watch(
               </div>
               <!-- 信息 -->
               <div class="article-info flex_c_between">
-                <span
+                <a v-if="paperMode && item.externalOnly" class="title"
+                  :data-paper="item.id" :href="item.original" target="_blank" rel="noopener noreferrer">
+                  {{ item.article_title }} <span aria-hidden="true">↗</span>
+                </a>
+                <span v-else
                   class="title text_overflow"
                   :title="item.article_title"
                   @click="!paperMode && operate('detail', item)"
                 >
                   {{ item.article_title }}
                 </span>
-                <p v-if="paperMode" class="meta">{{ item.categoryName }} · {{ item.reader ? '站内试读' : item.year }}</p>
+                <p v-if="paperMode" class="meta">
+                  {{ [item.categoryName, item.year, materialLabels[item.materialKind]].filter(Boolean).join(' · ') }}
+                </p>
                 <div v-else class="meta">
                   <span v-if="item.is_top == 1" class="to_pointer">
                     <i class="iconfont icon-zhiding"></i>
@@ -229,7 +245,8 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-.paper-card {cursor:pointer; border:1px solid #bac5b580; transition:border-color .25s,box-shadow .25s; scroll-margin:70px;}
+.paper-card {border:1px solid #bac5b580; transition:border-color .25s,box-shadow .25s; scroll-margin:70px;}
+.paper-card-link {cursor:pointer;}
 .paper-card.paper-selected {border-color:#536f54; box-shadow:0 0 0 1px #536f54,0 8px 22px #344c3820;}
 .paper-selected .title {view-transition-name:recommended-paper-title;}
 .paper-card:focus-visible {outline:2px solid #536f54;outline-offset:3px;}

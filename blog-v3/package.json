@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "serve": "vite",
+    "serve:codex": "node scripts/serve-codex.mjs",
+    "setup:python": "node scripts/setup-python.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "eslint": "eslint . --ext .vue,.js,.jsx --fix",
