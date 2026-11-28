@@ -18,6 +18,42 @@ const mobilePanel = ref(false);
 const panel = ref(null);
 const toolbar = ref(null);
 const compact = window.matchMedia('(max-width: 768px)');
+const paperTools = ref(null);
+const stickyOffset = ref(54);
+const searchToggle = ref(null);
+const searchInput = ref(null);
+const searchOpen = ref(false);
+const searchQuery = ref('');
+const activeHitIndex = ref(0);
+const zoomKey = 'lunjing.reading.text-size';
+const savedZoom = readLocal(zoomKey, 100);
+const textZoom = ref(Number.isInteger(savedZoom) && savedZoom >= 80 && savedZoom <= 150 ? savedZoom : 100);
+const searchResults = computed(() => {
+  const query = searchQuery.value.trim();
+  const hits = [];
+  const byParagraph = new Map();
+  if (!query) return { hits, byParagraph };
+
+  const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+  for (const section of p.sections) {
+    section.paragraphs.forEach((text, index) => {
+      const pid = section.id + '-p' + (index + 1);
+      const matches = [];
+      for (const match of text.matchAll(pattern)) {
+        const hit = { index: hits.length, pid, start: match.index, end: match.index + match[0].length };
+        hits.push(hit);
+        matches.push(hit);
+      }
+      if (matches.length) byParagraph.set(pid, matches);
+    });
+  }
+  return { hits, byParagraph };
+});
+const hitCount = computed(() => searchResults.value.hits.length);
+const searchStatus = computed(() => {
+  if (!searchQuery.value.trim()) return '';
+  return hitCount.value ? '第 ' + (activeHitIndex.value + 1) + ' / ' + hitCount.value + ' 处' : '无匹配';
+});
 const colors={yellow:'重点',green:'已理解',red:'有疑问',blue:'需要解释'};
 const prompts=['用中文讲讲','举个例子','这句话在这一节起什么作用','我需要先懂什么'];
 const evidenceLabels={mastered:'本题答对',gap:'阅读时先补讲',unsure:'待确认'};
@@ -33,9 +69,60 @@ const persist=()=>writeLocal(key,notes.value);
 const shown=computed(()=>notes.value.filter(n=>filter.value==='全部'||n.label===filter.value));
 function pieces(id,text){
   const marks=notes.value.filter(n=>n.pid===id&&n.color);
-  const cuts=[...new Set([0,text.length,...marks.flatMap(m=>[m.start,m.end])])].sort((a,b)=>a-b);
-  return cuts.slice(1).map((end,i)=>({text:text.slice(cuts[i],end),color:marks.find(m=>m.start<=cuts[i]&&m.end>=end)?.color}));
+  const hits = searchResults.value.byParagraph.get(id) || [];
+  const cuts = [...new Set([0, text.length, ...[...marks, ...hits].flatMap(range => [range.start, range.end])])]
+    .sort((a, b) => a - b);
+  return cuts.slice(1).map((end, i) => {
+    const start = cuts[i];
+    const hit = hits.find(range => range.start <= start && range.end >= end);
+    return {
+      text: text.slice(start, end),
+      color: marks.find(range => range.start <= start && range.end >= end)?.color,
+      hit: Boolean(hit),
+      active: hit?.index === activeHitIndex.value,
+      hitStart: hit?.start === start ? hit.index : undefined,
+    };
+  });
 }
+function setTextZoom(value) {
+  textZoom.value = value;
+  writeLocal(zoomKey, value);
+}
+function openSearch() {
+  searchOpen.value = true;
+  menu.value = null;
+  nextTick(() => {
+    searchInput.value?.focus({ preventScroll: true });
+    searchInput.value?.select();
+  });
+}
+function closeSearch() {
+  searchOpen.value = false;
+  searchQuery.value = '';
+  searchToggle.value?.focus({ preventScroll: true });
+}
+function scrollToHit(index) {
+  nextTick(() => {
+    if (!searchOpen.value || activeHitIndex.value !== index) return;
+    const hit = searchResults.value.hits[index];
+    const element = hit && document.getElementById(hit.pid)?.querySelector('[data-search-hit="' + index + '"]');
+    element?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  });
+}
+function moveHit(direction) {
+  if (!hitCount.value) return;
+  activeHitIndex.value = (activeHitIndex.value + direction + hitCount.value) % hitCount.value;
+  scrollToHit(activeHitIndex.value);
+}
+function searchKeydown(event) {
+  if (event.isComposing) return;
+  event.preventDefault();
+  moveHit(event.shiftKey ? -1 : 1);
+}
+watch(searchQuery, () => {
+  activeHitIndex.value = 0;
+  if (hitCount.value) scrollToHit(0);
+});
 function pick(){
   const sel=window.getSelection();
   if(!sel?.rangeCount||sel.isCollapsed)return;
@@ -158,11 +245,18 @@ function saveChat(c,done=false){
 function close(e){if(!e.target.closest('.selection-tools'))menu.value=null;}
 function closeUnusedPanel(){if(!compact.matches)mobilePanel.value=false;}
 function keydown(e){
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    if (mobilePanel.value) closePanel();
+    openSearch();
+    return;
+  }
   if(e.key!=='Escape')return;
   if(menu.value)menu.value=null;
   else if(compact.matches && mobilePanel.value)closePanel();
+  else if (searchOpen.value) closeSearch();
 }
-let observer,visible=new Map();
+let observer, toolbarObserver, visible=new Map();
 let positionTimer;
 const positionKey=key+'.paragraph';
 function savePosition(){
@@ -184,12 +278,17 @@ function finish(section){const at=visible.get(section);if(at!==undefined){props.
 function observe(){observer.disconnect();for(const s of [...visible.keys()])finish(s);if(!document.hidden)document.querySelectorAll('[data-read-section]').forEach(el=>observer.observe(el));}
 onMounted(()=>{props.record('open_paper');document.addEventListener('pointerdown',close);document.addEventListener('keydown',keydown);
   compact.addEventListener('change',closeUnusedPanel);
+  toolbarObserver = new ResizeObserver(() => {
+    stickyOffset.value = (paperTools.value?.offsetHeight || 46) + 8;
+  });
+  if (paperTools.value) toolbarObserver.observe(paperTools.value);
   window.addEventListener('scroll',trackPosition,{passive:true});
   window.addEventListener('pagehide',savePosition);
   observer=new IntersectionObserver(entries=>entries.forEach(e=>{const id=e.target.dataset.readSection;if(e.isIntersecting&&!document.hidden){if(!visible.has(id))visible.set(id,Date.now());}else finish(id);}));
   observe();document.addEventListener('visibilitychange',observe);
   returnToPosition(props.paragraph || readLocal(positionKey,null));});
 onBeforeUnmount(()=>{
+  toolbarObserver?.disconnect();
   clearTimeout(positionTimer);savePosition();window.removeEventListener('scroll',trackPosition);
   window.removeEventListener('pagehide',savePosition);
   observer?.disconnect();for(const s of [...visible.keys()])finish(s);
@@ -198,8 +297,9 @@ onBeforeUnmount(()=>{
 });
 </script>
 <template>
- <div class="reading-grid" :class="{'has-contents':p.sections.length > 1}">
-  <div class="paper-tools" role="group" aria-label="标注工具">
+ <div class="reading-grid" :class="{'has-contents':p.sections.length > 1}"
+      :style="{ '--reader-sticky-offset': stickyOffset + 'px' }">
+  <div ref="paperTools" class="paper-tools" :class="{'search-open':searchOpen}" role="group" aria-label="正文阅读工具">
     <div class="paper-tool-actions">
       <button v-for="(name,c) in colors" :key="c" type="button" :disabled="!quote" @click="mark(c)">
         <span class="note-dot" :class="c" aria-hidden="true"></span>{{name}}
@@ -207,13 +307,30 @@ onBeforeUnmount(()=>{
       <button type="button" :disabled="!quote" @click="mark(null,'收藏')">收藏</button>
       <button type="button" :disabled="!quote" @click="openChat">问 AI</button>
     </div>
-    <a v-if="p.original" :href="p.original" target="_blank" rel="noopener">查看完整原文 <span aria-hidden="true">↗</span></a>
+    <div class="paper-tool-actions">
+      <button ref="searchToggle" type="button" :aria-expanded="searchOpen" aria-controls="paper-search"
+              @click="searchOpen ? closeSearch() : openSearch()">搜索正文</button>
+      <div class="paper-zoom" role="group" aria-label="正文字号">
+        <button type="button" aria-label="缩小正文字号" :disabled="textZoom <= 80" @click="setTextZoom(textZoom - 10)">−</button>
+        <button type="button" :aria-label="'正文字号 ' + textZoom + '%，点击重置'" title="重置正文字号" @click="setTextZoom(100)">{{textZoom}}%</button>
+        <button type="button" aria-label="放大正文字号" :disabled="textZoom >= 150" @click="setTextZoom(textZoom + 10)">＋</button>
+      </div>
+      <a v-if="p.original" :href="p.original" target="_blank" rel="noopener">查看完整原文 <span aria-hidden="true">↗</span></a>
+    </div>
+    <form v-show="searchOpen" id="paper-search" class="paper-search" role="search" @submit.prevent>
+      <input ref="searchInput" v-model="searchQuery" type="search" aria-label="搜索正文" placeholder="搜索正文"
+             maxlength="160" autocomplete="off" @keydown.enter="searchKeydown">
+      <span class="search-status" role="status">{{searchStatus}}</span>
+      <button type="button" aria-label="上一个匹配" :disabled="!hitCount" @click="moveHit(-1)">↑</button>
+      <button type="button" aria-label="下一个匹配" :disabled="!hitCount" @click="moveHit(1)">↓</button>
+      <button type="button" aria-label="关闭搜索" @click="closeSearch">×</button>
+    </form>
   </div>
   <nav v-if="p.sections.length > 1" class="paper-contents" aria-labelledby="paper-contents-title">
     <h2 id="paper-contents-title">目录</h2>
     <button v-for="s in p.sections" :key="s.id" @click="jump({pid:s.id+'-p1',section:s.id})">{{s.heading}}</button>
   </nav>
-  <el-card class="md-preview text-side" shadow="never">
+  <el-card class="md-preview text-side" shadow="never" :style="{ '--reader-text-scale': textZoom / 100 }">
     <header class="reading-heading">
       <template v-if="p.materialKind==='open-text'">
         <p class="reader-muted">
@@ -227,7 +344,7 @@ onBeforeUnmount(()=>{
     <section v-for="s in p.sections" :key="s.id" :data-read-section="s.id">
       <h2 v-if="!p.excerpt || p.sections.length > 1">{{s.heading}}</h2>
       <div v-for="(text,i) in s.paragraphs" :key="i" class="paragraph">
-        <p :id="s.id+'-p'+(i+1)" :data-pid="s.id+'-p'+(i+1)" :data-section="s.id" tabindex="0" @pointerup="pick" @keyup="pick"><span v-for="(part,k) in pieces(s.id+'-p'+(i+1),text)" :key="k" :class="part.color">{{part.text}}</span></p>
+        <p :id="s.id+'-p'+(i+1)" :data-pid="s.id+'-p'+(i+1)" :data-section="s.id" tabindex="0" @pointerup="pick" @keyup="pick"><span v-for="(part,k) in pieces(s.id+'-p'+(i+1),text)" :key="k" :class="[part.color, {'search-hit':part.hit,'search-current':part.active}]" :data-search-hit="part.hitStart">{{part.text}}</span></p>
         <button class="paragraph-action" :aria-label="s.heading+' 第 '+(i+1)+' 段标注'" @click="selectParagraph(s.id,i,text,$event)">标注</button>
       </div>
     </section>
@@ -351,7 +468,7 @@ onBeforeUnmount(()=>{
   background: var(--reader-pane);
 }
 .paper-tool-actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.paper-tool-actions button, .paper-tools a {
+.paper-tool-actions button, .paper-tools a, .paper-search button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -363,9 +480,34 @@ onBeforeUnmount(()=>{
   font-size: 13px;
   text-underline-offset: 4px;
 }
-.paper-tool-actions button:disabled { opacity: .52; }
-.paper-tool-actions button:not(:disabled):hover, .paper-tools a:hover { background: var(--paper-card); }
+.paper-tools button:disabled { opacity: .52; }
+.paper-tools button:not(:disabled):hover, .paper-tools a:hover { background: var(--paper-card); }
 .paper-tools a:hover { text-decoration: underline; }
+.paper-zoom {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--paper-line);
+  border-radius: 5px;
+}
+.paper-zoom button { justify-content: center; min-width: 29px; font-variant-numeric: tabular-nums; }
+.paper-search {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 0 100%;
+}
+.paper-search input {
+  width: min(100%, 260px);
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--paper-line);
+  border-radius: 5px;
+  color: var(--paper-text);
+  background: var(--paper-card);
+  font: inherit;
+}
+.paper-search button { justify-content: center; min-width: 28px; }
+.search-status { color: var(--paper-muted); font-size: 13px; white-space: nowrap; }
 .text-side, .reader-sidebar {
   min-width: 0;
   border: 1px solid var(--paper-line);
@@ -426,7 +568,7 @@ onBeforeUnmount(()=>{
   margin: 0 0 14px;
   scroll-margin-top: calc(var(--reader-sticky-offset) + 10px);
   font-family: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
-  font-size: clamp(16px, 1.4vw, 19px);
+  font-size: calc(clamp(16px, 1.4vw, 19px) * var(--reader-text-scale, 1));
   line-height: 1.85;
   overflow-wrap: anywhere;
 }
@@ -560,6 +702,8 @@ onBeforeUnmount(()=>{
 }
 .red{background:#f3caca}.blue{background:#cbdef2}.green{background:#cce4cd}.yellow{background:#f6e4a2}
 .paragraph span:is(.red,.blue,.green,.yellow), .selection-tools button:is(.red,.blue,.green,.yellow) { color: #26342d; }
+.paragraph .search-hit { box-shadow: inset 0 -0.44em #ead68db8; }
+.paragraph .search-current { color: #26342d; background: #f4ce71; box-shadow: inset 0 -2px #896515; }
 .reader-toolbar, .panel-backdrop, .sidebar-header .mobile-close { display: none; }
 @media (min-width: 981px) {
   .reading-grid.has-contents {
@@ -584,6 +728,8 @@ onBeforeUnmount(()=>{
 @media (max-width: 768px) {
   .reading-grid { grid-template-columns: minmax(0, 1fr); }
   .paper-tools { position: static; }
+  .paper-tools.search-open { position: sticky; }
+  .paper-search button { min-width: 32px; min-height: 36px; }
   .paragraph p { scroll-margin-top: 16px; }
   .paragraph { column-gap: 8px; }
   .paragraph-action { min-height: 36px; padding-inline: 6px; }
